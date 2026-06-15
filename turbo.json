@@ -1,0 +1,28 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**"],
+      "env": [
+        "DATABASE_URL",
+        "PAYLOAD_SECRET",
+        "NEXT_PUBLIC_*",
+        "CLERK_*",
+        "SENTRY_*"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {},
+    "typecheck": {
+      "dependsOn": ["^build", "generate:types"]
+    },
+    "generate:types": {
+      "outputs": ["packages/payload-types/src/**"],
+      "cache": false
+    }
+  }
+}

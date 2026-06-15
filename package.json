@@ -1,0 +1,22 @@
+{
+  "name": "plotline",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Plotline monorepo — media tracking with Payload CMS and Next.js",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint -- --fix",
+    "typecheck": "turbo run typecheck",
+    "generate:types": "turbo run generate:types --filter=@plotline/payload",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.33.0"
+}
