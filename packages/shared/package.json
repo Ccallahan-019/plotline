@@ -1,0 +1,28 @@
+{
+  "name": "@plotline/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tmdb": "./src/tmdb/index.ts",
+    "./tmdb/client": "./src/tmdb/client.ts",
+    "./tmdb/schemas": "./src/tmdb/schemas.ts",
+    "./constants/media": "./src/constants/media.ts",
+    "./utils/dates": "./src/utils/dates.ts",
+    "./env": "./src/env.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.8",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@plotline/eslint-config": "workspace:*",
+    "@plotline/typescript-config": "workspace:*",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.2"
+  }
+}
