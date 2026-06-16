@@ -1,4 +1,4 @@
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 
 const DEFAULT_WATCHLISTS = [
   {
@@ -20,6 +20,7 @@ const DEFAULT_WATCHLISTS = [
 export async function seedDefaultWatchlists(
   payload: Payload,
   profileId: number,
+  req: PayloadRequest,
 ): Promise<void> {
   await Promise.all(
     DEFAULT_WATCHLISTS.map((list) =>
@@ -31,6 +32,7 @@ export async function seedDefaultWatchlists(
           visibility: 'private',
         },
         overrideAccess: true,
+        req,
       }),
     ),
   )

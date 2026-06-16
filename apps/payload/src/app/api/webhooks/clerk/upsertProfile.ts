@@ -20,12 +20,16 @@ export async function upsertProfile(user: ClerkUserPayload) {
     },
   })
 
+  console.log('existing', existing)
+
   const profileData = {
     avatarUrl: user.image_url ?? undefined,
     clerkUserId: user.id,
     displayName: buildDisplayName(user),
     username: buildUsername(user),
   }
+
+  console.log('profileData', profileData)
 
   if (existing.docs[0]) {
     return writeProfile(payload, {

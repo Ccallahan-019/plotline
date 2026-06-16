@@ -11,7 +11,7 @@ export const seedDefaultWatchlistsOnCreate: CollectionAfterChangeHook = async ({
     return doc
   }
 
-  await seedDefaultWatchlists(req.payload, doc.id)
+  await seedDefaultWatchlists(req.payload, doc.id, req)
 
   return doc
 }

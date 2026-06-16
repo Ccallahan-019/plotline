@@ -7,6 +7,7 @@ import { SKIP_WATCHLIST_STATS_RECALC } from '../context'
 export const recalculateStatsAfterWatchlistChange: CollectionAfterChangeHook = async ({
   context,
   doc,
+  operation,
   previousDoc,
   req,
 }) => {
@@ -19,7 +20,7 @@ export const recalculateStatsAfterWatchlistChange: CollectionAfterChangeHook = a
   const challengeChanged =
     JSON.stringify(previousDoc?.challenge ?? null) !== JSON.stringify(doc.challenge ?? null)
 
-  if (!challengeChanged) {
+  if (operation !== 'update' || !challengeChanged) {
     return doc
   }
 

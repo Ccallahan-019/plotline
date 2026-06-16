@@ -2,7 +2,7 @@ import type { JSONSchema4 } from 'json-schema'
 
 export const WATCHLIST_STATS_CACHE_URI = 'plotline://schemas/watchlist-stats-cache.json'
 
-export const watchlistStatsCacheSchema: JSONSchema4 = {
+export const watchlistStatsCacheObjectSchema: JSONSchema4 = {
   additionalProperties: false,
   properties: {
     actualPerDay: { type: 'number' },
@@ -36,4 +36,8 @@ export const watchlistStatsCacheSchema: JSONSchema4 = {
     'lastCalculatedAt',
   ],
   type: 'object',
+}
+
+export const watchlistStatsCacheSchema = {
+  oneOf: [{ type: 'null' }, watchlistStatsCacheObjectSchema],
 }

@@ -282,7 +282,7 @@ export interface Watchlist {
       | null;
     includeRewatches?: boolean | null;
   };
-  statsCache?: {
+  statsCache?: null | {
     actualPerDay?: number;
     completed: number;
     completedRuntimeMinutes?: number;
