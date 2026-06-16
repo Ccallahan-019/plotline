@@ -5,11 +5,16 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "dist/**"],
       "env": [
-        "DATABASE_URL",
-        "PAYLOAD_SECRET",
         "NEXT_PUBLIC_*",
         "CLERK_*",
-        "SENTRY_*"
+        "SENTRY_*",
+        "PAYLOAD_*",
+        "TMDB_*",
+        "CI",
+        "NEXT_RUNTIME",
+        "PLOTLINE_URL",
+        "POSTGRES_URL",
+        "NODE_ENV"
       ]
     },
     "dev": {
