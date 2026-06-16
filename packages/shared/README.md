@@ -8,6 +8,8 @@ Shared utilities, constants, and TMDB client stubs used by both Plotline apps.
 | --- | --- |
 | `@plotline/shared/tmdb` | TMDB v3 client + Zod schemas |
 | `@plotline/shared/constants/media` | `MediaStatus`, `MediaType`, `WatchEventType`, `Visibility`, `StreamingPlatform` |
+| `@plotline/shared/constants/watchlist-challenge` | Challenge list enums (`ListStatus`, `TvCountRule`, etc.) |
+| `@plotline/shared/watchlist-stats` | Pure watchlist/challenge stats computation |
 | `@plotline/shared/utils/dates` | Release calendar helpers |
 | `@plotline/shared/env` | Shared `@t3-oss/env-core` validation for server env vars |
 

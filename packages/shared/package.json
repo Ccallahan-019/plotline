@@ -8,6 +8,8 @@
     "./tmdb/client": "./src/tmdb/client.ts",
     "./tmdb/schemas": "./src/tmdb/schemas.ts",
     "./constants/media": "./src/constants/media.ts",
+    "./constants/watchlist-challenge": "./src/constants/watchlist-challenge.ts",
+    "./watchlist-stats": "./src/watchlist-stats/index.ts",
     "./utils/dates": "./src/utils/dates.ts",
     "./env": "./src/env.ts"
   },

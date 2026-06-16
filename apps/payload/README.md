@@ -1,67 +1,88 @@
-# Payload Blank Template
+# @plotline/payload
 
-This template comes configured with the bare minimum to get started on anything you need.
+Plotline's Payload CMS backend: admin panel, REST API, TMDB media cache, and Clerk profile sync.
 
-## Quick start
+## Local development
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+From the repo root:
 
-## Quick Start - local setup
+```bash
+pnpm db:up
+pnpm install
+pnpm dev --filter=@plotline/payload
+```
 
-To spin up this template locally, follow these steps:
+The app runs at [http://localhost:3001](http://localhost:3001). The admin panel is at [http://localhost:3001/admin](http://localhost:3001/admin).
 
-### Clone
+Create your first admin user through the admin UI on first launch.
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+## Collections
 
-### Development
+| Collection | Purpose |
+| --- | --- |
+| `users` | Payload admin accounts (not Plotline app users) |
+| `profiles` | App users synced from Clerk |
+| `media` | Shared TMDB catalog cache |
+| `library-items` | One row per `(profile, media)` — status and progress |
+| `watchlists` | Named lists for organizing library items; optional challenge mode with typed `statsCache` |
+| `watchlist-memberships` | Join table linking library items to watchlists; list-scoped status and goal weight |
+| `watch-events` | Append-only activity log |
+| `reviews` | One rating/review per `(profile, media)` |
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+## Custom endpoints
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+| Endpoint | Method | Auth | Purpose |
+| --- | --- | --- | --- |
+| `/api/tmdb/upsert` | POST | Service (`PAYLOAD_API_KEY`) | Upsert TMDB media records |
+| `/api/library/add-to-list` | POST | Service + `x-clerk-user-id` | Upsert library item and add to watchlist |
+| `/api/library/log-watch` | POST | Service + `x-clerk-user-id` | Log watch event and update library item |
+| `/api/watchlists/:id/recalculate-stats` | POST | Service + `x-clerk-user-id` | Recompute watchlist challenge stats cache |
+| `/api/webhooks/clerk` | POST | Clerk webhook signature | Sync profiles from Clerk |
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+BFF calls from `apps/plotline` should send:
 
-#### Docker (Optional)
+```
+Authorization: Bearer ${PAYLOAD_API_KEY}
+x-clerk-user-id: ${clerkUserId}
+```
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+## Type generation
 
-To do so, follow these steps:
+Generated types are written to `@plotline/payload-types`:
 
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+```bash
+pnpm generate:types
+```
 
-## How it works
+Do not edit `packages/payload-types/src/index.ts` manually.
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+## Environment variables
 
-### Collections
+| Variable | Required | Description |
+| --- | --- | --- |
+| `DATABASE_URL` or `POSTGRES_URL` | Yes | PostgreSQL connection string |
+| `PAYLOAD_SECRET` | Yes | Payload encryption secret |
+| `PAYLOAD_API_KEY` | Yes | Server-to-server API key for Plotline BFF |
+| `PLOTLINE_URL` | Yes (prod) | Plotline app origin for CORS |
+| `CLERK_WEBHOOK_SECRET` | Yes (prod) | Clerk webhook signing secret |
+| `SENTRY_DSN` | No | Sentry error reporting |
+| `SENTRY_AUTH_TOKEN` | No | CI/build source map upload |
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+See [`../../.env.example`](../../.env.example) for the full monorepo variable list.
 
-- #### Users (Authentication)
+## Sentry
 
-  Users are auth-enabled collections that have access to the admin panel.
+Sentry is configured via `@sentry/nextjs`:
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/3.x/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+- `src/instrumentation.ts`
+- `sentry.server.config.ts`
+- `sentry.edge.config.ts`
+- `next.config.ts` wrapped with `withSentryConfig`
 
-- #### Media
+## Vercel deployment
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
-
-### Docker
-
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
-
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
-
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
-
-## Questions
-
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+1. Create a Vercel project with **Root Directory** `apps/payload`.
+2. Enable **Include source files outside Root Directory** for monorepo builds.
+3. Build command: `cd ../.. && pnpm exec turbo run build --filter=@plotline/payload`
+4. Set env vars: `DATABASE_URL`, `PAYLOAD_SECRET`, `PAYLOAD_API_KEY`, `CLERK_WEBHOOK_SECRET`, `PLOTLINE_URL`, Sentry vars.
+5. Point Clerk webhooks to `https://<payload-domain>/api/webhooks/clerk`.

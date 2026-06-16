@@ -9,7 +9,12 @@
         "PAYLOAD_SECRET",
         "NEXT_PUBLIC_*",
         "CLERK_*",
-        "SENTRY_*"
+        "SENTRY_*",
+        "PAYLOAD_API_KEY",
+        "CI",
+        "NEXT_RUNTIME",
+        "PLOTLINE_URL",
+        "POSTGRES_URL"
       ]
     },
     "dev": {
