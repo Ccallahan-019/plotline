@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, SignedIn } from "@clerk/nextjs";
 import { Geist, Geist_Mono, Lora, Merriweather } from "next/font/google";
 
-import { SiteHeader } from "@/components/site-header";
-import { cn } from "@/lib/utils";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 import "./globals.css";
+import { Header } from "@/features/navigation/header/Header";
+import { AppSidebar } from "@/features/navigation/side-nav/components/Sidebar";
+import { ThemeProvider } from "@/features/theme/providers/ThemeProvider";
+import { cn } from "@/lib/utils";
 
 const merriweatherHeading = Merriweather({
   subsets: ["latin"],
@@ -56,10 +59,20 @@ export default function RootLayout({
           merriweatherHeading.variable,
         )}
         lang="en"
+        suppressHydrationWarning
       >
         <body className="flex min-h-full flex-col bg-background text-foreground">
-          <SiteHeader />
-          <main className="flex flex-1 flex-col">{children}</main>
+          <ThemeProvider>
+            <SidebarProvider>
+              <SignedIn>
+                <AppSidebar />
+              </SignedIn>
+              <main className="flex flex-1 flex-col">
+                <Header />
+                {children}
+              </main>
+            </SidebarProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
