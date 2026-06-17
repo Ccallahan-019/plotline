@@ -20,7 +20,7 @@ import {
   UserStar,
 } from "lucide-react";
 
-import type { SidebarMenuItem } from "../components/SidebarMenu";
+import type { SidebarMenuItem } from "../types";
 
 export const dashboardItems: SidebarMenuItem[] = [
   {

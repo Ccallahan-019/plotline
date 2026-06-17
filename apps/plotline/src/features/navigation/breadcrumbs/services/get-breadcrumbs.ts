@@ -4,7 +4,7 @@ import {
   breadcrumbRouteMap,
   dynamicBreadcrumbRoutes,
   formatSlugLabel,
-} from "./breadcrumbRoutes";
+} from "./breadcrumb-routes";
 
 const homeSegment: BreadcrumbSegment = {
   href: "/dashboard",
@@ -15,7 +15,10 @@ const homeSegment: BreadcrumbSegment = {
 const hiddenPathPrefixes = ["/sign-in", "/sign-up"];
 
 export function getBreadcrumbs(pathname: string): BreadcrumbSegment[] {
-  if (pathname === "/" || hiddenPathPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+  if (
+    pathname === "/" ||
+    hiddenPathPrefixes.some((prefix) => pathname.startsWith(prefix))
+  ) {
     return [];
   }
 

@@ -1,4 +1,4 @@
-import type { SidebarMenuItem } from "@/features/navigation/side-nav/components/SidebarMenu";
+import type { SidebarMenuItem } from "@/features/navigation/side-nav/types";
 
 import type { BreadcrumbRoute } from "../types";
 
@@ -11,7 +11,7 @@ import {
   reviewsAndRatingsItems,
   socialItems,
   watchlistsChallengesItems,
-} from "../../side-nav/services/SidebarMenuItems";
+} from "../../side-nav/services/sidebar-menu-items";
 
 type NavigationSection = {
   items: SidebarMenuItem[];
@@ -37,7 +37,11 @@ const navigationSections: NavigationSection[] = [
     section: "Stats & Insights",
     sectionHref: "/stats",
   },
-  { items: discoverItems, section: "Discover", sectionHref: "/discover/for-you" },
+  {
+    items: discoverItems,
+    section: "Discover",
+    sectionHref: "/discover/for-you",
+  },
   {
     items: alertsAvailabilityItems,
     section: "Alerts & Availability",

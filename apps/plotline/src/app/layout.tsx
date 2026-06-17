@@ -9,6 +9,7 @@ import "./globals.css";
 import { Header } from "@/features/navigation/header/Header";
 import { AppSidebar } from "@/features/navigation/side-nav/components/Sidebar";
 import { ThemeProvider } from "@/features/theme/providers/ThemeProvider";
+import { QueryProvider } from "@/lib/query/providers/QueryProvider";
 import { cn } from "@/lib/utils";
 
 const merriweatherHeading = Merriweather({
@@ -63,15 +64,17 @@ export default function RootLayout({
       >
         <body className="flex min-h-full flex-col bg-background text-foreground">
           <ThemeProvider>
-            <SidebarProvider>
-              <SignedIn>
-                <AppSidebar />
-              </SignedIn>
-              <main className="flex flex-1 flex-col">
-                <Header />
-                {children}
-              </main>
-            </SidebarProvider>
+            <QueryProvider>
+              <SidebarProvider>
+                <SignedIn>
+                  <AppSidebar />
+                </SignedIn>
+                <main className="flex flex-1 flex-col">
+                  <Header />
+                  {children}
+                </main>
+              </SidebarProvider>
+            </QueryProvider>
           </ThemeProvider>
         </body>
       </html>

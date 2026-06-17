@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { ShowIf } from "@/components/utils/ShowIf";
 
-import { getBreadcrumbs } from "../services/getBreadcrumbs";
+import { getBreadcrumbs } from "../services/get-breadcrumbs";
 import { BreadcrumbItemContent } from "./BreadcrumbItemContent";
 
 export function Breadcrumbs() {

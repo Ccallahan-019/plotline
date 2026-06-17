@@ -1,50 +1,58 @@
-import { auth } from '@clerk/nextjs/server'
-import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 
-import { Badge } from '@/components/ui/badge'
-import { buttonVariants } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { getWatchlistBySlug } from '@/lib/payload'
-import { PayloadClientError } from '@/lib/payload/client'
-import { cn } from '@/lib/utils'
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { PayloadClientError } from "@/lib/payload/client/payload-fetch";
+import { getWatchlistBySlug } from "@/lib/payload/queries/get-watchlists";
+import { cn } from "@/lib/utils";
 
 type WatchlistDetailPageProps = {
-  params: Promise<{ slug: string }>
-}
+  params: Promise<{ slug: string }>;
+};
 
 export async function generateMetadata({ params }: WatchlistDetailPageProps) {
-  const { slug } = await params
+  const { slug } = await params;
 
   return {
     title: slug,
-  }
+  };
 }
 
-export default async function WatchlistDetailPage({ params }: WatchlistDetailPageProps) {
-  const { slug } = await params
-  const { userId } = await auth()
+export default async function WatchlistDetailPage({
+  params,
+}: WatchlistDetailPageProps) {
+  const { slug } = await params;
+  const { userId } = await auth();
 
   if (!userId) {
-    redirect('/sign-in')
+    redirect("/sign-in");
   }
 
-  let watchlist = null
+  let watchlist = null;
 
   try {
-    watchlist = await getWatchlistBySlug(userId, slug)
+    watchlist = await getWatchlistBySlug(userId, slug);
   } catch (error) {
     if (!(error instanceof PayloadClientError) || error.status !== 404) {
-      throw error
+      throw error;
     }
   }
 
   if (!watchlist) {
-    notFound()
+    notFound();
   }
 
-  const stats = watchlist.statsCache
+  const stats = watchlist.statsCache;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
@@ -53,16 +61,24 @@ export default async function WatchlistDetailPage({ params }: WatchlistDetailPag
           <Badge className="w-fit" variant="secondary">
             Watchlist
           </Badge>
-          <h1 className="font-heading text-3xl font-semibold tracking-tight">{watchlist.name}</h1>
+          <h1 className="font-heading text-3xl font-semibold tracking-tight">
+            {watchlist.name}
+          </h1>
           <p className="max-w-2xl text-muted-foreground">
-            {watchlist.description ?? 'Detail view stub — memberships and media grid coming next.'}
+            {watchlist.description ??
+              "Detail view stub — memberships and media grid coming next."}
           </p>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline">{watchlist.visibility}</Badge>
-            {watchlist.challenge?.enabled ? <Badge>Challenge mode</Badge> : null}
+            {watchlist.challenge?.enabled ? (
+              <Badge>Challenge mode</Badge>
+            ) : null}
           </div>
         </div>
-        <Link className={cn(buttonVariants({ variant: 'outline' }))} href="/watchlists">
+        <Link
+          className={cn(buttonVariants({ variant: "outline" }))}
+          href="/watchlists"
+        >
           Back to lists
         </Link>
       </div>
@@ -70,7 +86,9 @@ export default async function WatchlistDetailPage({ params }: WatchlistDetailPag
       <Card>
         <CardHeader>
           <CardTitle>Stats cache</CardTitle>
-          <CardDescription>Derived from Payload watchlist membership hooks.</CardDescription>
+          <CardDescription>
+            Derived from Payload watchlist membership hooks.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <Stat label="Completed" value={stats?.completed ?? 0} />
@@ -81,7 +99,7 @@ export default async function WatchlistDetailPage({ params }: WatchlistDetailPag
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -90,5 +108,5 @@ function Stat({ label, value }: { label: string; value: number }) {
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className="font-heading text-2xl font-semibold">{value}</span>
     </div>
-  )
+  );
 }

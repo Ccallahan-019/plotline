@@ -52,6 +52,24 @@ Plotline cannot call Payload's Local API directly (separate Next.js apps). All u
 Browser → Clerk → Plotline BFF → Payload REST (apps/payload) → PostgreSQL
 ```
 
+### TanStack Query (client data layer)
+
+Interactive client islands fetch same-origin BFF routes via TanStack Query. Server Components prefetch with server-only query functions and pass `initialData` to hydrate the cache.
+
+| Layer          | Path                       | Role                                                                                 |
+| -------------- | -------------------------- | ------------------------------------------------------------------------------------ |
+| Server queries | `src/lib/payload/queries/` | Payload REST access (`import 'server-only'`) — used by RSC prefetch and BFF handlers |
+| BFF            | `src/app/api/`             | Clerk auth + delegates to server queries                                             |
+| Client fetch   | `src/lib/query/api.ts`     | `fetchJson` wrapper — never imports `@/lib/payload`                                  |
+| Query keys     | `src/lib/query/keys.ts`    | Centralized key factory                                                              |
+| Hooks          | `src/lib/query/hooks/`     | `useQuery` / `useMutation` for features                                              |
+
+**Pattern:** thin RSC page shell (auth + prefetch) → client island with hook + `initialData`. Mutations call POST BFF routes and invalidate related query keys.
+
+Reference implementation: `/watchlists` — `WatchlistsGrid` + `useWatchlists`.
+
+Query client defaults: `staleTime` 30s, `gcTime` 5m, retry once on 5xx.
+
 ## MVP routes
 
 | Route                  | Purpose                                  |
@@ -64,11 +82,15 @@ Browser → Clerk → Plotline BFF → Payload REST (apps/payload) → PostgreSQ
 
 ## BFF API routes
 
-| Route                           | Payload target                   |
-| ------------------------------- | -------------------------------- |
-| `POST /api/library/add-to-list` | `/api/library/add-to-list`       |
-| `POST /api/library/log-watch`   | `/api/library/log-watch`         |
-| `GET /api/tmdb/search?q=`       | TMDB via `@plotline/shared/tmdb` |
+| Route                           | Method | Purpose                                            |
+| ------------------------------- | ------ | -------------------------------------------------- |
+| `GET /api/library-items`        | GET    | List library items (`status`, `mediaType` filters) |
+| `GET /api/watchlists`           | GET    | List watchlists (`filter` query)                   |
+| `GET /api/watchlists/[slug]`    | GET    | Single watchlist by slug                           |
+| `GET /api/watch-events`         | GET    | Watch history (`limit`, `sort`)                    |
+| `POST /api/library/add-to-list` | POST   | Add media to library + watchlist                   |
+| `POST /api/library/log-watch`   | POST   | Log a watch event                                  |
+| `GET /api/tmdb/search?q=`       | GET    | TMDB search                                        |
 
 ## Feature roadmap
 

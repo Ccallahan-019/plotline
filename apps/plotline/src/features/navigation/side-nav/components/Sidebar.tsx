@@ -18,7 +18,7 @@ import {
   reviewsAndRatingsItems,
   socialItems,
   watchlistsChallengesItems,
-} from "../services/SidebarMenuItems";
+} from "../services/sidebar-menu-items";
 import { SidebarLogo } from "./SidebarLogo";
 import { SidebarMenu } from "./SidebarMenu";
 import { UserProfileButton } from "./UserProfileButton";

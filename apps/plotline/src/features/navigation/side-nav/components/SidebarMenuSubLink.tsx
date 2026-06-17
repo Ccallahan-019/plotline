@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { SidebarMenuSubButton } from "@/components/ui/sidebar";
 
-import { isLinkActive } from "../services/isLinkActive";
+import { isLinkActive } from "../services/is-link-active";
 
 export function SidebarMenuSubLink({
   children,

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { SidebarMenuButton } from "@/components/ui/sidebar";
 
-import { isLinkActive } from "../services/isLinkActive";
+import { isLinkActive } from "../services/is-link-active";
 
 type SidebarMenuLinkProps = {
   href: string;

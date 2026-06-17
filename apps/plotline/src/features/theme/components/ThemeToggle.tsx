@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useIsMounted } from "@/hooks/useIsMounted";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
