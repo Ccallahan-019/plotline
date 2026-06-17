@@ -1,5 +1,6 @@
 import type {
   LibraryItem,
+  Review,
   WatchEvent,
   Watchlist,
 } from "@plotline/payload-types";
@@ -13,6 +14,7 @@ import type {
 } from "@/lib/payload/types/library-mutations";
 import type {
   LibraryFilters,
+  ReviewFilters,
   WatchEventFilters,
   WatchlistFilters,
 } from "@/lib/query/services/keys";
@@ -26,6 +28,15 @@ export function fetchLibraryItems(
     `/api/library-items${buildSearchParams({
       mediaType: filters?.mediaType,
       status: filters?.status,
+    })}`,
+  );
+}
+
+export function fetchReviews(filters?: ReviewFilters): Promise<Review[]> {
+  return fetchJson<Review[]>(
+    `/api/reviews${buildSearchParams({
+      hasBody:
+        filters?.hasBody === undefined ? undefined : String(filters.hasBody),
     })}`,
   );
 }

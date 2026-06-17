@@ -66,7 +66,7 @@ Interactive client islands fetch same-origin BFF routes via TanStack Query. Serv
 
 **Pattern:** thin RSC page shell (auth + prefetch) → client island with hook + `initialData`. Mutations call POST BFF routes and invalidate related query keys.
 
-Reference implementation: `/watchlists` — `WatchlistsGrid` + `useWatchlists`.
+Reference implementation: `/watchlists` — `WatchlistsGrid` + `useWatchlists`. Reusable media presentation (`MediaGridItem`, `MediaListItem`, `MediaPoster`) lives in `src/features/media/`; library-specific UI (`LibraryList`, `LibraryListItem`, `StatusBadge`, `TitleSearchCombobox`, `LogWatchButton`) lives in `src/features/library/` and composes those media primitives. Mutations use `useAddToList` and `useLogWatch` from `src/lib/query/hooks/`.
 
 Query client defaults: `staleTime` 30s, `gcTime` 5m, retry once on 5xx.
 
@@ -88,6 +88,7 @@ Query client defaults: `staleTime` 30s, `gcTime` 5m, retry once on 5xx.
 | `GET /api/watchlists`           | GET    | List watchlists (`filter` query)                   |
 | `GET /api/watchlists/[slug]`    | GET    | Single watchlist by slug                           |
 | `GET /api/watch-events`         | GET    | Watch history (`limit`, `sort`)                    |
+| `GET /api/reviews`                | GET    | User reviews (`hasBody` filter)                    |
 | `POST /api/library/add-to-list` | POST   | Add media to library + watchlist                   |
 | `POST /api/library/log-watch`   | POST   | Log a watch event                                  |
 | `GET /api/tmdb/search?q=`       | GET    | TMDB search                                        |
