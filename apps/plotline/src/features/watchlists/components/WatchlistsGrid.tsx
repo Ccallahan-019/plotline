@@ -58,7 +58,7 @@ export function WatchlistsGrid({
       ) : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {watchlists.map((watchlist) => (
-          <Link href={`/watchlists/${watchlist.slug}`} key={watchlist.id}>
+          <Link href={`/dashboard/watchlists/${watchlist.slug}`} key={watchlist.id}>
             <Card className="h-full transition-colors hover:border-primary/40">
               <CardHeader>
                 <CardTitle>{watchlist.name}</CardTitle>

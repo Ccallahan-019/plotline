@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
+    <>
       <div className="flex flex-col gap-2">
         <Badge className="w-fit" variant="secondary">
           Protected
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
             <CardDescription>Jump into the MVP surfaces wired to Payload.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
-            <Link className="text-primary underline-offset-4 hover:underline" href="/watchlists">
+            <Link className="text-primary underline-offset-4 hover:underline" href="/dashboard/watchlists">
               Browse watchlists
             </Link>
             <Link className="text-primary underline-offset-4 hover:underline" href="/api/tmdb/search?q=inception">
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </>
   )
 }
 

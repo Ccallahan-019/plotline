@@ -21,33 +21,33 @@ type NavigationSection = {
 
 const navigationSections: NavigationSection[] = [
   { items: dashboardItems, section: "Dashboard", sectionHref: "/dashboard" },
-  { items: byStatusByTypeItems, section: "Library", sectionHref: "/library" },
+  { items: byStatusByTypeItems, section: "Library", sectionHref: "/dashboard/library" },
   {
     items: watchlistsChallengesItems,
     section: "Watchlists",
-    sectionHref: "/watchlists",
+    sectionHref: "/dashboard/watchlists",
   },
   {
     items: reviewsAndRatingsItems,
     section: "Reviews & Ratings",
-    sectionHref: "/reviews",
+    sectionHref: "/dashboard/reviews",
   },
   {
     items: getStatsInsightsItems(),
     section: "Stats & Insights",
-    sectionHref: "/stats",
+    sectionHref: "/dashboard/stats",
   },
   {
     items: discoverItems,
     section: "Discover",
-    sectionHref: "/discover/for-you",
+    sectionHref: "/dashboard/discover/for-you",
   },
   {
     items: alertsAvailabilityItems,
     section: "Alerts & Availability",
-    sectionHref: "/alerts/following",
+    sectionHref: "/dashboard/alerts/following",
   },
-  { items: socialItems, section: "Social", sectionHref: "/social/feed" },
+  { items: socialItems, section: "Social", sectionHref: "/dashboard/social/feed" },
 ];
 
 function getFirstHref(items: SidebarMenuItem[]): string | undefined {
@@ -110,15 +110,15 @@ export const dynamicBreadcrumbRoutes: {
 }[] = [
   {
     formatLabel: formatSlugLabel,
-    parentHref: "/watchlists",
+    parentHref: "/dashboard/watchlists",
     parentLabel: "Watchlists",
-    pattern: /^\/watchlists\/([^/]+)$/,
+    pattern: /^\/dashboard\/watchlists\/([^/]+)$/,
   },
   {
     formatLabel: (value) => value,
-    parentHref: "/stats",
+    parentHref: "/dashboard/stats",
     parentLabel: "Summary",
-    pattern: /^\/stats\/year\/(\d+)$/,
+    pattern: /^\/dashboard\/stats\/year\/(\d+)$/,
   },
 ];
 

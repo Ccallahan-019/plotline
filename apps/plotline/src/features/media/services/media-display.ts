@@ -56,10 +56,10 @@ export function getTitleHref(media: MediaDisplay): string {
   const tmdbId = media.tmdbId;
 
   if (tmdbId === undefined) {
-    return "/library";
+    return "/dashboard/library";
   }
 
-  return `/title/${media.mediaType}/${tmdbId}`;
+  return `/dashboard/title/${media.mediaType}/${tmdbId}`;
 }
 
 export function toMediaDisplayFromLibraryItem(

@@ -35,7 +35,7 @@ export default function HomePage() {
             <CardDescription>Organize planned, in-progress, and completed titles.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link className={cn(buttonVariants({ variant: 'secondary' }))} href="/watchlists">
+            <Link className={cn(buttonVariants({ variant: 'secondary' }))} href="/dashboard/watchlists">
               View watchlists
             </Link>
           </CardContent>

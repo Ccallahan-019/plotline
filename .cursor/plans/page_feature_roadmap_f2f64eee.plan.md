@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: phase-0-routes
     content: "Phase 0c: Route namespace — nest all side-nav pages under src/app/dashboard/, update sidebar-menu-items.tsx + breadcrumb-routes.ts hrefs, add dashboard layout"
-    status: pending
+    status: completed
   - id: phase-1-search
     content: "Phase 1a: /dashboard/search — Input Group, filter bar (badges + Show Filters Sheet), discover/search BFF with text+genre support, results grid"
     status: pending
@@ -55,11 +55,11 @@ The side nav in [`sidebar-menu-items.tsx`](apps/plotline/src/features/navigation
 
 **Routing convention:** All authenticated side-nav pages live under **`/dashboard/*`**. Public routes (`/`, `/sign-in`, `/sign-up`) stay at the root. BFF API routes stay at `/api/*`.
 
-| Status      | Routes | Examples                                                      |
-| ----------- | ------ | ------------------------------------------------------------- |
-| **Full**    | 1      | `/dashboard/watchlists` (migrate from `/watchlists`)          |
-| **Partial** | 4      | `/dashboard`, `/dashboard/watchlists/[slug]`, slug shortcuts  |
-| **Missing** | ~46    | Everything else in the sidebar                                |
+| Status      | Routes | Examples                                                     |
+| ----------- | ------ | ------------------------------------------------------------ |
+| **Full**    | 1      | `/dashboard/watchlists` (migrate from `/watchlists`)         |
+| **Partial** | 4      | `/dashboard`, `/dashboard/watchlists/[slug]`, slug shortcuts |
+| **Missing** | ~46    | Everything else in the sidebar                               |
 
 **Backend readiness** (Payload collections already exist):
 
@@ -160,23 +160,23 @@ src/app/dashboard/
 
 Update [`sidebar-menu-items.tsx`](apps/plotline/src/features/navigation/side-nav/services/sidebar-menu-items.tsx) and [`breadcrumb-routes.ts`](apps/plotline/src/features/navigation/breadcrumbs/services/breadcrumb-routes.ts) section hrefs accordingly.
 
-| Section | Old href | New href |
-| ------- | -------- | -------- |
-| Dashboard → Overview | `/dashboard` | `/dashboard` (unchanged) |
-| Dashboard → Continue Watching | `/dashboard/continue-watching` | `/dashboard/continue-watching` (unchanged) |
-| Dashboard → Recent Activity | `/dashboard/recent-activity` | `/dashboard/recent-activity` (unchanged) |
-| Library → All Titles | `/library` | `/dashboard/library` |
-| Library → status filters | `/library/planned`, etc. | `/dashboard/library/planned`, etc. |
-| Library → type filters | `/library/movies`, `/library/tv` | `/dashboard/library/movies`, `/dashboard/library/tv` |
-| Watchlists | `/watchlists`, `/watchlists/*` | `/dashboard/watchlists`, `/dashboard/watchlists/*` |
-| Challenges | `/challenges/*` | `/dashboard/challenges/*` |
-| Reviews | `/reviews`, `/reviews/*` | `/dashboard/reviews`, `/dashboard/reviews/*` |
-| Stats | `/stats`, `/stats/*` | `/dashboard/stats`, `/dashboard/stats/*` |
-| Discover → Browse → **Search TMDB** | `/search` | **`/dashboard/search`** |
-| Discover | `/discover/*` | `/dashboard/discover/*` |
-| Alerts | `/alerts/*` | `/dashboard/alerts/*` |
-| Availability | `/availability`, `/availability/*` | `/dashboard/availability`, `/dashboard/availability/*` |
-| Social | `/social/*`, `/profile` | `/dashboard/social/*`, `/dashboard/profile` |
+| Section                             | Old href                           | New href                                               |
+| ----------------------------------- | ---------------------------------- | ------------------------------------------------------ |
+| Dashboard → Overview                | `/dashboard`                       | `/dashboard` (unchanged)                               |
+| Dashboard → Continue Watching       | `/dashboard/continue-watching`     | `/dashboard/continue-watching` (unchanged)             |
+| Dashboard → Recent Activity         | `/dashboard/recent-activity`       | `/dashboard/recent-activity` (unchanged)               |
+| Library → All Titles                | `/library`                         | `/dashboard/library`                                   |
+| Library → status filters            | `/library/planned`, etc.           | `/dashboard/library/planned`, etc.                     |
+| Library → type filters              | `/library/movies`, `/library/tv`   | `/dashboard/library/movies`, `/dashboard/library/tv`   |
+| Watchlists                          | `/watchlists`, `/watchlists/*`     | `/dashboard/watchlists`, `/dashboard/watchlists/*`     |
+| Challenges                          | `/challenges/*`                    | `/dashboard/challenges/*`                              |
+| Reviews                             | `/reviews`, `/reviews/*`           | `/dashboard/reviews`, `/dashboard/reviews/*`           |
+| Stats                               | `/stats`, `/stats/*`               | `/dashboard/stats`, `/dashboard/stats/*`               |
+| Discover → Browse → **Search TMDB** | `/search`                          | **`/dashboard/search`**                                |
+| Discover                            | `/discover/*`                      | `/dashboard/discover/*`                                |
+| Alerts                              | `/alerts/*`                        | `/dashboard/alerts/*`                                  |
+| Availability                        | `/availability`, `/availability/*` | `/dashboard/availability`, `/dashboard/availability/*` |
+| Social                              | `/social/*`, `/profile`            | `/dashboard/social/*`, `/dashboard/profile`            |
 
 ### Migration tasks (Phase 0c)
 
@@ -367,22 +367,22 @@ See [Route namespace](#route-namespace--all-side-nav-pages-under-dashboard) sect
 
 **Search input spec:**
 
-| Element | Spec |
-| ------- | ---- |
-| Component | shadcn Input Group — [`input-group.tsx`](apps/plotline/src/components/ui/input-group.tsx) (already present) |
-| Leading addon | Search icon (`Search` from lucide-react) in `InputGroupAddon` aligned to the **start** |
-| Input | Controlled text field; debounced (~300ms) before firing search query |
+| Element        | Spec                                                                                                                 |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Component      | shadcn Input Group — [`input-group.tsx`](apps/plotline/src/components/ui/input-group.tsx) (already present)          |
+| Leading addon  | Search icon (`Search` from lucide-react) in `InputGroupAddon` aligned to the **start**                               |
+| Input          | Controlled text field; debounced (~300ms) before firing search query                                                 |
 | Trailing addon | **Clear** button in `InputGroupAddon` at the **end** — visible when query non-empty; clears input and resets results |
-| Placeholder | e.g. "Search movies and series…" |
+| Placeholder    | e.g. "Search movies and series…"                                                                                     |
 
 **Filter bar spec (between input and grid):**
 
-| Element | Spec |
-| ------- | ---- |
-| Layout | Horizontal flex row — active filter badges on the left (wrap), **Show Filters** button `ml-auto` on the right |
-| Active badges | One `Badge` per applied filter (removable via click/X): e.g. `Series`, `Horror`, `2010–2019`, `Rating 7–10` |
+| Element             | Spec                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Layout              | Horizontal flex row — active filter badges on the left (wrap), **Show Filters** button `ml-auto` on the right            |
+| Active badges       | One `Badge` per applied filter (removable via click/X): e.g. `Series`, `Horror`, `2010–2019`, `Rating 7–10`              |
 | Show Filters button | Opens a shadcn **Sheet** (`side="right"`) — add [`sheet.tsx`](apps/plotline/src/components/ui/sheet.tsx) already present |
-| Empty state | When no filters applied, bar shows only the Show Filters button (no badges) |
+| Empty state         | When no filters applied, bar shows only the Show Filters button (no badges)                                              |
 
 **Filter sheet spec (Sheet content):**
 
@@ -394,25 +394,25 @@ pnpm dlx shadcn@latest add field toggle-group slider checkbox -c apps/plotline
 
 All controls wrapped in **Field** / **FieldGroup** / **FieldLabel** / **FieldDescription** as applicable.
 
-| Filter | Component | Behavior |
-| ------ | --------- | -------- |
-| Media type | **Toggle Group** (`type="single"`) | Options: **All** / **Film** / **Series** — maps to `movie` / `tv` / unset |
-| Genre | **Checkbox** list inside a **FieldGroup** | Multi-select TMDB genre IDs; load options from `GET /api/tmdb/genres?mediaType=` (movie + tv lists merged/deduped in UI or separate sections per type) |
-| Release year | **Slider** | Range slider (min/max year), e.g. 1950–current year; show selected range in `FieldDescription` |
-| Rating | Two **Input** fields in a **FieldGroup** | Min rating and max rating (0–10, step 0.5); validate min ≤ max |
-| Actions | Sheet footer | **Apply Filters** (closes sheet, triggers refetch) + **Clear all** (resets to defaults) |
+| Filter       | Component                                 | Behavior                                                                                                                                               |
+| ------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Media type   | **Toggle Group** (`type="single"`)        | Options: **All** / **Film** / **Series** — maps to `movie` / `tv` / unset                                                                              |
+| Genre        | **Checkbox** list inside a **FieldGroup** | Multi-select TMDB genre IDs; load options from `GET /api/tmdb/genres?mediaType=` (movie + tv lists merged/deduped in UI or separate sections per type) |
+| Release year | **Slider**                                | Range slider (min/max year), e.g. 1950–current year; show selected range in `FieldDescription`                                                         |
+| Rating       | Two **Input** fields in a **FieldGroup**  | Min rating and max rating (0–10, step 0.5); validate min ≤ max                                                                                         |
+| Actions      | Sheet footer                              | **Apply Filters** (closes sheet, triggers refetch) + **Clear all** (resets to defaults)                                                                |
 
 **Results grid spec:**
 
-| Element | Spec |
-| ------- | ---- |
-| Layout | CSS grid — e.g. `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4` |
-| Grid item | Reuse and **augment** [`MediaCard`](apps/plotline/src/features/media/components/MediaItem.tsx) (`MediaItem.tsx`) — **do not** create a separate `SearchResultCard` component |
-| Navigation | `MediaCard` already links via `getTitleHref()` → `/dashboard/title/[mediaType]/[tmdbId]` (update in [`media-display.ts`](apps/plotline/src/features/media/services/media-display.ts) per Phase 0c) |
-| Poster | Existing `MediaPoster` inside `MediaCard` — no duplicate poster logic |
-| Rating badge | **Augment `MediaCard` / `MediaPoster`:** optional `voteAverage?: number` on `MediaDisplay`; when present, render a `Badge` overlay in the **top-right corner** of the poster (one decimal, e.g. `8.4`); omit when undefined |
-| Metadata row | Existing `MediaCard` subtitle via `useMediaItem` — **Film** / **Series** + release year (`formatReleaseYear()`); search grid passes mapped `MediaDisplay` from TMDB results (use [`toMediaDisplayFromTmdbResult`](apps/plotline/src/features/media/services/media-display.ts) or shared mapper) |
-| Search grid usage | `SearchResultGrid` maps each result to `<MediaCard media={...} />` with `voteAverage` populated from TMDB `vote_average` |
+| Element           | Spec                                                                                                                                                                                                                                                                                            |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layout            | CSS grid — e.g. `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4`                                                                                                                                                                                                                |
+| Grid item         | Reuse and **augment** [`MediaCard`](apps/plotline/src/features/media/components/MediaItem.tsx) (`MediaItem.tsx`) — **do not** create a separate `SearchResultCard` component                                                                                                                    |
+| Navigation        | `MediaCard` already links via `getTitleHref()` → `/dashboard/title/[mediaType]/[tmdbId]` (update in [`media-display.ts`](apps/plotline/src/features/media/services/media-display.ts) per Phase 0c)                                                                                              |
+| Poster            | Existing `MediaPoster` inside `MediaCard` — no duplicate poster logic                                                                                                                                                                                                                           |
+| Rating badge      | **Augment `MediaCard` / `MediaPoster`:** optional `voteAverage?: number` on `MediaDisplay`; when present, render a `Badge` overlay in the **top-right corner** of the poster (one decimal, e.g. `8.4`); omit when undefined                                                                     |
+| Metadata row      | Existing `MediaCard` subtitle via `useMediaItem` — **Film** / **Series** + release year (`formatReleaseYear()`); search grid passes mapped `MediaDisplay` from TMDB results (use [`toMediaDisplayFromTmdbResult`](apps/plotline/src/features/media/services/media-display.ts) or shared mapper) |
+| Search grid usage | `SearchResultGrid` maps each result to `<MediaCard media={...} />` with `voteAverage` populated from TMDB `vote_average`                                                                                                                                                                        |
 
 **`MediaCard` augmentation checklist:**
 
@@ -444,8 +444,8 @@ flowchart TD
 
 ```ts
 type SearchFilters = {
-  mediaType?: "movie" | "tv";       // Film / Series; omit = All
-  genreIds?: number[];              // TMDB genre IDs (multi)
+  mediaType?: "movie" | "tv"; // Film / Series; omit = All
+  genreIds?: number[]; // TMDB genre IDs (multi)
   yearMin?: number;
   yearMax?: number;
   ratingMin?: number;
@@ -455,14 +455,14 @@ type SearchFilters = {
 
 **BFF work** (extend [`/api/tmdb/search`](apps/plotline/src/app/api/tmdb/search/route.ts) or add `/api/tmdb/browse`):
 
-| Param | Maps to |
-| ----- | ------- |
-| `q` | Text query (optional when browsing by filters only) |
-| `mediaType` | Filter / discover endpoint selection |
-| `genreIds` | Comma-separated IDs → `with_genres` (discover) or post-filter (search) |
-| `yearMin`, `yearMax` | Discover date params / post-filter on search result dates |
-| `ratingMin`, `ratingMax` | `vote_average.gte/lte` / post-filter on `vote_average` |
-| `page` | Pagination |
+| Param                    | Maps to                                                                |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `q`                      | Text query (optional when browsing by filters only)                    |
+| `mediaType`              | Filter / discover endpoint selection                                   |
+| `genreIds`               | Comma-separated IDs → `with_genres` (discover) or post-filter (search) |
+| `yearMin`, `yearMax`     | Discover date params / post-filter on search result dates              |
+| `ratingMin`, `ratingMax` | `vote_average.gte/lte` / post-filter on `vote_average`                 |
+| `page`                   | Pagination                                                             |
 
 **Text + genre simultaneously:** When `q` and `genreIds` are both set, BFF runs `search/multi`, post-filters type/year/rating from result fields, then **enriches the current page** with lightweight TMDB detail calls to read `genre_ids` and drops non-matching items. Accept that genre filtering may yield sparse pages (optionally backfill by fetching additional search pages server-side in a follow-up).
 
@@ -581,13 +581,13 @@ type SearchFilters = {
 
 **Goal:** Full list CRUD and challenge-mode UX.
 
-| Order | Route(s)                                       | Work                                                                                                                      |
-| ----- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Order | Route(s)                                                 | Work                                                                                                                      |
+| ----- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | 3.1   | `/dashboard/watchlists/new`                              | `useCreateWatchlist` mutation + form; invalidate `watchlists` key                                                         |
 | 3.2   | `/dashboard/watchlists` enhancements                     | Filter tabs update `watchlists({ filter })` query key                                                                     |
 | 3.3   | `/dashboard/challenges/active`, `/completed`, `/overdue` | Filter watchlists query by `challenge.enabled` + `statsCache.status`                                                      |
 | 3.4   | `/dashboard/challenges/new`                              | Create challenge watchlist mutation                                                                                       |
-| 3.5   | BFF                                            | Add `GET /api/watchlists/:slug/stats` + `useWatchlistStats(slug)` hook per [`docs/architecture.md`](docs/architecture.md) |
+| 3.5   | BFF                                                      | Add `GET /api/watchlists/:slug/stats` + `useWatchlistStats(slug)` hook per [`docs/architecture.md`](docs/architecture.md) |
 
 **Backend:** Challenge model is embedded in `watchlists` — no new collection. Stats recompute already exists in Payload hooks.
 
@@ -597,12 +597,12 @@ type SearchFilters = {
 
 **Goal:** Rate and review watched titles.
 
-| Order | Route                  | Work                                                                                   |
-| ----- | ---------------------- | -------------------------------------------------------------------------------------- |
-| 4.1   | `/dashboard/reviews`             | `useReviews()` list with media join                                                    |
-| 4.2   | `/dashboard/reviews/rated`       | Filter query key `{ hasBody: false }`                                                  |
-| 4.3   | `/dashboard/reviews/written`     | Filter query key `{ hasBody: true }`                                                   |
-| 4.4   | Inline on title detail | `useCreateReview` / `useUpdateReview` mutations; invalidate `reviews` + `libraryItems` |
+| Order | Route                        | Work                                                                                   |
+| ----- | ---------------------------- | -------------------------------------------------------------------------------------- |
+| 4.1   | `/dashboard/reviews`         | `useReviews()` list with media join                                                    |
+| 4.2   | `/dashboard/reviews/rated`   | Filter query key `{ hasBody: false }`                                                  |
+| 4.3   | `/dashboard/reviews/written` | Filter query key `{ hasBody: true }`                                                   |
+| 4.4   | Inline on title detail       | `useCreateReview` / `useUpdateReview` mutations; invalidate `reviews` + `libraryItems` |
 
 **Backend:** `reviews` collection fully defined. Can ship after Phase 1d title detail exists.
 
@@ -612,15 +612,15 @@ type SearchFilters = {
 
 **Goal:** Personal analytics from watch history.
 
-| Order | Route                                   | Work                                                                                                                                                                                       |
-| ----- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 5.1   | `/dashboard/stats`                                | Summary dashboard — aggregate `library-items` + `watch-events`                                                                                                                             |
-| 5.2   | `/dashboard/stats/history`                        | `useInfiniteQuery` on paginated `watch-events`                                                                                                                                             |
-| 5.3   | `/dashboard/stats/by-platform`                    | Group `watch-events.platform`                                                                                                                                                              |
-| 5.4   | `/dashboard/stats/rewatches`                      | Filter `isRewatch` + `rewatchCount`                                                                                                                                                        |
+| Order | Route                                                       | Work                                                                                                                                                                                       |
+| ----- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 5.1   | `/dashboard/stats`                                          | Summary dashboard — aggregate `library-items` + `watch-events`                                                                                                                             |
+| 5.2   | `/dashboard/stats/history`                                  | `useInfiniteQuery` on paginated `watch-events`                                                                                                                                             |
+| 5.3   | `/dashboard/stats/by-platform`                              | Group `watch-events.platform`                                                                                                                                                              |
+| 5.4   | `/dashboard/stats/rewatches`                                | Filter `isRewatch` + `rewatchCount`                                                                                                                                                        |
 | 5.5   | `/dashboard/stats/year/[year]`, `/dashboard/stats/year/all` | Year-filtered aggregates                                                                                                                                                                   |
-| 5.6   | `/dashboard/stats/year/share`                     | Export/share card (can be static image or link)                                                                                                                                            |
-| 5.7   | **Payload work**                        | Implement profile `statsCache` recalculation (schema exists in [`stats-cache.schema.ts`](apps/payload/src/collections/profiles/stats-cache.schema.ts) but is only cleared, never computed) |
+| 5.6   | `/dashboard/stats/year/share`                               | Export/share card (can be static image or link)                                                                                                                                            |
+| 5.7   | **Payload work**                                            | Implement profile `statsCache` recalculation (schema exists in [`stats-cache.schema.ts`](apps/payload/src/collections/profiles/stats-cache.schema.ts) but is only cleared, never computed) |
 
 **Backend:** Queryable today via `watch-events`; profile cache is optional optimization.
 
@@ -630,8 +630,8 @@ type SearchFilters = {
 
 **Goal:** Browse and find new titles without social/recommendation engine.
 
-| Order | Route                | Work                                                  |
-| ----- | -------------------- | ----------------------------------------------------- |
+| Order | Route                          | Work                                                  |
+| ----- | ------------------------------ | ----------------------------------------------------- |
 | 6.1   | `/dashboard/discover/trending` | `useQuery` on new `GET /api/tmdb/trending` BFF route  |
 | 6.2   | `/dashboard/discover/upcoming` | `useQuery` on new `GET /api/media/upcoming` BFF route |
 | 6.3   | `/dashboard/discover/for-you`  | **Blocked** — needs `recommendation-cache` collection |
@@ -644,8 +644,8 @@ Ship 6.1–6.2 after `/dashboard/search` (Phase 1a) reuses TMDB integration patt
 
 ### Phase 7 — Profile
 
-| Route      | Work                                                                             |
-| ---------- | -------------------------------------------------------------------------------- |
+| Route                | Work                                                                             |
+| -------------------- | -------------------------------------------------------------------------------- |
 | `/dashboard/profile` | `useProfile` + `useUpdateProfile` mutations; longer `staleTime` for profile data |
 
 Low urgency until social features matter.
@@ -656,11 +656,11 @@ Low urgency until social features matter.
 
 All routes **blocked** on new Payload collections per [`apps/plotline/README.md`](apps/plotline/README.md):
 
-| Route                                                 | Prerequisite                          |
-| ----------------------------------------------------- | ------------------------------------- |
-| `/dashboard/social/feed`                                        | `activity-items` collection           |
+| Route                                                                     | Prerequisite                          |
+| ------------------------------------------------------------------------- | ------------------------------------- |
+| `/dashboard/social/feed`                                                  | `activity-items` collection           |
 | `/dashboard/social/friends/activity`, `/dashboard/social/friends/reviews` | `friendships` + visibility resolution |
-| `/dashboard/social/find`                                        | User discovery API                    |
+| `/dashboard/social/find`                                                  | User discovery API                    |
 
 **Suggested Payload-first order:** `friendships` → `activity-items` → then build feed pages.
 
@@ -668,8 +668,8 @@ All routes **blocked** on new Payload collections per [`apps/plotline/README.md`
 
 ### Phase 9 — Alerts & availability (defer until backend exists)
 
-| Route                                                            | Prerequisite                                              |
-| ---------------------------------------------------------------- | --------------------------------------------------------- |
+| Route                                                                                          | Prerequisite                                              |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | `/dashboard/alerts/following`, `/dashboard/alerts/episodes`, `/dashboard/alerts/releases`      | `profile-media-follows` + notification delivery           |
 | `/dashboard/availability`, `/dashboard/availability/leaving`, `/dashboard/availability/region` | `streaming-availability` + JustWatch/Reelgood integration |
 
@@ -679,19 +679,19 @@ All routes **blocked** on new Payload collections per [`apps/plotline/README.md`
 
 ## Side-nav section summary
 
-| Section                    | Routes | Phase                    | Backend          | TanStack Query                 |
-| -------------------------- | ------ | ------------------------ | ---------------- | ------------------------------ |
-| Route namespace            | all    | 0c                       | —                | —                              |
-| Data layer (cross-cutting) | —      | 0a                       | Ready            | Setup + GET BFF routes         |
-| Dashboard                  | 3      | 2                        | Ready            | Parallel queries               |
-| Library (By Status / Type) | 8      | 1b                       | Ready            | Filtered query keys            |
-| My Watchlists              | 5      | 1c + 3                   | Ready            | useWatchlist + mutations       |
-| Challenges                 | 4      | 3                        | Ready            | Filtered watchlists query      |
-| Reviews & Ratings          | 3      | 4                        | Ready            | useReviews + mutations         |
-| Stats & Insights           | 7      | 5                        | Partial          | useInfiniteQuery for history   |
+| Section                    | Routes | Phase                              | Backend          | TanStack Query                   |
+| -------------------------- | ------ | ---------------------------------- | ---------------- | -------------------------------- |
+| Route namespace            | all    | 0c                                 | —                | —                                |
+| Data layer (cross-cutting) | —      | 0a                                 | Ready            | Setup + GET BFF routes           |
+| Dashboard                  | 3      | 2                                  | Ready            | Parallel queries                 |
+| Library (By Status / Type) | 8      | 1b                                 | Ready            | Filtered query keys              |
+| My Watchlists              | 5      | 1c + 3                             | Ready            | useWatchlist + mutations         |
+| Challenges                 | 4      | 3                                  | Ready            | Filtered watchlists query        |
+| Reviews & Ratings          | 3      | 4                                  | Ready            | useReviews + mutations           |
+| Stats & Insights           | 7      | 5                                  | Partial          | useInfiniteQuery for history     |
 | Discover                   | 6      | 1a (search + filters) + 6 (browse) | Partial / Future | useTmdbBrowse + genre list query |
-| Alerts & Availability      | 6      | 9                        | Future           | Deferred                       |
-| Social                     | 5      | 8                        | Future           | Deferred                       |
+| Alerts & Availability      | 6      | 9                                  | Future           | Deferred                         |
+| Social                     | 5      | 8                                  | Future           | Deferred                         |
 
 All route paths prefixed with `/dashboard/` except public auth/landing pages.
 

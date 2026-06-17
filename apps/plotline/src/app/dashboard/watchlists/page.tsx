@@ -20,7 +20,7 @@ export default async function WatchlistsPage() {
     await getInitialWatchlists(userId);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
+    <>
       <div className="flex flex-col gap-2">
         <Badge className="w-fit" variant="secondary">
           Library
@@ -38,6 +38,6 @@ export default async function WatchlistsPage() {
         initialData={initialWatchlists}
         initialError={initialError}
       />
-    </div>
+    </>
   );
 }

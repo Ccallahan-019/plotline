@@ -55,7 +55,7 @@ export default async function WatchlistDetailPage({
   const stats = watchlist.statsCache;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
+    <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-2">
           <Badge className="w-fit" variant="secondary">
@@ -77,7 +77,7 @@ export default async function WatchlistDetailPage({
         </div>
         <Link
           className={cn(buttonVariants({ variant: "outline" }))}
-          href="/watchlists"
+          href="/dashboard/watchlists"
         >
           Back to lists
         </Link>
@@ -98,7 +98,7 @@ export default async function WatchlistDetailPage({
           <Stat label="Remaining" value={stats?.remaining ?? 0} />
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }
 
