@@ -46,8 +46,13 @@ export function getMediaItemDisplay({
 
   const cardSubtitle = variant === "grid" ? gridSubtitle : listSubtitle;
 
+  const showMediaCondition = media.posterPath
+    ? media.posterPath.trim().length > 0
+    : false;
+
   return {
     cardSubtitle,
+    showMediaCondition,
     titleHref,
   };
 }

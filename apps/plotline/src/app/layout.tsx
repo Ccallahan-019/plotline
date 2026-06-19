@@ -1,36 +1,20 @@
 import type { Metadata } from "next";
 
 import { ClerkProvider, SignedIn } from "@clerk/nextjs";
-import { Geist, Geist_Mono, Lora, Merriweather } from "next/font/google";
-
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { Geist, IBM_Plex_Sans } from "next/font/google";
 
 import "./globals.css";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/features/navigation/header/Header";
 import { AppSidebar } from "@/features/navigation/side-nav/components/Sidebar";
 import { ThemeProvider } from "@/features/theme/providers/ThemeProvider";
 import { QueryProvider } from "@/lib/query/providers/QueryProvider";
 import { cn } from "@/lib/utils";
 
-const merriweatherHeading = Merriweather({
-  subsets: ["latin"],
-  variable: "--font-heading",
-});
+const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" });
 
-const lora = Lora({
-  subsets: ["latin"],
-  variable: "--font-serif",
-});
-
-const geistSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
+const ibmPlexSans = IBM_Plex_Sans({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   description:
@@ -51,14 +35,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html
-        className={cn(
-          "h-full antialiased",
-          geistSans.variable,
-          geistMono.variable,
-          "font-serif",
-          lora.variable,
-          merriweatherHeading.variable,
-        )}
+        className={cn("font-sans", ibmPlexSans.variable, geistHeading.variable)}
         lang="en"
         suppressHydrationWarning
       >
@@ -74,6 +51,7 @@ export default function RootLayout({
                   {children}
                 </main>
               </SidebarProvider>
+              <Toaster richColors />
             </QueryProvider>
           </ThemeProvider>
         </body>

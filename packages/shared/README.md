@@ -6,7 +6,7 @@ Shared utilities, constants, and TMDB client stubs used by both Plotline apps.
 
 | Import | Purpose |
 | --- | --- |
-| `@plotline/shared/tmdb` | TMDB v3 client + Zod schemas |
+| `@plotline/shared/tmdb` | TMDB client + Zod schemas |
 | `@plotline/shared/constants/media` | `MediaStatus`, `MediaType`, `WatchEventType`, `Visibility`, `StreamingPlatform` |
 | `@plotline/shared/constants/watchlist-challenge` | Challenge list enums (`ListStatus`, `TvCountRule`, etc.) |
 | `@plotline/shared/watchlist-stats` | Pure watchlist/challenge stats computation |
@@ -24,7 +24,7 @@ import { createTmdbClient } from "@plotline/shared/tmdb";
 import { MEDIA_STATUSES } from "@plotline/shared/constants/media";
 import { daysUntilRelease } from "@plotline/shared/utils/dates";
 
-const tmdb = createTmdbClient(process.env.TMDB_API_KEY!);
+const tmdb = createTmdbClient(process.env.TMDB_READ_ACCESS_TOKEN!);
 const results = await tmdb.searchMulti("dune");
 const days = daysUntilRelease(results.results[0]?.release_date);
 ```

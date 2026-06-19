@@ -43,8 +43,7 @@ export function computeWatchlistStats(
   let remainingRuntimeMinutes: number | undefined;
 
   if (isRuntimeGoal) {
-    goalRuntimeMinutes =
-      challenge?.goalRuntimeMinutes ?? totalEligibleUnits;
+    goalRuntimeMinutes = challenge?.goalRuntimeMinutes ?? totalEligibleUnits;
     totalEligible = goalRuntimeMinutes;
     completedRuntimeMinutes = completed;
     remainingRuntimeMinutes = Math.max(0, goalRuntimeMinutes - completed);

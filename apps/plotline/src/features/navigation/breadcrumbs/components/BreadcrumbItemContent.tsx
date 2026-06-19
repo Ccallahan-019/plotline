@@ -48,5 +48,5 @@ export function BreadcrumbItemContent({
     );
   }
 
-  return <span className="truncate text-muted-foreground">{label}</span>;
+  return <span className="truncate">{label}</span>;
 }

@@ -2,7 +2,6 @@ import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
-import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { LibraryItems } from './collections/library-items'
@@ -59,7 +58,7 @@ export default buildConfig({
     recalculateWatchlistStatsEndpoint,
   ],
   secret: process.env.PAYLOAD_SECRET || '',
-  sharp,
+
   typescript: {
     declare: false,
     outputFile: path.resolve(dirname, '../../../packages/payload-types/src/index.ts'),

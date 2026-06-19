@@ -6,6 +6,7 @@ import {
   PRIOR_COMPLETION_RULES,
   TV_COUNT_RULES,
 } from '@plotline/shared/constants/watchlist-challenge'
+import { JSONSchema4 } from 'json-schema'
 
 import { watchlistsAccess } from './access'
 import { preventSystemWatchlistDelete } from './hooks/preventSystemWatchlistDelete'
@@ -150,7 +151,7 @@ export const Watchlists: CollectionConfig = {
       },
       jsonSchema: {
         fileMatch: [WATCHLIST_STATS_CACHE_URI],
-        schema: watchlistStatsCacheSchema,
+        schema: watchlistStatsCacheSchema as JSONSchema4,
         uri: WATCHLIST_STATS_CACHE_URI,
       },
       name: 'statsCache',

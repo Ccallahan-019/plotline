@@ -8,3 +8,10 @@ export type TitleSearchItem = {
   label: string;
   result: TmdbSearchResultItem;
 };
+
+export type WatchlistComboboxItem = {
+  disabled?: boolean;
+  id: string;
+  label: string;
+  watchlistId: number;
+};

@@ -32,6 +32,7 @@ export function ThemeToggle() {
   return (
     <Tooltip>
       <TooltipTrigger
+        delay={200}
         render={
           <Button
             aria-label="Toggle dark mode"

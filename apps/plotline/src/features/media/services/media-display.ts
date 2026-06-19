@@ -119,6 +119,8 @@ export function toMediaDisplayFromTmdbResult(
       releaseDate: result.release_date,
       runtime: result.runtime,
       title,
+      tmdbId: result.id,
+      voteAverage: result.vote_average,
     };
   }
 
@@ -129,5 +131,7 @@ export function toMediaDisplayFromTmdbResult(
     posterPath: result.poster_path,
     releaseDate: result.release_date ?? result.first_air_date,
     title,
+    tmdbId: result.id,
+    voteAverage: result.vote_average,
   };
 }

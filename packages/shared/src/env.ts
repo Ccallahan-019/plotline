@@ -14,8 +14,7 @@ export function createSharedEnv(
     emptyStringAsUndefined: true,
     runtimeEnv,
     server: {
-      TMDB_API_KEY: z.string().min(1),
-      TMDB_READ_ACCESS_TOKEN: z.string().min(1).optional(),
+      TMDB_READ_ACCESS_TOKEN: z.string().min(1),
     },
   });
 }

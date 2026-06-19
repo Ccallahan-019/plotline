@@ -3,6 +3,14 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        hostname: "image.tmdb.org",
+        protocol: "https",
+      },
+    ],
+  },
   transpilePackages: ["@plotline/shared", "@plotline/payload-types"],
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {

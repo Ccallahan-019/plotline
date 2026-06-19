@@ -29,16 +29,12 @@ export function MediaListItem({
   media,
   subtitle,
 }: MediaListItemProps) {
-  const { cardSubtitle, titleHref } = getMediaItemDisplay({
+  const { cardSubtitle, showMediaCondition, titleHref } = getMediaItemDisplay({
     href,
     media,
     subtitle,
     variant: "list",
   });
-
-  const showMediaCondition = media.posterPath
-    ? media.posterPath.trim().length > 0
-    : false;
 
   return (
     <Item

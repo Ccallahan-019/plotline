@@ -3,6 +3,15 @@ import { NextResponse } from "next/server";
 
 import { handlePayloadError } from "@/lib/api/handle-payload-error";
 import { requireClerkUserId } from "@/lib/api/require-clerk-user-id";
+import { getProfileWatchRegion } from "@/lib/payload/queries/get-profile-watch-region";
+import { browseTmdb, BrowseValidationError } from "@/lib/tmdb/browse";
+import {
+  isBrowseRequestEnabled,
+  parseBrowseMode,
+  parseMediaType,
+  parseSearchFilters,
+  parseSearchSort,
+} from "@/lib/tmdb/search-filters";
 
 export async function GET(request: Request) {
   const authResult = await requireClerkUserId();
@@ -11,9 +20,9 @@ export async function GET(request: Request) {
     return authResult;
   }
 
-  const apiKey = process.env.TMDB_API_KEY;
+  const accessToken = process.env.TMDB_READ_ACCESS_TOKEN;
 
-  if (!apiKey) {
+  if (!accessToken) {
     return NextResponse.json(
       { error: "TMDB is not configured" },
       { status: 503 },
@@ -21,25 +30,45 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q")?.trim();
+  const mode = parseBrowseMode(searchParams.get("mode"));
+  const query = searchParams.get("q")?.trim() ?? "";
   const page = Number(searchParams.get("page") ?? "1");
+  const mediaType = parseMediaType(searchParams.get("mediaType"));
+  const filters = parseSearchFilters(searchParams);
+  const sort = parseSearchSort(searchParams.get("sort"));
 
-  if (!query) {
+  if (!isBrowseRequestEnabled(mode, query)) {
     return NextResponse.json(
-      { error: "Query parameter q is required" },
+      {
+        error:
+          mode === "search"
+            ? "Provide a search query of at least 2 characters"
+            : "Invalid browse request",
+      },
       { status: 400 },
     );
   }
 
   try {
-    const client = createTmdbClient(apiKey);
-    const results = await client.searchMulti(
+    const client = createTmdbClient(accessToken);
+    const watchRegion = await getProfileWatchRegion(authResult.clerkUserId);
+    const results = await browseTmdb(
+      client,
+      mode,
       query,
+      mediaType,
+      filters,
+      sort,
       Number.isNaN(page) ? 1 : page,
+      watchRegion,
     );
 
     return NextResponse.json(results);
   } catch (error) {
+    if (error instanceof BrowseValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     return handlePayloadError(error);
   }
 }

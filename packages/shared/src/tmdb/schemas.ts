@@ -89,3 +89,24 @@ const tvDetailsSchema = z.object({
 export const tmdbTvDetailsSchema = tvDetailsSchema;
 
 export type TmdbTvDetails = z.infer<typeof tmdbTvDetailsSchema>;
+
+export const tmdbGenreListSchema = z.object({
+  genres: z.array(genreSchema),
+});
+
+export type TmdbGenre = z.infer<typeof genreSchema>;
+export type TmdbGenreList = z.infer<typeof tmdbGenreListSchema>;
+
+const watchProviderSchema = z.object({
+  display_priority: z.number().optional(),
+  logo_path: z.string().nullable().optional(),
+  provider_id: z.number(),
+  provider_name: z.string(),
+});
+
+export const tmdbWatchProviderListSchema = z.object({
+  results: z.array(watchProviderSchema),
+});
+
+export type TmdbWatchProvider = z.infer<typeof watchProviderSchema>;
+export type TmdbWatchProviderList = z.infer<typeof tmdbWatchProviderListSchema>;

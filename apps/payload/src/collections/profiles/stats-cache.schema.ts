@@ -6,7 +6,7 @@ const profileStatsCacheObjectSchema: JSONSchema4 = {
   additionalProperties: false,
   properties: {
     hoursWatched: { type: 'number' },
-    lastCalculatedAt: { format: 'date-time', type: 'string' },
+    lastCalculatedAt: { type: 'string' },
     totalCompleted: { type: 'number' },
     totalPlanned: { type: 'number' },
     totalWatching: { type: 'number' },

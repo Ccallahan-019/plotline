@@ -7,6 +7,7 @@ type MediaDisplayBase = {
   runtime?: null | number;
   title: string;
   tmdbId?: number;
+  voteAverage?: number;
 };
 
 type MovieDisplay = {

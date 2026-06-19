@@ -3,15 +3,10 @@ import type {
   Review,
   WatchEvent,
   Watchlist,
+  WatchlistMembership,
 } from "@plotline/payload-types";
 import type { TmdbSearchResponse } from "@plotline/shared/tmdb";
 
-import type {
-  AddToListInput,
-  AddToListResult,
-  LogWatchInput,
-  LogWatchResult,
-} from "@/lib/payload/types/library-mutations";
 import type {
   LibraryFilters,
   ReviewFilters,
@@ -19,7 +14,23 @@ import type {
   WatchlistFilters,
 } from "@/lib/query/services/keys";
 
+import {
+  type BrowseMode,
+  DEFAULT_SEARCH_FILTERS,
+  type SearchFilters,
+  type SearchMediaType,
+  type SearchSort,
+  type TmdbGenresResponse,
+  type TmdbWatchProvidersResponse,
+} from "@/features/search/types";
 import { fetchJson } from "@/lib/api/fetch-json";
+import {
+  type AddToListInput,
+  type AddToListResult,
+  hasAddToListTmdbRef,
+  type LogWatchInput,
+  type LogWatchResult,
+} from "@/lib/payload/types/library-mutations";
 
 export function fetchLibraryItems(
   filters?: LibraryFilters,
@@ -41,12 +52,57 @@ export function fetchReviews(filters?: ReviewFilters): Promise<Review[]> {
   );
 }
 
-export function fetchTmdbSearch(
+export function fetchTmdbBrowse(
+  mode: BrowseMode,
   q: string,
+  mediaType: SearchMediaType,
+  filters: SearchFilters,
+  sort: SearchSort,
   page = 1,
 ): Promise<TmdbSearchResponse> {
   return fetchJson<TmdbSearchResponse>(
-    `/api/tmdb/search${buildSearchParams({ page, q })}`,
+    `/api/tmdb/search${buildSearchParams({
+      genreIds: filters.genreIds?.join(","),
+      mediaType,
+      mode,
+      page,
+      providerIds: filters.providerIds?.join(","),
+      q: mode === "search" ? q || undefined : undefined,
+      ratingMax: filters.ratingMax,
+      ratingMin: filters.ratingMin,
+      runtimeMax: filters.runtimeMax,
+      runtimeMin: filters.runtimeMin,
+      sort,
+      yearMax: filters.yearMax,
+      yearMin: filters.yearMin,
+    })}`,
+  );
+}
+
+export function fetchTmdbGenres(): Promise<TmdbGenresResponse> {
+  return fetchJson<TmdbGenresResponse>("/api/tmdb/genres");
+}
+
+export function fetchTmdbSearch(
+  q: string,
+  page = 1,
+  mediaType: SearchMediaType = "movie",
+): Promise<TmdbSearchResponse> {
+  return fetchTmdbBrowse(
+    "search",
+    q,
+    mediaType,
+    DEFAULT_SEARCH_FILTERS,
+    "popularity",
+    page,
+  );
+}
+
+export function fetchTmdbWatchProviders(
+  mediaType: SearchMediaType,
+): Promise<TmdbWatchProvidersResponse> {
+  return fetchJson<TmdbWatchProvidersResponse>(
+    `/api/tmdb/watch-providers${buildSearchParams({ mediaType })}`,
   );
 }
 
@@ -65,6 +121,14 @@ export function fetchWatchlist(slug: string): Promise<Watchlist> {
   return fetchJson<Watchlist>(`/api/watchlists/${encodeURIComponent(slug)}`);
 }
 
+export function fetchWatchlistMemberships(
+  libraryItemId: number,
+): Promise<WatchlistMembership[]> {
+  return fetchJson<WatchlistMembership[]>(
+    `/api/watchlist-memberships${buildSearchParams({ libraryItemId })}`,
+  );
+}
+
 export function fetchWatchlists(
   filters?: WatchlistFilters,
 ): Promise<Watchlist[]> {
@@ -81,6 +145,29 @@ export function postAddToList(input: AddToListInput): Promise<AddToListResult> {
     headers: { "Content-Type": "application/json" },
     method: "POST",
   });
+}
+
+export async function postAddToLists(
+  inputs: AddToListInput[],
+): Promise<AddToListResult[]> {
+  const usesTmdbRef = inputs.some(hasAddToListTmdbRef);
+
+  if (!usesTmdbRef) {
+    return Promise.all(inputs.map((input) => postAddToList(input)));
+  }
+
+  const results: AddToListResult[] = [];
+  let mediaId: number | string | undefined;
+
+  for (const input of inputs) {
+    const requestInput =
+      mediaId != null ? toMediaIdAddToListInput(input, mediaId) : input;
+    const result = await postAddToList(requestInput);
+    results.push(result);
+    mediaId ??= getMediaIdFromAddToListResult(result);
+  }
+
+  return results;
 }
 
 export function postLogWatch(input: LogWatchInput): Promise<LogWatchResult> {
@@ -105,4 +192,29 @@ function buildSearchParams(
   const query = params.toString();
 
   return query ? `?${query}` : "";
+}
+
+function getMediaIdFromAddToListResult(
+  result: AddToListResult,
+): number | string | undefined {
+  const media = result.libraryItem.media;
+
+  if (typeof media === "object" && media != null) {
+    return media.id;
+  }
+
+  return media;
+}
+
+function toMediaIdAddToListInput(
+  input: AddToListInput,
+  mediaId: number | string,
+): AddToListInput {
+  return {
+    mediaId,
+    note: input.note,
+    status: input.status,
+    watchlistId: input.watchlistId,
+    watchlistSlug: input.watchlistSlug,
+  };
 }

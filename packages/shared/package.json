@@ -11,6 +11,7 @@
     "./constants/watchlist-challenge": "./src/constants/watchlist-challenge.ts",
     "./watchlist-stats": "./src/watchlist-stats/index.ts",
     "./utils/dates": "./src/utils/dates.ts",
+    "./utils/formatNumber": "./src/utils/formatNumber.ts",
     "./env": "./src/env.ts"
   },
   "scripts": {

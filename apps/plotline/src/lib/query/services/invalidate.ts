@@ -8,15 +8,25 @@ export function invalidateAfterCreateWatchlist(queryClient: QueryClient) {
 
 export function invalidateAfterLibraryMutation(
   queryClient: QueryClient,
-  options?: { watchlistSlug?: string },
+  options?: { watchlistSlug?: string; watchlistSlugs?: string[] },
 ) {
   void queryClient.invalidateQueries({ queryKey: ["library-items"] });
   void queryClient.invalidateQueries({ queryKey: ["watch-events"] });
   void queryClient.invalidateQueries({ queryKey: ["watchlists"] });
+  void queryClient.invalidateQueries({ queryKey: ["watchlist-memberships"] });
 
-  if (options?.watchlistSlug) {
+  const watchlistSlugs = [
+    ...new Set(
+      [
+        ...(options?.watchlistSlugs ?? []),
+        ...(options?.watchlistSlug ? [options.watchlistSlug] : []),
+      ].filter(Boolean),
+    ),
+  ];
+
+  for (const slug of watchlistSlugs) {
     void queryClient.invalidateQueries({
-      queryKey: queryKeys.watchlist(options.watchlistSlug),
+      queryKey: queryKeys.watchlist(slug),
     });
   }
 }
