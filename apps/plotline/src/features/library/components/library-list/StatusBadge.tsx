@@ -9,8 +9,9 @@ import {
   Trash,
   TvMinimalPlay,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 
-import { Badge } from "@/components/ui/badge";
+import { MotionBadge } from "@/components/animation/MotionBadge";
 import { cn } from "@/lib/utils";
 
 export type Status = "untracked" | MediaStatus;
@@ -52,26 +53,54 @@ const STATUS_TEXT_COLORS: Record<Status, string> = {
 };
 
 type StatusBadgeProps = {
+  animationKey?: string;
   className?: string;
   status: Status;
+  triggerAnimation?: boolean;
 };
 
-export function StatusBadge({ className, status }: StatusBadgeProps) {
+export function StatusBadge({
+  animationKey,
+  className,
+  status,
+  triggerAnimation = false,
+}: StatusBadgeProps) {
   const Icon = STATUS_ICONS[status];
 
   const label = STATUS_LABELS[status];
 
+  const key = animationKey
+    ? triggerAnimation
+      ? `${animationKey}-${label}-animated`
+      : `${animationKey}-${label}`
+    : label;
+
   return (
-    <Badge
+    <MotionBadge
       className={cn(
         className,
         STATUS_BG_COLORS[status],
         STATUS_TEXT_COLORS[status],
+        triggerAnimation ? "gap-1.5" : "gap-0",
       )}
+      transition={{ duration: 0.2 }}
       variant="default"
     >
       <Icon />
-      {label}
-    </Badge>
+      <AnimatePresence initial={false} mode="sync">
+        {triggerAnimation && (
+          <motion.div
+            animate={{ width: "auto" }}
+            exit={{ width: 0 }}
+            initial={{ width: 0 }}
+            key={key}
+            style={{ overflow: "hidden" }}
+            transition={{ duration: 0.2 }}
+          >
+            {label}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </MotionBadge>
   );
 }

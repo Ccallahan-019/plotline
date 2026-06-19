@@ -11,7 +11,7 @@ import {
 import { ShowIf } from "@/components/utils/ShowIf";
 import { getPosterUrl } from "@/features/media/services/media-display";
 
-import { TitleSearchItem } from "../types";
+import { TitleSearchItem } from "../../types";
 
 export const TitleSearchComboboxItem = ({
   item,

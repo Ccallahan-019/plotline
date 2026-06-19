@@ -8,7 +8,7 @@ import { MediaListItem } from "@/features/media/components/MediaListItem";
 import {
   getMediaFromLibraryItem,
   toMediaDisplayFromLibraryItem,
-} from "../services/media-display";
+} from "../../services/media-display";
 import { LogWatchButton } from "./LogWatchButton";
 import { StatusBadge } from "./StatusBadge";
 

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/empty";
 import { LibraryFilters } from "@/lib/query/services/keys";
 
-import { getLibraryEmptyCopy } from "../constants/library-filters";
+import { getLibraryEmptyCopy } from "../../constants/library-filters";
 
 type LibraryEmptyProps = {
   filters?: LibraryFilters;

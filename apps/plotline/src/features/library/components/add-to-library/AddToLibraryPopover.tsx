@@ -63,7 +63,7 @@ export function AddToLibraryPopover({
               onClick={handleTriggerClick}
               render={
                 <Button
-                  className="bg-background/90 shadow-sm backdrop-blur-sm"
+                  className="shadow-sm backdrop-blur-sm"
                   size="icon"
                   variant="secondary"
                 />

@@ -17,7 +17,7 @@ import { InputGroupAddon } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { ShowIf } from "@/components/utils/ShowIf";
 
-import { useTitleSearch } from "../hooks/use-title-search";
+import { useTitleSearch } from "../../hooks/use-title-search";
 import { TitleSearchComboboxItem } from "./TitleSearchComboboxItem";
 
 type TitleSearchComboboxProps = {

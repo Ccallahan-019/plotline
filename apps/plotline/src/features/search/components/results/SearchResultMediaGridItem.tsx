@@ -6,7 +6,6 @@ import { AddToLibraryPopover } from "@/features/library/components/add-to-librar
 import { LibraryPosterStatusBadge } from "@/features/library/components/add-to-library/LibraryPosterStatusBadge";
 import { MediaGridItem } from "@/features/media/components/MediaGridItem";
 import { toMediaDisplayFromTmdbResult } from "@/features/media/services/media-display";
-import { useOpenState } from "@/providers/OpenStateProvider";
 
 import { useSearchLibraryItems } from "../../providers/SearchLibraryItemsProvider";
 
@@ -18,7 +17,6 @@ export function SearchResultMediaGridItem({
   item,
 }: SearchResultMediaGridItemProps) {
   const { getLibraryItemForMedia } = useSearchLibraryItems();
-  const { isOpen } = useOpenState();
 
   const media = toMediaDisplayFromTmdbResult(item);
 
@@ -30,12 +28,13 @@ export function SearchResultMediaGridItem({
 
   return (
     <MediaGridItem
-      animate={!isOpen}
       media={media}
-      posterOverlay={
-        <div className="absolute bottom-1 flex items-center justify-center gap-2 w-full">
+      posterOverlay={(isHovered) => (
+        <div className="absolute bottom-1 right-1 flex items-center justify-end gap-2 w-full">
           <LibraryPosterStatusBadge
+            animationKey={existingLibraryItem?.id?.toString() ?? ""}
             status={existingLibraryItem?.status ?? "untracked"}
+            triggerAnimation={isHovered}
           />
 
           <AddToLibraryPopover
@@ -43,7 +42,7 @@ export function SearchResultMediaGridItem({
             media={media}
           />
         </div>
-      }
+      )}
     />
   );
 }
