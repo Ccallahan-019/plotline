@@ -24,9 +24,9 @@ import { UserProfileButton } from './UserProfileButton'
 
 export function AppSidebar() {
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="pt-2 px-1">
+        <div className="pt-2 px-0.5">
           <UserProfileButton />
         </div>
       </SidebarHeader>

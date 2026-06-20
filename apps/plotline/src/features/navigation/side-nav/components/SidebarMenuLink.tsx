@@ -21,11 +21,9 @@ export function SidebarMenuLink({ href, icon, label }: SidebarMenuLinkProps) {
     <SidebarMenuButton
       isActive={isActive}
       render={
-        <Link className="w-full" href={href}>
-          <div className="flex items-center gap-2">
-            {icon && icon}
-            <span>{label}</span>
-          </div>
+        <Link href={href}>
+          {icon && icon}
+          <span className="truncate group-data-[collapsible=icon]:hidden">{label}</span>
         </Link>
       }
     />

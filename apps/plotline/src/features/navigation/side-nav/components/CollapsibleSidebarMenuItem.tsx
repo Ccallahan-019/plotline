@@ -1,8 +1,7 @@
 'use client'
 
 import { ChevronDown } from 'lucide-react'
-import { Easing, motion, useReducedMotion } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
@@ -10,8 +9,10 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubItem,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { ShowIf } from '@/components/utils/ShowIf'
+import { cn } from '@/lib/utils'
 
 import { SidebarMenuSubLink } from '../components/SidebarMenuSubLink'
 
@@ -21,88 +22,56 @@ export type CollapsibleSidebarMenuItemProps = {
   label: string
 }
 
-const listVariants = {
-  closed: {
-    transition: {
-      staggerChildren: 0.04,
-      staggerDirection: -1,
-    },
-  },
-  open: {
-    transition: {
-      delayChildren: 0.06,
-      staggerChildren: 0.04,
-    },
-  },
-}
-
-const itemVariants = {
-  closed: {
-    opacity: 0,
-    transition: { duration: 0.05, ease: 'easeIn' as Easing },
-    y: -6,
-  },
-  open: {
-    opacity: 1,
-    transition: { duration: 0.15, ease: 'easeOut' as Easing },
-    y: 0,
-  },
-}
-
 export function CollapsibleSidebarMenuItem({
   icon,
   items,
   label,
 }: CollapsibleSidebarMenuItemProps) {
   const [open, setOpen] = useState(false)
-  const shouldReduceMotion = useReducedMotion()
+
+  const { state } = useSidebar()
+  const isCollapsed = state === 'collapsed'
+
+  useEffect(() => {
+    if (isCollapsed) setOpen(false)
+  }, [isCollapsed])
 
   return (
     <Collapsible onOpenChange={setOpen} open={open}>
       <SidebarMenuItem>
         <SidebarMenuButton
           render={
-            <CollapsibleTrigger>
-              <div className="flex items-center gap-2">
-                {icon && icon}
-                <span>{label}</span>
-              </div>
-              <motion.div
-                animate={{ rotate: open ? 180 : 0 }}
-                className="ml-auto flex items-center"
-                transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-              >
-                <ChevronDown />
-              </motion.div>
+            <CollapsibleTrigger className="flex w-full items-center gap-2 overflow-hidden">
+              {icon}
+              <span className="truncate group-data-[collapsible=icon]:hidden">{label}</span>
+              <ChevronDown
+                className={cn(
+                  'ml-auto size-4 shrink-0 transition-transform duration-200',
+                  'group-data-[collapsible=icon]:hidden',
+                  open && 'rotate-180',
+                )}
+              />
             </CollapsibleTrigger>
           }
+          tooltip={label}
         />
       </SidebarMenuItem>
 
       <CollapsibleContent keepMounted>
-        <motion.div
-          animate={open ? 'open' : 'closed'}
-          initial={false}
-          transition={{
-            staggerChildren: 0.04,
-          }}
-          variants={listVariants}
-        >
-          <SidebarMenuSub>
-            {items.map((item, index) => (
-              <SidebarMenuSubItem key={`${item.label}-${item.href}-${index}`}>
-                <motion.div className="w-full flex items-center gap-2" variants={itemVariants}>
-                  <SidebarMenuSubLink href={item.href}>
-                    <span>{item.label}</span>
-                    <ShowIf condition={!!item.icon}>
-                      <div className="ml-auto">{item.icon}</div>
-                    </ShowIf>
-                  </SidebarMenuSubLink>
-                </motion.div>
-              </SidebarMenuSubItem>
-            ))}
-          </SidebarMenuSub>
-        </motion.div>
+        <SidebarMenuSub>
+          {items.map((item, index) => (
+            <SidebarMenuSubItem key={`${item.label}-${item.href}-${index}`}>
+              <div className="w-full flex items-center gap-2">
+                <SidebarMenuSubLink href={item.href}>
+                  <span>{item.label}</span>
+                  <ShowIf condition={!!item.icon}>
+                    <div className="ml-auto">{item.icon}</div>
+                  </ShowIf>
+                </SidebarMenuSubLink>
+              </div>
+            </SidebarMenuSubItem>
+          ))}
+        </SidebarMenuSub>
       </CollapsibleContent>
     </Collapsible>
   )
