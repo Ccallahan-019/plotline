@@ -20,7 +20,6 @@ import {
 } from '@/features/library/add-to-list/services/add-to-library-form'
 import { getMembershipWatchlistIds } from '@/features/library/add-to-list/services/get-membership-watchlist-ids'
 import { buildAddToListInputs } from '@/features/library/types/mutations'
-import { getErrorMessage } from '@/utils/get-error-message'
 
 const EMPTY_MEMBERSHIPS: WatchlistMembership[] = []
 
@@ -95,26 +94,46 @@ export function useAddToLibraryForm({
     )
 
     try {
-      await addToListsMutation.mutateAsync(
-        buildAddToListInputs({
-          media: resolveAddToLibraryMedia(media, existingLibraryItem),
-          note: values.note.trim() || undefined,
-          status: isInLibrary ? undefined : values.status,
-          watchlistIds: selectableWatchlistIds,
-        }),
-      )
+      await toast
+        .promise(
+          addToListsMutation.mutateAsync(
+            buildAddToListInputs({
+              media: resolveAddToLibraryMedia(media, existingLibraryItem),
+              note: values.note.trim() || undefined,
+              status: isInLibrary ? undefined : values.status,
+              watchlistIds: selectableWatchlistIds,
+            }),
+          ),
+          {
+            error: {
+              description:
+                'There was an error adding the media to your watchlists. Please try again.',
+              message: 'Error Adding Media',
+            },
+            loading: 'Adding media to your watchlists...',
+            success: (data) => {
+              const media = data[0]?.libraryItem.media
+              const title = typeof media === 'object' ? media.title : `Media #${media}`
+              const watchlistCount = selectableWatchlistIds.length
+              const watchlistName = data[0]?.watchlist.name
 
-      toast.success(
-        selectableWatchlistIds.length === 1
-          ? 'Added to watchlist'
-          : `Added to ${selectableWatchlistIds.length} watchlists`,
-      )
+              return {
+                description: `${title} has been added to ${watchlistCount === 1 ? watchlistName : 'your watchlists'} successfully.`,
+                message:
+                  watchlistCount === 1
+                    ? 'Added to Watchlist'
+                    : `Added to ${watchlistCount} Watchlists`,
+              }
+            },
+          },
+        )
+        .unwrap()
+
       resetForm()
       onSuccess?.()
-    } catch (error) {
-      toast.error(
-        getErrorMessage(error instanceof Error ? error : null) ?? 'Could not add to library',
-      )
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      // No-op - toast promise will handle the error
     }
   }, [
     addToListsMutation,
