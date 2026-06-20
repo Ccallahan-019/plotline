@@ -4,15 +4,9 @@ import { UserButton, useUser } from '@clerk/nextjs'
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { ShowIf } from '@/components/utils/ShowIf'
-import { useIsMounted } from '@/hooks/use-is-mounted'
 
 export function UserProfileButton() {
   const { isLoaded, user } = useUser()
-  const isMounted = useIsMounted()
-
-  if (!isMounted) {
-    return null
-  }
 
   if (!isLoaded) {
     return <UserProfileSkeleton />

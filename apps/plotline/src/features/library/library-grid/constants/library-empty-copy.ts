@@ -9,12 +9,12 @@ export function getLibraryEmptyCopy(filters: MediaFilters = {}): {
   if (hasActiveFilters(filters)) {
     return {
       description: 'Try adjusting your filters to see more results.',
-      title: 'No matching titles',
+      title: 'No Matching Titles',
     }
   }
 
   return {
     description: 'Search TMDB and add titles to start tracking.',
-    title: 'Your library is empty',
+    title: 'Your Library is Empty',
   }
 }

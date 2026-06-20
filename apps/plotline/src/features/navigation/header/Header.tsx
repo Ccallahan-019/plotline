@@ -1,13 +1,12 @@
 import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs'
-import Link from 'next/link'
 
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Breadcrumbs } from '@/features/navigation/breadcrumbs/components/Breadcrumbs'
 import { SidebarTrigger } from '@/features/navigation/side-nav/components/SidebarTrigger'
 import { ThemeToggle } from '@/features/theme/components/ThemeToggle'
-import { cn } from '@/lib/utils'
 
 import { HeaderContainer } from './HeaderContainer'
+import { SignUpLink } from './SignUpLink'
 
 export function Header() {
   return (
@@ -27,9 +26,7 @@ export function Header() {
               Sign in
             </Button>
           </SignInButton>
-          <Link className={cn(buttonVariants({ size: 'sm' }))} href="/sign-up">
-            Get started
-          </Link>
+          <SignUpLink />
         </SignedOut>
       </div>
     </HeaderContainer>

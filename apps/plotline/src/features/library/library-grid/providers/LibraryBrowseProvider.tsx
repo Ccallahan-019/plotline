@@ -10,10 +10,14 @@ import {
   useState,
 } from 'react'
 
-import type { LibraryItemsResponse } from '@/features/library/library-grid/types/library-items'
+import type { LibraryItemsResponse } from '@/features/library/library-grid/types'
 
 import { useLibraryGridItems } from '@/features/library/library-grid/hooks/use-library-grid-items'
-import { DEFAULT_LIBRARY_PAGE_SIZE } from '@/features/library/library-grid/types/library-items'
+import {
+  DEFAULT_LIBRARY_PAGE_SIZE,
+  DEFAULT_LIBRARY_SORT,
+  type LibrarySort,
+} from '@/features/library/library-grid/types'
 import { useFilters } from '@/features/media-grid/filters/providers/FiltersProvider'
 import { getErrorMessage } from '@/utils/get-error-message'
 
@@ -26,6 +30,8 @@ type LibraryBrowseContextValue = {
   pageSize: number
   setPage: (page: number) => void
   setPageSize: (pageSize: number) => void
+  setSort: (sort: LibrarySort) => void
+  sort: LibrarySort
   totalPages: number
   totalResults: number
 }
@@ -45,12 +51,14 @@ export function LibraryBrowseProvider({
   const { appliedFilters } = useFilters()
   const [page, setPage] = useState(initialData.page)
   const [pageSize, setPageSize] = useState(initialData.limit || DEFAULT_LIBRARY_PAGE_SIZE)
+  const [sort, setSort] = useState<LibrarySort>(DEFAULT_LIBRARY_SORT)
 
   const initialQuery = useMemo(
     () => ({
       filters: {},
       page: initialData.page,
       pageSize: initialData.limit,
+      sort: DEFAULT_LIBRARY_SORT,
     }),
     [initialData.limit, initialData.page],
   )
@@ -60,8 +68,9 @@ export function LibraryBrowseProvider({
       filters: appliedFilters,
       page,
       pageSize,
+      sort,
     }),
-    [appliedFilters, page, pageSize],
+    [appliedFilters, page, pageSize, sort],
   )
 
   const { data, error, isFetching, isLoading } = useLibraryGridItems(query, {
@@ -99,6 +108,8 @@ export function LibraryBrowseProvider({
       pageSize,
       setPage: setPageCallback,
       setPageSize: setPageSizeCallback,
+      setSort,
+      sort,
       totalPages: data?.totalPages ?? 1,
       totalResults: data?.totalDocs ?? 0,
     }),
@@ -112,6 +123,7 @@ export function LibraryBrowseProvider({
       pageSize,
       setPageCallback,
       setPageSizeCallback,
+      sort,
     ],
   )
 

@@ -4,7 +4,7 @@ import { toPayloadLibraryFilters } from '@/features/media-grid/filters/services/
 import { buildSearchParams } from '@/lib/api/build-search-params'
 import { fetchJson } from '@/lib/api/fetch-json'
 
-import type { LibraryItemsQuery, LibraryItemsResponse } from '../types/library-items'
+import type { LibraryItemsQuery, LibraryItemsResponse } from '../types'
 
 export function fetchAllLibraryItems(): Promise<LibraryItem[]> {
   return fetchLibraryItems({
@@ -23,6 +23,7 @@ export function fetchLibraryItems(query: LibraryItemsQuery = {}): Promise<Librar
         payloadFilters.onWatchlist === undefined ? undefined : String(payloadFilters.onWatchlist),
       page: query.page ?? 1,
       pageSize: query.pageSize ?? 24,
+      sort: query.sort,
       sources: payloadFilters.sources?.join(','),
       statuses: payloadFilters.statuses?.join(','),
       watchlistIds: payloadFilters.watchlistIds?.join(','),

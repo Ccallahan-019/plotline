@@ -9,4 +9,4 @@ export function MotionBadge({ ...props }: MotionBadgeProps) {
   return <MotionBadgeComponent {...props} />
 }
 
-const MotionBadgeComponent = motion(Badge)
+const MotionBadgeComponent = motion.create(Badge)

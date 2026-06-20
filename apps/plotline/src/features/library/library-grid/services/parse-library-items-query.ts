@@ -5,7 +5,9 @@ import type { MediaFilters } from '@/features/media-grid/filters/types'
 
 import { normalizeMediaFilters } from '@/features/media-grid/filters/services/normalize-filters'
 
-import type { LibraryItemsQuery } from '../types/library-items'
+import type { LibraryItemsQuery } from '../types'
+
+import { parseLibrarySort } from './resolve-library-sort'
 
 const VALID_STATUSES = new Set<MediaStatus>([
   'completed',
@@ -66,6 +68,8 @@ export function parseLibraryItemsQuery(searchParams: URLSearchParams): LibraryIt
     page: parseOptionalNumber(searchParams.get('page')) ?? 1,
 
     pageSize: parseOptionalNumber(searchParams.get('pageSize')) ?? 24,
+
+    sort: parseLibrarySort(searchParams.get('sort')),
   }
 }
 

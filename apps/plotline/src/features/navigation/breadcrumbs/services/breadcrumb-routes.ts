@@ -6,9 +6,9 @@ import {
   alertsAvailabilityItems,
   dashboardItems,
   discoverItems,
-  getStatsInsightsItems,
   reviewsAndRatingsItems,
   socialItems,
+  statsInsightsItems,
   watchlistsChallengesItems,
 } from '../../side-nav/services/sidebar-menu-items'
 
@@ -31,7 +31,7 @@ const navigationSections: NavigationSection[] = [
     sectionHref: '/dashboard/reviews',
   },
   {
-    items: getStatsInsightsItems(),
+    items: statsInsightsItems,
     section: 'Stats & Insights',
     sectionHref: '/dashboard/stats',
   },

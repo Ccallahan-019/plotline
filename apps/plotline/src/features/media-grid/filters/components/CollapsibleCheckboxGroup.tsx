@@ -14,7 +14,7 @@ import { FilterCheckbox } from './FilterCheckbox'
 type CollapsibleCheckboxGroupProps<T extends FilterCheckboxItem> = {
   fieldIdPrefix: string
   items: T[]
-  label: string
+  label?: string
   onChange: (selectedIds: Array<number | string>) => void
   selectedIds: Array<number | string>
   showAllLabel?: string
@@ -52,11 +52,14 @@ export function CollapsibleCheckboxGroup<T extends FilterCheckboxItem>({
     ))
   }
 
-  const resolvedTriggerText = showAllLabel ?? triggerText.replace('options', label.toLowerCase())
+  const resolvedTriggerText =
+    showAllLabel ?? triggerText.replace('options', label?.toLowerCase() ?? '')
 
   return (
     <Field>
-      <FieldLabel className="font-semibold mb-2">{label}</FieldLabel>
+      <ShowIf condition={!!label}>
+        <FieldLabel className="font-semibold mb-2">{label}</FieldLabel>
+      </ShowIf>
       <ShowIf condition={hasHiddenItems}>
         <Collapsible onOpenChange={setExpanded} open={expanded}>
           <FieldGroup data-slot="checkbox-group">{renderList(visibleItems)}</FieldGroup>

@@ -13,9 +13,9 @@ import {
   alertsAvailabilityItems,
   dashboardItems,
   discoverItems,
-  getStatsInsightsItems,
   reviewsAndRatingsItems,
   socialItems,
+  statsInsightsItems,
   watchlistsChallengesItems,
 } from '../services/sidebar-menu-items'
 import { SidebarLogo } from './SidebarLogo'
@@ -56,7 +56,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Stats & Insights</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu items={getStatsInsightsItems()} />
+            <SidebarMenu items={statsInsightsItems} />
           </SidebarGroupContent>
         </SidebarGroup>
 

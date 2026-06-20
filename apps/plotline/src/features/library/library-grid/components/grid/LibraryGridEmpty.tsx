@@ -14,7 +14,7 @@ export function LibraryGridEmpty({ filters }: LibraryGridEmptyProps) {
   const emptyCopy = getLibraryEmptyCopy(filters ?? {})
 
   return (
-    <Empty>
+    <Empty className="border">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <Library />

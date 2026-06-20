@@ -1,5 +1,7 @@
 'use client'
 
+import type { ReactNode } from 'react'
+
 import { ShowIf } from '@/components/utils/ShowIf'
 
 import { useFilterRegistry } from '../providers/FilterRegistryProvider'
@@ -12,11 +14,12 @@ import { NoFiltersBadge } from './NoFiltersBadge'
 import { ShowFiltersButton } from './ShowFiltersButton'
 
 type FilterBarProps = {
+  endActions?: ReactNode
   onApply?: () => void
   visible?: boolean
 }
 
-export function FilterBar({ onApply, visible = true }: FilterBarProps) {
+export function FilterBar({ endActions, onApply, visible = true }: FilterBarProps) {
   const { appliedFilters } = useFilters()
   const { context, visibleDefinitions } = useFilterRegistry()
 
@@ -47,7 +50,10 @@ export function FilterBar({ onApply, visible = true }: FilterBarProps) {
         />
       </div>
 
-      <ShowFiltersButton />
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        {endActions}
+        <ShowFiltersButton />
+      </div>
     </div>
   )
 }

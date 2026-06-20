@@ -1,3 +1,5 @@
+'use client'
+
 import { Media } from '@plotline/payload-types'
 import { Check } from 'lucide-react'
 

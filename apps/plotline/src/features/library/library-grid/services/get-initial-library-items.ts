@@ -1,5 +1,4 @@
-import type { LibraryItemsResponse } from '@/features/library/library-grid/types/library-items'
-import type { LibraryItemsQuery } from '@/features/library/library-grid/types/library-items'
+import type { LibraryItemsQuery, LibraryItemsResponse } from '@/features/library/library-grid/types'
 
 import {
   getAllLibraryItems,

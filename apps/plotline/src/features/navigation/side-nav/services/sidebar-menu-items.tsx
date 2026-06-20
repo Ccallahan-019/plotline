@@ -118,38 +118,27 @@ export const reviewsAndRatingsItems: SidebarMenuItem[] = [
   },
 ]
 
-export const getStatsInsightsItems = (): SidebarMenuItem[] => {
-  const currentYear = new Date().getFullYear()
-
-  return [
-    {
-      icon: <ChartNoAxesCombined />,
-      id: 'stats-overview',
-      items: [
-        { href: '/dashboard/stats', label: 'Summary' },
-        { href: '/dashboard/stats/history', label: 'Watch History' },
-        { href: '/dashboard/stats/by-platform', label: 'By Platform' },
-        { href: '/dashboard/stats/rewatches', label: 'Rewatches' },
-      ],
-      label: 'Overview',
-      type: 'collapsible',
-    },
-    {
-      icon: <CalendarCheck2 />,
-      id: 'year-in-review',
-      items: [
-        {
-          href: `/dashboard/stats/year/${currentYear}`,
-          label: `${currentYear}`,
-        },
-        { href: '/dashboard/stats/year/all', label: 'All Time' },
-        { href: '/dashboard/stats/year/share', label: 'Share & Export' },
-      ],
-      label: 'Year in Review',
-      type: 'collapsible',
-    },
-  ]
-}
+export const statsInsightsItems: SidebarMenuItem[] = [
+  {
+    icon: <ChartNoAxesCombined />,
+    id: 'stats-overview',
+    items: [
+      { href: '/dashboard/stats', label: 'Summary' },
+      { href: '/dashboard/stats/history', label: 'Watch History' },
+      { href: '/dashboard/stats/by-platform', label: 'By Platform' },
+      { href: '/dashboard/stats/rewatches', label: 'Rewatches' },
+    ],
+    label: 'Overview',
+    type: 'collapsible',
+  },
+  {
+    href: `/dashboard/stats/year-in-review`,
+    icon: <CalendarCheck2 />,
+    id: 'year-in-review',
+    label: 'Year in Review',
+    type: 'standard',
+  },
+]
 
 export const discoverItems: SidebarMenuItem[] = [
   {

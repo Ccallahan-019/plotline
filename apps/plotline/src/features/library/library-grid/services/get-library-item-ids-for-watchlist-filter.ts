@@ -2,6 +2,11 @@ import type { WatchlistMembership } from '@plotline/payload-types'
 
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
 
+export type WatchlistFilterIdsResult = {
+  exclude?: boolean
+  libraryItemIds: number[]
+}
+
 type WatchlistFilterInput = {
   onWatchlist?: boolean
   watchlistIds?: number[]
@@ -10,8 +15,8 @@ type WatchlistFilterInput = {
 export async function getLibraryItemIdsForWatchlistFilter(
   clerkUserId: string,
   filters: WatchlistFilterInput,
-): Promise<null | number[]> {
-  if (!filters.onWatchlist && !filters.watchlistIds?.length) {
+): Promise<null | WatchlistFilterIdsResult> {
+  if (filters.onWatchlist === undefined && !filters.watchlistIds?.length) {
     return null
   }
 
@@ -39,5 +44,8 @@ export async function getLibraryItemIdsForWatchlistFilter(
     .map((membership) => membership.libraryItem)
     .map((libraryItem) => (typeof libraryItem === 'object' ? libraryItem.id : libraryItem))
 
-  return [...new Set(libraryItemIds)]
+  return {
+    exclude: filters.onWatchlist === false,
+    libraryItemIds: [...new Set(libraryItemIds)],
+  }
 }

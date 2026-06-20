@@ -24,12 +24,7 @@ export function ShowFiltersButton() {
   }
 
   return (
-    <Button
-      className="ml-auto shrink-0 gap-2"
-      onClick={handleClick}
-      type="button"
-      variant="outline"
-    >
+    <Button className="shrink-0 gap-2" onClick={handleClick} type="button" variant="outline">
       <SlidersHorizontal data-icon="inline-start" />
       Show Filters
       <ShowIf condition={hasFilters}>

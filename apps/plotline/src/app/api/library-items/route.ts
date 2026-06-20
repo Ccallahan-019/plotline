@@ -19,6 +19,7 @@ export async function GET(request: Request) {
     const result = await getLibraryItems(authResult.clerkUserId, query.filters, {
       page: query.page,
       pageSize: query.pageSize,
+      sort: query.sort,
     })
 
     return NextResponse.json(result)

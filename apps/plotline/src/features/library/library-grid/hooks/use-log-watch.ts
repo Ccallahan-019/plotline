@@ -4,7 +4,7 @@ import type { QueryKey } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import type { LogWatchInput, LogWatchResult } from '../../types/mutations'
-import type { LibraryItemsResponse } from '../types/library-items'
+import type { LibraryItemsResponse } from '../types'
 
 import { invalidateAfterLibraryMutation } from '../../services/invalidate-library-queries'
 import { postLogWatch } from '../services/fetch-log-watch'

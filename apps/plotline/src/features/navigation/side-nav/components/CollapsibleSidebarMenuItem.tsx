@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronDown } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
@@ -9,7 +9,6 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubItem,
-  useSidebar,
 } from '@/components/ui/sidebar'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { cn } from '@/lib/utils'
@@ -28,13 +27,6 @@ export function CollapsibleSidebarMenuItem({
   label,
 }: CollapsibleSidebarMenuItemProps) {
   const [open, setOpen] = useState(false)
-
-  const { state } = useSidebar()
-  const isCollapsed = state === 'collapsed'
-
-  useEffect(() => {
-    if (isCollapsed) setOpen(false)
-  }, [isCollapsed])
 
   return (
     <Collapsible onOpenChange={setOpen} open={open}>

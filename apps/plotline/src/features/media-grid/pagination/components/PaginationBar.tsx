@@ -46,12 +46,9 @@ export function PaginationBar({
               <PaginationPreviousButton onPageChange={onPageChange} page={page} />
             </PaginationItem>
             {paginationRange.map((item, index) => (
-              <PaginationPageButton
-                currentPage={page}
-                item={item}
-                key={`pagination-${item}-${index}`}
-                onPageChange={onPageChange}
-              />
+              <PaginationItem key={`pagination-${item}-${index}`}>
+                <PaginationPageButton currentPage={page} item={item} onPageChange={onPageChange} />
+              </PaginationItem>
             ))}
             <PaginationItem>
               <PaginationNextButton
