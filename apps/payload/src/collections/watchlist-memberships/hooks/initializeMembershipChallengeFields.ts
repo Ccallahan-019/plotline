@@ -41,9 +41,7 @@ export const initializeMembershipChallengeFields: CollectionBeforeValidateHook =
   }
 
   const media =
-    typeof libraryItem.media === 'object' && libraryItem.media != null
-      ? libraryItem.media
-      : null
+    typeof libraryItem.media === 'object' && libraryItem.media != null ? libraryItem.media : null
 
   if (!media) {
     return data

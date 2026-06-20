@@ -1,13 +1,13 @@
-import { FilterBarSeparator } from "../filters/FilterBarSeparator";
-import { SearchFilterBar } from "../filters/SearchFilterBar";
-import { SearchInputGroup } from "../input/SearchInputGroup";
-import { ResultsTitle } from "../results/ResultsTitle";
-import { SearchResultGrid } from "../results/SearchResultGrid";
-import { SearchResultPagination } from "../results/SearchResultPagination";
-import { SearchSortSelector } from "../sort/SearchSortSelector";
-import { BrowseModeToggle } from "./BrowseModeToggle";
-import { IsFetchingIndicator } from "./IsFetchingIndicator";
-import { MediaTypeToggle } from "./MediaTypeToggle";
+import { SearchFilterBar } from '../filters/SearchFilterBar'
+import { SearchFilterBarSeparator } from '../filters/SearchFilterBarSeparator'
+import { ResultsTitle } from '../results/ResultsTitle'
+import { SearchResultGrid } from '../results/SearchResultGrid'
+import { BrowseModeToggle } from './BrowseModeToggle'
+import { IsFetchingIndicator } from './IsFetchingIndicator'
+import { MediaTypeToggle } from './MediaTypeToggle'
+import { SearchInputGroup } from './SearchInputGroup'
+import { SearchPagination } from './SearchPagination'
+import { SearchSortSelector } from './SearchSortSelector'
 
 export function SearchPage() {
   return (
@@ -17,13 +17,13 @@ export function SearchPage() {
           <BrowseModeToggle />
           <IsFetchingIndicator />
         </div>
+
         <MediaTypeToggle />
       </div>
 
       <SearchInputGroup />
-
       <SearchFilterBar />
-      <FilterBarSeparator />
+      <SearchFilterBarSeparator />
 
       <section className="flex flex-col gap-5 scroll-mt-6" id="search-results">
         <div className="flex items-end justify-between ">
@@ -32,8 +32,8 @@ export function SearchPage() {
         </div>
 
         <SearchResultGrid />
-        <SearchResultPagination />
+        <SearchPagination />
       </section>
     </div>
-  );
+  )
 }

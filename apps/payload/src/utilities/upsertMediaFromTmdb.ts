@@ -42,10 +42,7 @@ export async function upsertMediaFromTmdb(
     limit: 1,
     overrideAccess: true,
     where: {
-      and: [
-        { tmdbId: { equals: input.tmdbId } },
-        { mediaType: { equals: input.mediaType } },
-      ],
+      and: [{ tmdbId: { equals: input.tmdbId } }, { mediaType: { equals: input.mediaType } }],
     },
   })
 

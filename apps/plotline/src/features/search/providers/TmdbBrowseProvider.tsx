@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { TmdbSearchResponse } from "@plotline/shared/tmdb";
+import { TmdbSearchResponse } from '@plotline/shared/tmdb'
 import {
   createContext,
   PropsWithChildren,
@@ -8,83 +8,80 @@ import {
   useContext,
   useEffect,
   useState,
-} from "react";
+} from 'react'
 
-import { isBrowseRequestEnabled } from "@/lib/tmdb/search-filters";
-import { getErrorMessage } from "@/utils/get-error-message";
+import { useFilters } from '@/features/media-grid/filters/providers/FiltersProvider'
+import { isBrowseRequestEnabled } from '@/features/search/services/search-filters'
+import { getErrorMessage } from '@/utils/get-error-message'
 
-import { useTmdbBrowse as useTmdbBrowseHook } from "../hooks/use-tmdb-browse";
-import { useBrowseMode } from "./BrowseModeProvider";
-import { useMediaType } from "./MediaTypeProvider";
-import { useSearchFilters } from "./SearchFiltersProvider";
-import { useSearchSort } from "./SearchSortProvider";
+import { useTmdbBrowse as useTmdbBrowseHook } from '../hooks/use-tmdb-browse'
+import { useBrowseMode } from './BrowseModeProvider'
+import { useMediaType } from './MediaTypeProvider'
+import { useSearchSort } from './SearchSortProvider'
 
 type TmdbBrowseContextValue = {
-  errorMessage: null | string;
-  handleClearQuery: () => void;
-  isFetching: boolean;
-  isInitialLoading: boolean;
-  page: number;
-  query: string;
-  searchResults: TmdbSearchResponse | undefined;
-  setPage: (page: number) => void;
-  setQuery: (query: string) => void;
-  showPrompt: boolean;
-  totalPages: number;
-};
+  errorMessage: null | string
+  handleClearQuery: () => void
+  isFetching: boolean
+  isInitialLoading: boolean
+  page: number
+  query: string
+  searchResults: TmdbSearchResponse | undefined
+  setPage: (page: number) => void
+  setQuery: (query: string) => void
+  showPrompt: boolean
+  totalPages: number
+}
 
-const TmdbBrowseContext = createContext<null | TmdbBrowseContextValue>(null);
+const TmdbBrowseContext = createContext<null | TmdbBrowseContextValue>(null)
 
 export function TmdbBrowseProvider({ children }: PropsWithChildren) {
-  const { mode } = useBrowseMode();
-  const { mediaType } = useMediaType();
-  const { appliedFilters } = useSearchFilters();
-  const { sort } = useSearchSort();
+  const { mode } = useBrowseMode()
+  const { mediaType } = useMediaType()
+  const { appliedFilters } = useFilters()
+  const { sort } = useSearchSort()
 
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
 
-  const trimmedQuery = query.trim();
-  const showPrompt = !isBrowseRequestEnabled(mode, trimmedQuery);
-  const isDiscoverMode = mode === "discover";
+  const trimmedQuery = query.trim()
+  const showPrompt = !isBrowseRequestEnabled(mode, trimmedQuery)
+  const isDiscoverMode = mode === 'discover'
 
-  const { data, error, isFetching, isLoading } = useTmdbBrowseHook(
-    trimmedQuery,
-    {
-      filters: appliedFilters,
-      mediaType,
-      mode,
-      page,
-      sort,
-    },
-  );
+  const { data, error, isFetching, isLoading } = useTmdbBrowseHook(trimmedQuery, {
+    filters: appliedFilters,
+    mediaType,
+    mode,
+    page,
+    sort,
+  })
 
   const setPageCallback = useCallback(
     (nextPage: number) => {
       if (data && nextPage > data.total_pages) {
-        return;
+        return
       }
 
-      setPage(Math.max(1, nextPage));
+      setPage(Math.max(1, nextPage))
     },
     [data],
-  );
+  )
 
   const setQueryCallback = useCallback(
     (nextQuery: string) => {
-      setQuery(nextQuery);
-      setPage(1);
+      setQuery(nextQuery)
+      setPage(1)
     },
     [setPage],
-  );
+  )
 
   const handleClearQuery = () => {
-    setQuery("");
-  };
+    setQuery('')
+  }
 
-  const errorMessage = getErrorMessage(error);
-  const totalPages = showPrompt ? 1 : (data?.total_pages ?? 1);
-  const isInitialLoading = isLoading && !data;
+  const errorMessage = getErrorMessage(error)
+  const totalPages = showPrompt ? 1 : (data?.total_pages ?? 1)
+  const isInitialLoading = isLoading && !data
 
   const value: TmdbBrowseContextValue = {
     errorMessage,
@@ -98,25 +95,21 @@ export function TmdbBrowseProvider({ children }: PropsWithChildren) {
     setQuery: setQueryCallback,
     showPrompt,
     totalPages,
-  };
+  }
 
   useEffect(() => {
     if (isDiscoverMode) {
-      setQuery("");
+      setQuery('')
     }
-  }, [isDiscoverMode]);
+  }, [isDiscoverMode])
 
-  return (
-    <TmdbBrowseContext.Provider value={value}>
-      {children}
-    </TmdbBrowseContext.Provider>
-  );
+  return <TmdbBrowseContext.Provider value={value}>{children}</TmdbBrowseContext.Provider>
 }
 
 export function useTmdbBrowse() {
-  const context = useContext(TmdbBrowseContext);
+  const context = useContext(TmdbBrowseContext)
   if (!context) {
-    throw new Error("useTmdbBrowse must be used within a TmdbBrowseProvider");
+    throw new Error('useTmdbBrowse must be used within a TmdbBrowseProvider')
   }
-  return context;
+  return context
 }

@@ -74,10 +74,7 @@ export const WatchlistMemberships: CollectionConfig = {
   ],
   hooks: {
     afterChange: [recalculateStatsAfterMembershipChange],
-    beforeValidate: [
-      validateWatchlistLibraryItemOwnership,
-      initializeMembershipChallengeFields,
-    ],
+    beforeValidate: [validateWatchlistLibraryItemOwnership, initializeMembershipChallengeFields],
   },
   indexes: [
     {

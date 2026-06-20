@@ -1,27 +1,27 @@
-"use client";
+'use client'
 
-import { Compass, Search } from "lucide-react";
+import { Compass, Search } from 'lucide-react'
 
-import { ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ToggleGroup } from "@/components/ui/toggle-group";
+import { ToggleGroupItem } from '@/components/ui/toggle-group'
+import { ToggleGroup } from '@/components/ui/toggle-group'
 
-import type { BrowseMode } from "../../types";
+import type { BrowseMode } from '../../types'
 
-import { useBrowseMode } from "../../providers/BrowseModeProvider";
-import { useTmdbBrowse } from "../../providers/TmdbBrowseProvider";
+import { useBrowseMode } from '../../providers/BrowseModeProvider'
+import { useTmdbBrowse } from '../../providers/TmdbBrowseProvider'
 
 export function BrowseModeToggle() {
-  const { mode, setMode } = useBrowseMode();
-  const { setPage } = useTmdbBrowse();
+  const { mode, setMode } = useBrowseMode()
+  const { setPage } = useTmdbBrowse()
 
   const handleChange = (value: string[]) => {
     if (!value.length) {
-      return;
+      return
     }
 
-    setMode(value[0] as BrowseMode);
-    setPage(1);
-  };
+    setMode(value[0] as BrowseMode)
+    setPage(1)
+  }
 
   return (
     <ToggleGroup onValueChange={handleChange} value={[mode]} variant="outline">
@@ -34,5 +34,5 @@ export function BrowseModeToggle() {
         Search
       </ToggleGroupItem>
     </ToggleGroup>
-  );
+  )
 }

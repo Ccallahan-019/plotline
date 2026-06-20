@@ -16,7 +16,7 @@ todos:
     status: completed
   - id: phase-1-library
     content: "Phase 1b: /dashboard/library (+ status/type filter routes) — useLibraryItems grid, shared LibraryList client island, thin wrapper pages"
-    status: pending
+    status: completed
   - id: phase-1-watchlist-detail
     content: "Phase 1c: /dashboard/watchlists/[slug] — complete stub with useWatchlist, membership media grid, challenge progress, add/remove"
     status: pending

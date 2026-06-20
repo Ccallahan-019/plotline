@@ -6,10 +6,10 @@ export function daysUntilRelease(
   releaseDate: null | string | undefined,
   referenceDate: Date = new Date(),
 ): null | number {
-  const date = parseReleaseDate(releaseDate);
+  const date = parseReleaseDate(releaseDate)
 
   if (!date) {
-    return null;
+    return null
   }
 
   const reference = new Date(
@@ -18,55 +18,53 @@ export function daysUntilRelease(
       referenceDate.getUTCMonth(),
       referenceDate.getUTCDate(),
     ),
-  );
+  )
 
-  const diffMs = date.getTime() - reference.getTime();
+  const diffMs = date.getTime() - reference.getTime()
 
-  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
 }
 
 export function formatReleaseDateForCalendar(
   value: null | string | undefined,
-  locale = "en-US",
+  locale = 'en-US',
 ): null | string {
-  const date = parseReleaseDate(value);
+  const date = parseReleaseDate(value)
 
   if (!date) {
-    return null;
+    return null
   }
 
   return new Intl.DateTimeFormat(locale, {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-    year: "numeric",
-  }).format(date);
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+    year: 'numeric',
+  }).format(date)
 }
 
 export function getDecadeFromDate(date: Date): number {
-  return Math.floor(date.getUTCFullYear() / 10) * 10;
+  return Math.floor(date.getUTCFullYear() / 10) * 10
 }
 
-export function getDecadeFromReleaseDate(
-  value: null | string | undefined,
-): null | number {
-  const date = parseReleaseDate(value);
+export function getDecadeFromReleaseDate(value: null | string | undefined): null | number {
+  const date = parseReleaseDate(value)
 
   if (!date) {
-    return null;
+    return null
   }
 
-  return getDecadeFromDate(date);
+  return getDecadeFromDate(date)
 }
 
 export function isUpcoming(
   releaseDate: null | string | undefined,
   referenceDate: Date = new Date(),
 ): boolean {
-  const date = parseReleaseDate(releaseDate);
+  const date = parseReleaseDate(releaseDate)
 
   if (!date) {
-    return false;
+    return false
   }
 
   const reference = new Date(
@@ -75,9 +73,9 @@ export function isUpcoming(
       referenceDate.getUTCMonth(),
       referenceDate.getUTCDate(),
     ),
-  );
+  )
 
-  return date.getTime() > reference.getTime();
+  return date.getTime() > reference.getTime()
 }
 
 export function isWithinReleaseWindow(
@@ -85,25 +83,25 @@ export function isWithinReleaseWindow(
   windowDays: number,
   referenceDate: Date = new Date(),
 ): boolean {
-  const days = daysUntilRelease(releaseDate, referenceDate);
+  const days = daysUntilRelease(releaseDate, referenceDate)
 
   if (days === null) {
-    return false;
+    return false
   }
 
-  return days >= 0 && days <= windowDays;
+  return days >= 0 && days <= windowDays
 }
 
 export function parseReleaseDate(value: null | string | undefined): Date | null {
   if (!value) {
-    return null;
+    return null
   }
 
-  const date = new Date(`${value}T00:00:00.000Z`);
+  const date = new Date(`${value}T00:00:00.000Z`)
 
   if (Number.isNaN(date.getTime())) {
-    return null;
+    return null
   }
 
-  return date;
+  return date
 }

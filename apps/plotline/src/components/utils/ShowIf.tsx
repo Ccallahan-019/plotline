@@ -1,10 +1,10 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren } from 'react'
 
 type ShowIfProps = PropsWithChildren<{
-  condition: boolean;
-}>;
+  condition: boolean
+}>
 
 export function ShowIf({ children, condition }: ShowIfProps) {
-  if (!condition) return null;
-  return children;
+  if (!condition) return null
+  return children
 }

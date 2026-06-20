@@ -35,7 +35,10 @@ export default function HomePage() {
             <CardDescription>Organize planned, in-progress, and completed titles.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link className={cn(buttonVariants({ variant: 'secondary' }))} href="/dashboard/watchlists">
+            <Link
+              className={cn(buttonVariants({ variant: 'secondary' }))}
+              href="/dashboard/watchlists"
+            >
               View watchlists
             </Link>
           </CardContent>
@@ -43,7 +46,9 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <CardTitle>Log watches</CardTitle>
-            <CardDescription>Record movies and TV progress through the Payload BFF layer.</CardDescription>
+            <CardDescription>
+              Record movies and TV progress through the Payload BFF layer.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Link className={cn(buttonVariants({ variant: 'secondary' }))} href="/dashboard">
@@ -54,7 +59,9 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <CardTitle>Search TMDB</CardTitle>
-            <CardDescription>Find titles server-side and upsert them into your library.</CardDescription>
+            <CardDescription>
+              Find titles server-side and upsert them into your library.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">

@@ -1,34 +1,31 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server'
 
-import { handlePayloadError } from "@/lib/api/handle-payload-error";
-import { requireClerkUserId } from "@/lib/api/require-clerk-user-id";
-import { getWatchlistBySlug } from "@/lib/payload/queries/get-watchlists";
+import { getWatchlistBySlug } from '@/features/watchlists/services/get-watchlists'
+import { handlePayloadError } from '@/lib/api/handle-payload-error'
+import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 
 type RouteContext = {
-  params: Promise<{ slug: string }>;
-};
+  params: Promise<{ slug: string }>
+}
 
 export async function GET(_request: Request, context: RouteContext) {
-  const authResult = await requireClerkUserId();
+  const authResult = await requireClerkUserId()
 
   if (authResult instanceof NextResponse) {
-    return authResult;
+    return authResult
   }
 
-  const { slug } = await context.params;
+  const { slug } = await context.params
 
   try {
-    const watchlist = await getWatchlistBySlug(authResult.clerkUserId, slug);
+    const watchlist = await getWatchlistBySlug(authResult.clerkUserId, slug)
 
     if (!watchlist) {
-      return NextResponse.json(
-        { error: "Watchlist not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Watchlist not found' }, { status: 404 })
     }
 
-    return NextResponse.json(watchlist);
+    return NextResponse.json(watchlist)
   } catch (error) {
-    return handlePayloadError(error);
+    return handlePayloadError(error)
   }
 }

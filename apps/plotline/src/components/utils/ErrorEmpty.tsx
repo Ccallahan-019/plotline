@@ -1,10 +1,10 @@
-"use client";
+'use client'
 
-import { Info, ShieldAlert } from "lucide-react";
-import { useState } from "react";
+import { Info, ShieldAlert } from 'lucide-react'
+import { useState } from 'react'
 
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
+import { Button } from '../ui/button'
+import { Card, CardContent } from '../ui/card'
 import {
   Empty,
   EmptyContent,
@@ -12,28 +12,23 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "../ui/empty";
-import { ShowIf } from "./ShowIf";
+} from '../ui/empty'
+import { ShowIf } from './ShowIf'
 
 type ErrorEmptyProps = {
-  description: string;
-  errorMessage?: null | string;
-  title: string;
-};
+  description: string
+  errorMessage?: null | string
+  title: string
+}
 
-export const ErrorEmpty = ({
-  description,
-  errorMessage,
-  title,
-}: ErrorEmptyProps) => {
-  const [showErrorMessage, setShowErrorMessage] = useState(false);
+export const ErrorEmpty = ({ description, errorMessage, title }: ErrorEmptyProps) => {
+  const [showErrorMessage, setShowErrorMessage] = useState(false)
 
   const handleClick = () => {
-    setShowErrorMessage(!showErrorMessage);
-  };
+    setShowErrorMessage(!showErrorMessage)
+  }
 
-  const showErrorMessageContent =
-    !!errorMessage && process.env.NODE_ENV === "development";
+  const showErrorMessageContent = !!errorMessage && process.env.NODE_ENV === 'development'
 
   return (
     <Card className="max-w-3xl w-full mx-auto">
@@ -54,9 +49,7 @@ export const ErrorEmpty = ({
                   </Button>
 
                   <ShowIf condition={showErrorMessage}>
-                    <p className="text-muted-foreground text-sm">
-                      {errorMessage}
-                    </p>
+                    <p className="text-muted-foreground text-sm">{errorMessage}</p>
                   </ShowIf>
                 </div>
               </EmptyContent>
@@ -65,5 +58,5 @@ export const ErrorEmpty = ({
         </Empty>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

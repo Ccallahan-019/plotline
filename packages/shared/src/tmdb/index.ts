@@ -1,4 +1,4 @@
-export { createTmdbClient, TmdbClient, TmdbError } from "./client";
+export { createTmdbClient, TmdbClient, TmdbError } from './client'
 export {
   type TmdbGenre,
   type TmdbGenreList,
@@ -13,4 +13,4 @@ export {
   type TmdbWatchProvider,
   type TmdbWatchProviderList,
   tmdbWatchProviderListSchema,
-} from "./schemas";
+} from './schemas'

@@ -1,53 +1,28 @@
-import type { MediaStatus, MediaType } from "@plotline/shared/constants/media";
+import { NextResponse } from 'next/server'
 
-import { NextResponse } from "next/server";
-
-import { handlePayloadError } from "@/lib/api/handle-payload-error";
-import { requireClerkUserId } from "@/lib/api/require-clerk-user-id";
-import { getLibraryItems } from "@/lib/payload/queries/get-library-items";
-
-const VALID_STATUSES = new Set<MediaStatus>([
-  "completed",
-  "dropped",
-  "on_hold",
-  "planned",
-  "watching",
-]);
-const VALID_MEDIA_TYPES = new Set<MediaType>(["movie", "tv"]);
+import { getLibraryItems } from '@/features/library/library-grid/services/get-library-items'
+import { parseLibraryItemsQuery } from '@/features/library/library-grid/services/parse-library-items-query'
+import { handlePayloadError } from '@/lib/api/handle-payload-error'
+import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 
 export async function GET(request: Request) {
-  const authResult = await requireClerkUserId();
+  const authResult = await requireClerkUserId()
 
   if (authResult instanceof NextResponse) {
-    return authResult;
+    return authResult
   }
 
-  const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status");
-  const mediaType = searchParams.get("mediaType");
-
-  if (status && !VALID_STATUSES.has(status as MediaStatus)) {
-    return NextResponse.json(
-      { error: "Invalid status filter" },
-      { status: 400 },
-    );
-  }
-
-  if (mediaType && !VALID_MEDIA_TYPES.has(mediaType as MediaType)) {
-    return NextResponse.json(
-      { error: "Invalid mediaType filter" },
-      { status: 400 },
-    );
-  }
+  const { searchParams } = new URL(request.url)
+  const query = parseLibraryItemsQuery(searchParams)
 
   try {
-    const items = await getLibraryItems(authResult.clerkUserId, {
-      mediaType: mediaType as MediaType | undefined,
-      status: status as MediaStatus | undefined,
-    });
+    const result = await getLibraryItems(authResult.clerkUserId, query.filters, {
+      page: query.page,
+      pageSize: query.pageSize,
+    })
 
-    return NextResponse.json(items);
+    return NextResponse.json(result)
   } catch (error) {
-    return handlePayloadError(error);
+    return handlePayloadError(error)
   }
 }

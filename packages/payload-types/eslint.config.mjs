@@ -1,4 +1,4 @@
-import { config } from "@plotline/eslint-config/base";
+import { config } from '@plotline/eslint-config/base'
 
 /** @type {import("eslint").Linter.Config[]} */
-export default [...config];
+export default [...config]

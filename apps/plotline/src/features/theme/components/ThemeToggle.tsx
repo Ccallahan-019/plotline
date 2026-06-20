@@ -1,32 +1,28 @@
-"use client";
+'use client'
 
-import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Moon, Sun } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useIsMounted } from "@/hooks/use-is-mounted";
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useIsMounted } from '@/hooks/use-is-mounted'
 
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const isMounted = useIsMounted();
+  const { resolvedTheme, setTheme } = useTheme()
+  const isMounted = useIsMounted()
 
-  const isDark = resolvedTheme === "dark";
+  const isDark = resolvedTheme === 'dark'
 
-  const icon = isDark ? <Moon /> : <Sun />;
+  const icon = isDark ? <Moon /> : <Sun />
 
   const handleToggle = () => {
-    setTheme(isDark ? "light" : "dark");
-  };
+    setTheme(isDark ? 'light' : 'dark')
+  }
 
-  const tooltipContent = isDark ? "Light Mode" : "Dark Mode";
+  const tooltipContent = isDark ? 'Light Mode' : 'Dark Mode'
 
   if (!isMounted) {
-    return null;
+    return null
   }
 
   return (
@@ -48,5 +44,5 @@ export function ThemeToggle() {
         <p>{tooltipContent}</p>
       </TooltipContent>
     </Tooltip>
-  );
+  )
 }

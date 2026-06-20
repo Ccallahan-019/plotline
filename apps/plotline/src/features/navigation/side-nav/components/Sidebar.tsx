@@ -7,21 +7,20 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar'
 
 import {
   alertsAvailabilityItems,
-  byStatusByTypeItems,
   dashboardItems,
   discoverItems,
   getStatsInsightsItems,
   reviewsAndRatingsItems,
   socialItems,
   watchlistsChallengesItems,
-} from "../services/sidebar-menu-items";
-import { SidebarLogo } from "./SidebarLogo";
-import { SidebarMenu } from "./SidebarMenu";
-import { UserProfileButton } from "./UserProfileButton";
+} from '../services/sidebar-menu-items'
+import { SidebarLogo } from './SidebarLogo'
+import { SidebarMenu } from './SidebarMenu'
+import { UserProfileButton } from './UserProfileButton'
 
 export function AppSidebar() {
   return (
@@ -37,13 +36,6 @@ export function AppSidebar() {
           <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu items={dashboardItems} />
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Library</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu items={byStatusByTypeItems} />
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -97,5 +89,5 @@ export function AppSidebar() {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  );
+  )
 }

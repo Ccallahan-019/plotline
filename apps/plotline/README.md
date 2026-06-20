@@ -88,7 +88,7 @@ Query client defaults: `staleTime` 30s, `gcTime` 5m, retry once on 5xx.
 | `GET /api/watchlists`           | GET    | List watchlists (`filter` query)                   |
 | `GET /api/watchlists/[slug]`    | GET    | Single watchlist by slug                           |
 | `GET /api/watch-events`         | GET    | Watch history (`limit`, `sort`)                    |
-| `GET /api/reviews`                | GET    | User reviews (`hasBody` filter)                    |
+| `GET /api/reviews`              | GET    | User reviews (`hasBody` filter)                    |
 | `POST /api/library/add-to-list` | POST   | Add media to library + watchlist                   |
 | `POST /api/library/log-watch`   | POST   | Log a watch event                                  |
 | `GET /api/tmdb/search?q=`       | GET    | TMDB search                                        |

@@ -1,15 +1,15 @@
-import { z } from "zod";
+import { z } from 'zod'
 
 const genreSchema = z.object({
   id: z.number(),
   name: z.string(),
-});
+})
 
 const searchResultItemSchema = z.object({
   backdrop_path: z.string().nullable().optional(),
   first_air_date: z.string().optional(),
   id: z.number(),
-  media_type: z.enum(["movie", "tv"]).optional(),
+  media_type: z.enum(['movie', 'tv']).optional(),
   name: z.string().optional(),
   number_of_episodes: z.number().optional(),
   original_name: z.string().optional(),
@@ -21,17 +21,17 @@ const searchResultItemSchema = z.object({
   runtime: z.number().optional(),
   title: z.string().optional(),
   vote_average: z.number().optional(),
-});
+})
 
 export const tmdbSearchResponseSchema = z.object({
   page: z.number(),
   results: z.array(searchResultItemSchema),
   total_pages: z.number(),
   total_results: z.number(),
-});
+})
 
-export type TmdbSearchResponse = z.infer<typeof tmdbSearchResponseSchema>;
-export type TmdbSearchResultItem = z.infer<typeof searchResultItemSchema>;
+export type TmdbSearchResponse = z.infer<typeof tmdbSearchResponseSchema>
+export type TmdbSearchResultItem = z.infer<typeof searchResultItemSchema>
 
 const movieDetailsSchema = z.object({
   backdrop_path: z.string().nullable().optional(),
@@ -48,11 +48,11 @@ const movieDetailsSchema = z.object({
   tagline: z.string().nullable().optional(),
   title: z.string(),
   vote_average: z.number().optional(),
-});
+})
 
-export const tmdbMovieDetailsSchema = movieDetailsSchema;
+export const tmdbMovieDetailsSchema = movieDetailsSchema
 
-export type TmdbMovieDetails = z.infer<typeof tmdbMovieDetailsSchema>;
+export type TmdbMovieDetails = z.infer<typeof tmdbMovieDetailsSchema>
 
 const tvDetailsSchema = z.object({
   backdrop_path: z.string().nullable().optional(),
@@ -84,29 +84,29 @@ const tvDetailsSchema = z.object({
   poster_path: z.string().nullable().optional(),
   status: z.string().optional(),
   vote_average: z.number().optional(),
-});
+})
 
-export const tmdbTvDetailsSchema = tvDetailsSchema;
+export const tmdbTvDetailsSchema = tvDetailsSchema
 
-export type TmdbTvDetails = z.infer<typeof tmdbTvDetailsSchema>;
+export type TmdbTvDetails = z.infer<typeof tmdbTvDetailsSchema>
 
 export const tmdbGenreListSchema = z.object({
   genres: z.array(genreSchema),
-});
+})
 
-export type TmdbGenre = z.infer<typeof genreSchema>;
-export type TmdbGenreList = z.infer<typeof tmdbGenreListSchema>;
+export type TmdbGenre = z.infer<typeof genreSchema>
+export type TmdbGenreList = z.infer<typeof tmdbGenreListSchema>
 
 const watchProviderSchema = z.object({
   display_priority: z.number().optional(),
   logo_path: z.string().nullable().optional(),
   provider_id: z.number(),
   provider_name: z.string(),
-});
+})
 
 export const tmdbWatchProviderListSchema = z.object({
   results: z.array(watchProviderSchema),
-});
+})
 
-export type TmdbWatchProvider = z.infer<typeof watchProviderSchema>;
-export type TmdbWatchProviderList = z.infer<typeof tmdbWatchProviderListSchema>;
+export type TmdbWatchProvider = z.infer<typeof watchProviderSchema>
+export type TmdbWatchProviderList = z.infer<typeof tmdbWatchProviderListSchema>

@@ -1,9 +1,6 @@
 import { APIError, type CollectionBeforeValidateHook } from 'payload'
 
-export const validateWatchlistChallenge: CollectionBeforeValidateHook = ({
-  data,
-  originalDoc,
-}) => {
+export const validateWatchlistChallenge: CollectionBeforeValidateHook = ({ data, originalDoc }) => {
   const challenge = data?.challenge ?? originalDoc?.challenge
   const enabled = challenge?.enabled === true
 

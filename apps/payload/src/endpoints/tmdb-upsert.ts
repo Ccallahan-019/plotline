@@ -1,6 +1,9 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 
-import { upsertMediaFromTmdb, type UpsertMediaFromTmdbInput } from '../utilities/upsertMediaFromTmdb'
+import {
+  upsertMediaFromTmdb,
+  type UpsertMediaFromTmdbInput,
+} from '../utilities/upsertMediaFromTmdb'
 import { parseJsonBody, requireServiceAuth } from './helpers'
 
 export const tmdbUpsertEndpoint: Endpoint = {
@@ -18,10 +21,7 @@ export const tmdbUpsertEndpoint: Endpoint = {
     }
 
     if (!body.tmdbId || !body.mediaType || !body.title) {
-      return Response.json(
-        { error: 'tmdbId, mediaType, and title are required' },
-        { status: 400 },
-      )
+      return Response.json({ error: 'tmdbId, mediaType, and title are required' }, { status: 400 })
     }
 
     const doc = await upsertMediaFromTmdb(req, body)

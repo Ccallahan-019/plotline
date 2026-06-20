@@ -1,18 +1,18 @@
-"use client";
+'use client'
 
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
-import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/components/ui/sidebar";
+import { Button } from '@/components/ui/button'
+import { useSidebar } from '@/components/ui/sidebar'
 
 export function SidebarTrigger() {
-  const { open, toggleSidebar } = useSidebar();
+  const { open, toggleSidebar } = useSidebar()
 
-  const Icon = open ? PanelLeftClose : PanelLeftOpen;
+  const Icon = open ? PanelLeftClose : PanelLeftOpen
 
   return (
     <Button onClick={toggleSidebar} size="icon-sm" variant="secondary">
       <Icon />
     </Button>
-  );
+  )
 }

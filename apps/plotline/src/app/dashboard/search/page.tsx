@@ -1,55 +1,50 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 
-import { getInitialLibraryItems } from "@/features/library/services/get-initial-library-items";
-import { SearchPage } from "@/features/search/components/page/SearchPage";
-import { BrowseModeProvider } from "@/features/search/providers/BrowseModeProvider";
-import { FilterErrorsProvider } from "@/features/search/providers/FilterErrorsProvider";
-import { MediaTypeProvider } from "@/features/search/providers/MediaTypeProvider";
-import { SearchFiltersProvider } from "@/features/search/providers/SearchFiltersProvider";
-import { SearchLibraryItemsProvider } from "@/features/search/providers/SearchLibraryItemsProvider";
-import { SearchSortProvider } from "@/features/search/providers/SearchSortProvider";
-import { TmdbBrowseProvider } from "@/features/search/providers/TmdbBrowseProvider";
-import { TmdbGenresProvider } from "@/features/search/providers/TmdbGenresProvider";
-import { TmdbWatchProvidersProvider } from "@/features/search/providers/TmdbWatchProvidersProvider";
-import { OpenStateProvider } from "@/providers/OpenStateProvider";
+import { getInitialLibraryItemsLookup } from '@/features/library/library-grid/services/get-initial-library-items'
+import { SearchPage } from '@/features/search/components/page/SearchPage'
+import { BrowseModeProvider } from '@/features/search/providers/BrowseModeProvider'
+import { MediaTypeProvider } from '@/features/search/providers/MediaTypeProvider'
+import { SearchFilterRegistryProvider } from '@/features/search/providers/SearchFilterRegistryProvider'
+import { SearchFiltersRootProvider } from '@/features/search/providers/SearchFiltersRootProvider'
+import { SearchLibraryItemsProvider } from '@/features/search/providers/SearchLibraryItemsProvider'
+import { SearchSortProvider } from '@/features/search/providers/SearchSortProvider'
+import { TmdbBrowseProvider } from '@/features/search/providers/TmdbBrowseProvider'
+import { TmdbGenresProvider } from '@/features/search/providers/TmdbGenresProvider'
+import { TmdbWatchProvidersProvider } from '@/features/search/providers/TmdbWatchProvidersProvider'
 
 export const metadata = {
-  title: "Search TMDB",
-};
+  title: 'Search TMDB',
+}
 
 export default async function DashboardSearchPage() {
-  const { userId } = await auth();
+  const { userId } = await auth()
 
   if (!userId) {
-    redirect("/sign-in");
+    redirect('/sign-in')
   }
 
-  const { initialLibraryItems } = await getInitialLibraryItems(userId);
+  const { initialLibraryItems } = await getInitialLibraryItemsLookup(userId)
 
   return (
-    <OpenStateProvider>
+    <SearchFiltersRootProvider>
       <BrowseModeProvider>
-        <FilterErrorsProvider>
-          <MediaTypeProvider>
-            <SearchFiltersProvider>
-              <SearchSortProvider>
-                <TmdbBrowseProvider>
-                  <TmdbGenresProvider>
-                    <TmdbWatchProvidersProvider>
-                      <SearchLibraryItemsProvider
-                        initialData={initialLibraryItems}
-                      >
-                        <SearchPage />
-                      </SearchLibraryItemsProvider>
-                    </TmdbWatchProvidersProvider>
-                  </TmdbGenresProvider>
-                </TmdbBrowseProvider>
-              </SearchSortProvider>
-            </SearchFiltersProvider>
-          </MediaTypeProvider>
-        </FilterErrorsProvider>
+        <MediaTypeProvider>
+          <SearchSortProvider>
+            <TmdbBrowseProvider>
+              <TmdbGenresProvider>
+                <TmdbWatchProvidersProvider>
+                  <SearchFilterRegistryProvider>
+                    <SearchLibraryItemsProvider initialData={initialLibraryItems}>
+                      <SearchPage />
+                    </SearchLibraryItemsProvider>
+                  </SearchFilterRegistryProvider>
+                </TmdbWatchProvidersProvider>
+              </TmdbGenresProvider>
+            </TmdbBrowseProvider>
+          </SearchSortProvider>
+        </MediaTypeProvider>
       </BrowseModeProvider>
-    </OpenStateProvider>
-  );
+    </SearchFiltersRootProvider>
+  )
 }

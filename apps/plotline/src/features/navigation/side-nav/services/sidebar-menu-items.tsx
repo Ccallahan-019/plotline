@@ -2,13 +2,12 @@ import {
   Bell,
   CalendarCheck2,
   ChartNoAxesCombined,
-  ClipboardClock,
   ClockFading,
   Compass,
   Globe,
   LayoutDashboard,
+  Library,
   ListChecks,
-  MonitorCog,
   MonitorPlay,
   Plus,
   Sparkles,
@@ -18,236 +17,216 @@ import {
   Swords,
   Users,
   UserStar,
-} from "lucide-react";
+} from 'lucide-react'
 
-import type { SidebarMenuItem } from "../types";
+import type { SidebarMenuItem } from '../types'
 
 export const dashboardItems: SidebarMenuItem[] = [
   {
-    href: "/dashboard",
+    href: '/dashboard',
     icon: <LayoutDashboard />,
-    id: "dashboard",
-    label: "Overview",
-    type: "standard",
+    id: 'dashboard',
+    label: 'Overview',
+    type: 'standard',
   },
   {
-    href: "/dashboard/continue-watching",
+    href: '/dashboard/continue-watching',
     icon: <StepForward />,
-    id: "dashboard-continue-watching",
-    label: "Continue Watching",
-    type: "standard",
+    id: 'dashboard-continue-watching',
+    label: 'Continue Watching',
+    type: 'standard',
   },
   {
-    href: "/dashboard/recent-activity",
+    href: '/dashboard/recent-activity',
     icon: <ClockFading />,
-    id: "dashboard-recent-activity",
-    label: "Recent Activity",
-    type: "standard",
-  },
-];
-
-export const byStatusByTypeItems: SidebarMenuItem[] = [
-  {
-    icon: <ClipboardClock />,
-    id: "by-status",
-    items: [
-      { href: "/dashboard/library", label: "All Titles" },
-      { href: "/dashboard/library/planned", label: "Planned" },
-      { href: "/dashboard/library/watching", label: "Currently Watching" },
-      { href: "/dashboard/library/completed", label: "Completed" },
-      { href: "/dashboard/library/on-hold", label: "On Hold" },
-      { href: "/dashboard/library/dropped", label: "Dropped" },
-    ],
-    label: "By Status",
-    type: "collapsible",
+    id: 'dashboard-recent-activity',
+    label: 'Recent Activity',
+    type: 'standard',
   },
   {
-    icon: <MonitorCog />,
-    id: "by-type",
-    items: [
-      { href: "/dashboard/library/movies", label: "Movies" },
-      { href: "/dashboard/library/tv", label: "TV Shows" },
-    ],
-    label: "By Type",
-    type: "collapsible",
+    href: '/dashboard/library',
+    icon: <Library />,
+    id: 'dashboard-library',
+    label: 'Library',
+    type: 'standard',
   },
-];
+]
 
 export const watchlistsChallengesItems: SidebarMenuItem[] = [
   {
     icon: <ListChecks />,
-    id: "watchlists",
+    id: 'watchlists',
     items: [
-      { href: "/dashboard/watchlists", label: "All Watchlists" },
-      { href: "/dashboard/watchlists/watchlist", label: "Watchlist" },
+      { href: '/dashboard/watchlists', label: 'All Watchlists' },
+      { href: '/dashboard/watchlists/watchlist', label: 'Watchlist' },
       {
-        href: "/dashboard/watchlists/currently-watching",
-        label: "Currently Watching",
+        href: '/dashboard/watchlists/currently-watching',
+        label: 'Currently Watching',
       },
-      { href: "/dashboard/watchlists/custom", label: "Custom Lists" },
+      { href: '/dashboard/watchlists/custom', label: 'Custom Lists' },
       {
-        href: "/dashboard/watchlists/new",
+        href: '/dashboard/watchlists/new',
         icon: <Plus size={14} stroke="currentColor" />,
-        label: "Create New",
+        label: 'Create New',
       },
     ],
-    label: "My Watchlists",
-    type: "collapsible",
+    label: 'My Watchlists',
+    type: 'collapsible',
   },
   {
     icon: <Swords />,
-    id: "challenges",
+    id: 'challenges',
     items: [
-      { href: "/dashboard/challenges/active", label: "Active Challenges" },
+      { href: '/dashboard/challenges/active', label: 'Active Challenges' },
       {
-        href: "/dashboard/challenges/completed",
-        label: "Completed Challenges",
+        href: '/dashboard/challenges/completed',
+        label: 'Completed Challenges',
       },
-      { href: "/dashboard/challenges/overdue", label: "Overdue" },
+      { href: '/dashboard/challenges/overdue', label: 'Overdue' },
       {
-        href: "/dashboard/challenges/new",
+        href: '/dashboard/challenges/new',
         icon: <Plus size={14} stroke="currentColor" />,
-        label: "Create New",
+        label: 'Create New',
       },
     ],
-    label: "Challenges",
-    type: "collapsible",
+    label: 'Challenges',
+    type: 'collapsible',
   },
-];
+]
 
 export const reviewsAndRatingsItems: SidebarMenuItem[] = [
   {
-    href: "/dashboard/reviews",
+    href: '/dashboard/reviews',
     icon: <UserStar />,
-    id: "reviews",
-    label: "All Reviews",
-    type: "standard",
+    id: 'reviews',
+    label: 'All Reviews',
+    type: 'standard',
   },
   {
-    href: "/dashboard/reviews/rated",
+    href: '/dashboard/reviews/rated',
     icon: <StarHalf />,
-    id: "reviews-rated",
-    label: "Rating Only",
-    type: "standard",
+    id: 'reviews-rated',
+    label: 'Rating Only',
+    type: 'standard',
   },
   {
-    href: "/dashboard/reviews/written",
+    href: '/dashboard/reviews/written',
     icon: <SquareChartGantt />,
-    id: "reviews-written",
-    label: "Written Reviews",
-    type: "standard",
+    id: 'reviews-written',
+    label: 'Written Reviews',
+    type: 'standard',
   },
-];
+]
 
 export const getStatsInsightsItems = (): SidebarMenuItem[] => {
-  const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear()
 
   return [
     {
       icon: <ChartNoAxesCombined />,
-      id: "stats-overview",
+      id: 'stats-overview',
       items: [
-        { href: "/dashboard/stats", label: "Summary" },
-        { href: "/dashboard/stats/history", label: "Watch History" },
-        { href: "/dashboard/stats/by-platform", label: "By Platform" },
-        { href: "/dashboard/stats/rewatches", label: "Rewatches" },
+        { href: '/dashboard/stats', label: 'Summary' },
+        { href: '/dashboard/stats/history', label: 'Watch History' },
+        { href: '/dashboard/stats/by-platform', label: 'By Platform' },
+        { href: '/dashboard/stats/rewatches', label: 'Rewatches' },
       ],
-      label: "Overview",
-      type: "collapsible",
+      label: 'Overview',
+      type: 'collapsible',
     },
     {
       icon: <CalendarCheck2 />,
-      id: "year-in-review",
+      id: 'year-in-review',
       items: [
         {
           href: `/dashboard/stats/year/${currentYear}`,
           label: `${currentYear}`,
         },
-        { href: "/dashboard/stats/year/all", label: "All Time" },
-        { href: "/dashboard/stats/year/share", label: "Share & Export" },
+        { href: '/dashboard/stats/year/all', label: 'All Time' },
+        { href: '/dashboard/stats/year/share', label: 'Share & Export' },
       ],
-      label: "Year in Review",
-      type: "collapsible",
+      label: 'Year in Review',
+      type: 'collapsible',
     },
-  ];
-};
+  ]
+}
 
 export const discoverItems: SidebarMenuItem[] = [
   {
     icon: <Sparkles />,
-    id: "recommendations",
+    id: 'recommendations',
     items: [
-      { href: "/dashboard/discover/for-you", label: "For You" },
-      { href: "/dashboard/discover/similar", label: "Because You Watched…" },
-      { href: "/dashboard/discover/friends", label: "From Friends" },
+      { href: '/dashboard/discover/for-you', label: 'For You' },
+      { href: '/dashboard/discover/similar', label: 'Because You Watched…' },
+      { href: '/dashboard/discover/friends', label: 'From Friends' },
     ],
-    label: "Recommendations",
-    type: "collapsible",
+    label: 'Recommendations',
+    type: 'collapsible',
   },
   {
     icon: <Globe />,
-    id: "browse",
+    id: 'browse',
     items: [
-      { href: "/dashboard/search", label: "Search TMDB" },
-      { href: "/dashboard/discover/upcoming", label: "Upcoming Releases" },
-      { href: "/dashboard/discover/trending", label: "Popular This Week" },
+      { href: '/dashboard/search', label: 'Search TMDB' },
+      { href: '/dashboard/discover/upcoming', label: 'Upcoming Releases' },
+      { href: '/dashboard/discover/trending', label: 'Popular This Week' },
     ],
-    label: "Browse",
-    type: "collapsible",
+    label: 'Browse',
+    type: 'collapsible',
   },
-];
+]
 
 export const alertsAvailabilityItems: SidebarMenuItem[] = [
   {
     icon: <Bell />,
-    id: "release-alerts",
+    id: 'release-alerts',
     items: [
-      { href: "/dashboard/alerts/following", label: "Following" },
-      { href: "/dashboard/alerts/episodes", label: "New Episodes" },
-      { href: "/dashboard/alerts/releases", label: "New Seasons & Releases" },
+      { href: '/dashboard/alerts/following', label: 'Following' },
+      { href: '/dashboard/alerts/episodes', label: 'New Episodes' },
+      { href: '/dashboard/alerts/releases', label: 'New Seasons & Releases' },
     ],
-    label: "Release Alerts",
-    type: "collapsible",
+    label: 'Release Alerts',
+    type: 'collapsible',
   },
   {
     icon: <MonitorPlay />,
-    id: "where-to-watch",
+    id: 'where-to-watch',
     items: [
-      { href: "/dashboard/availability", label: "Available Now" },
-      { href: "/dashboard/availability/leaving", label: "Leaving Soon" },
-      { href: "/dashboard/availability/region", label: "In My Region" },
+      { href: '/dashboard/availability', label: 'Available Now' },
+      { href: '/dashboard/availability/leaving', label: 'Leaving Soon' },
+      { href: '/dashboard/availability/region', label: 'In My Region' },
     ],
-    label: "Where to Watch",
-    type: "collapsible",
+    label: 'Where to Watch',
+    type: 'collapsible',
   },
-];
+]
 
 export const socialItems: SidebarMenuItem[] = [
   {
     icon: <Users />,
-    id: "social-feed",
+    id: 'social-feed',
     items: [
-      { href: "/dashboard/social/feed", label: "Activity Feed" },
+      { href: '/dashboard/social/feed', label: 'Activity Feed' },
       {
-        href: "/dashboard/social/friends/activity",
+        href: '/dashboard/social/friends/activity',
         label: "Friends' Watches",
       },
       {
-        href: "/dashboard/social/friends/reviews",
+        href: '/dashboard/social/friends/reviews',
         label: "Friends' Reviews",
       },
     ],
-    label: "Feed",
-    type: "collapsible",
+    label: 'Feed',
+    type: 'collapsible',
   },
   {
     icon: <Compass />,
-    id: "social-profile",
+    id: 'social-profile',
     items: [
-      { href: "/dashboard/profile", label: "My Public Profile" },
-      { href: "/dashboard/social/find", label: "Find Friends" },
+      { href: '/dashboard/profile', label: 'My Public Profile' },
+      { href: '/dashboard/social/find', label: 'Find Friends' },
     ],
-    label: "Connect",
-    type: "collapsible",
+    label: 'Connect',
+    type: 'collapsible',
   },
-];
+]

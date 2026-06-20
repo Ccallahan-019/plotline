@@ -1,12 +1,6 @@
-import { ListChecks } from "lucide-react";
+import { ListChecks } from 'lucide-react'
 
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 
 export function WatchlistsEmpty() {
   return (
@@ -17,10 +11,9 @@ export function WatchlistsEmpty() {
         </EmptyMedia>
         <EmptyTitle>No watchlists yet</EmptyTitle>
         <EmptyDescription>
-          Profiles and default watchlists are created when Clerk webhooks sync
-          to Payload.
+          Profiles and default watchlists are created when Clerk webhooks sync to Payload.
         </EmptyDescription>
       </EmptyHeader>
     </Empty>
-  );
+  )
 }

@@ -1,48 +1,48 @@
-"use client";
+'use client'
 
-import { TmdbSearchResultItem } from "@plotline/shared/tmdb";
+import { TmdbSearchResultItem } from '@plotline/shared/tmdb'
+import { Fragment } from 'react/jsx-runtime'
 
-import { AddToLibraryPopover } from "@/features/library/components/add-to-library/AddToLibraryPopover";
-import { LibraryPosterStatusBadge } from "@/features/library/components/add-to-library/LibraryPosterStatusBadge";
-import { MediaGridItem } from "@/features/media/components/MediaGridItem";
-import { toMediaDisplayFromTmdbResult } from "@/features/media/services/media-display";
+import { StatusBadge } from '@/components/utils/StatusBadge'
+import { AddToLibraryPopover } from '@/features/library/add-to-list/components/AddToLibraryPopover'
+import { MediaGridItem } from '@/features/media-grid/grid/components/MediaGridItem'
+import { toMediaDisplayFromTmdbResult } from '@/features/media-grid/grid/services/media-display-helpers'
 
-import { useSearchLibraryItems } from "../../providers/SearchLibraryItemsProvider";
+import { useSearchLibraryItems } from '../../providers/SearchLibraryItemsProvider'
 
 type SearchResultMediaGridItemProps = {
-  item: TmdbSearchResultItem;
-};
+  item: TmdbSearchResultItem
+}
 
-export function SearchResultMediaGridItem({
-  item,
-}: SearchResultMediaGridItemProps) {
-  const { getLibraryItemForMedia } = useSearchLibraryItems();
+export function SearchResultMediaGridItem({ item }: SearchResultMediaGridItemProps) {
+  const { getLibraryItemForMedia } = useSearchLibraryItems()
 
-  const media = toMediaDisplayFromTmdbResult(item);
+  const media = toMediaDisplayFromTmdbResult(item)
 
   if (media === null) {
-    return null;
+    return null
   }
 
-  const existingLibraryItem = getLibraryItemForMedia(media);
+  const existingLibraryItem = getLibraryItemForMedia(media)
 
   return (
     <MediaGridItem
       media={media}
       posterOverlay={(isHovered) => (
-        <div className="absolute bottom-1 right-1 flex items-center justify-end gap-2 w-full">
-          <LibraryPosterStatusBadge
-            animationKey={existingLibraryItem?.id?.toString() ?? ""}
-            status={existingLibraryItem?.status ?? "untracked"}
-            triggerAnimation={isHovered}
-          />
-
-          <AddToLibraryPopover
-            existingLibraryItem={existingLibraryItem}
-            media={media}
-          />
-        </div>
+        <Fragment>
+          <div className="absolute top-1 left-1">
+            <StatusBadge
+              animationKey={existingLibraryItem?.id?.toString() ?? ''}
+              className="shadow-sm h-7 rounded-md"
+              status={existingLibraryItem?.status ?? 'untracked'}
+              triggerAnimation={isHovered}
+            />
+          </div>
+          <div className="absolute bottom-1 right-1">
+            <AddToLibraryPopover existingLibraryItem={existingLibraryItem} media={media} />
+          </div>
+        </Fragment>
       )}
     />
-  );
+  )
 }

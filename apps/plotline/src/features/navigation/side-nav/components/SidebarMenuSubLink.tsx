@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-import { SidebarMenuSubButton } from "@/components/ui/sidebar";
+import { SidebarMenuSubButton } from '@/components/ui/sidebar'
 
-import { isLinkActive } from "../services/is-link-active";
+import { isLinkActive } from '../services/is-link-active'
 
 export function SidebarMenuSubLink({
   children,
   href,
 }: {
-  children: React.ReactNode;
-  href: string;
+  children: React.ReactNode
+  href: string
 }) {
-  const pathname = usePathname();
-  const isActive = isLinkActive(href, pathname);
+  const pathname = usePathname()
+  const isActive = isLinkActive(href, pathname)
 
   return (
     <SidebarMenuSubButton
@@ -26,5 +26,5 @@ export function SidebarMenuSubLink({
         </Link>
       }
     />
-  );
+  )
 }

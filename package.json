@@ -7,12 +7,14 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint -- --fix",
+    "format": "prettier --write .",
     "typecheck": "turbo run typecheck",
     "generate:types": "turbo run generate:types --filter=@plotline/payload",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down"
   },
   "devDependencies": {
+    "prettier": "^3.4.2",
     "turbo": "^2.5.4"
   },
   "engines": {

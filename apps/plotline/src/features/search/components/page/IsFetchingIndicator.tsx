@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from '@/components/ui/spinner'
 
-import { useTmdbBrowse } from "../../providers/TmdbBrowseProvider";
+import { useTmdbBrowse } from '../../providers/TmdbBrowseProvider'
 
 export function IsFetchingIndicator() {
-  const { isFetching } = useTmdbBrowse();
+  const { isFetching } = useTmdbBrowse()
 
-  if (!isFetching) return null;
+  if (!isFetching) return null
 
-  return <Spinner className="size-4" />;
+  return <Spinner className="size-4" />
 }

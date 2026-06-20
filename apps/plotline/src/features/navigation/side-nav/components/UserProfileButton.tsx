@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from '@clerk/nextjs'
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { ShowIf } from "@/components/utils/ShowIf";
-import { useIsMounted } from "@/hooks/use-is-mounted";
+import { Skeleton } from '@/components/ui/skeleton'
+import { ShowIf } from '@/components/utils/ShowIf'
+import { useIsMounted } from '@/hooks/use-is-mounted'
 
 export function UserProfileButton() {
-  const { isLoaded, user } = useUser();
-  const isMounted = useIsMounted();
+  const { isLoaded, user } = useUser()
+  const isMounted = useIsMounted()
 
   if (!isMounted) {
-    return null;
+    return null
   }
 
   if (!isLoaded) {
-    return <UserProfileSkeleton />;
+    return <UserProfileSkeleton />
   }
 
   return (
@@ -25,7 +25,7 @@ export function UserProfileButton() {
         <span className="text-sm font-medium">{user?.fullName}</span>
       </ShowIf>
     </div>
-  );
+  )
 }
 
 const UserProfileSkeleton = () => {
@@ -34,9 +34,9 @@ const UserProfileSkeleton = () => {
       <UserButtonSkeleton />
       <Skeleton className="h-4 w-28" />
     </div>
-  );
-};
+  )
+}
 
 const UserButtonSkeleton = () => {
-  return <Skeleton className="h-7 w-7 rounded-full" />;
-};
+  return <Skeleton className="h-7 w-7 rounded-full" />
+}

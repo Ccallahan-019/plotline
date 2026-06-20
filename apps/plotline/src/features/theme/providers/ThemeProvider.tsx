@@ -1,17 +1,13 @@
-"use client";
+'use client'
 
-import type { ComponentProps } from "react";
+import type { ComponentProps } from 'react'
 
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ThemeProvider as NextThemesProvider } from 'next-themes'
 
-const clientScriptProps = { type: "application/json" } as const;
+const clientScriptProps = { type: 'application/json' } as const
 
-export function ThemeProvider({
-  children,
-  ...props
-}: ComponentProps<typeof NextThemesProvider>) {
-  const scriptProps =
-    typeof window === "undefined" ? undefined : clientScriptProps;
+export function ThemeProvider({ children, ...props }: ComponentProps<typeof NextThemesProvider>) {
+  const scriptProps = typeof window === 'undefined' ? undefined : clientScriptProps
 
   return (
     <NextThemesProvider
@@ -24,5 +20,5 @@ export function ThemeProvider({
     >
       {children}
     </NextThemesProvider>
-  );
+  )
 }
