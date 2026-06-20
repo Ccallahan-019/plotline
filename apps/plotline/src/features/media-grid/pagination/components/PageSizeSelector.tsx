@@ -39,7 +39,9 @@ export function PageSizeSelector({
 
   return (
     <Field orientation="horizontal">
-      <FieldLabel htmlFor="page-size-selector">Rows per Page</FieldLabel>
+      <FieldLabel className="text-nowrap mr-1" htmlFor="page-size-selector">
+        Rows per Page
+      </FieldLabel>
 
       <Select disabled={disabled} onValueChange={handleChange} value={String(pageSize)}>
         <SelectTrigger aria-label={ariaLabel} className={cn(className)}>

@@ -16,6 +16,7 @@ type PaginationBarProps = {
   onPageChange: (page: number) => void
   page: number
   scrollTargetId?: string
+  selector?: React.ReactNode
   showResultsSummary?: boolean
   totalPages: number
   totalResults?: number
@@ -26,6 +27,7 @@ export function PaginationBar({
   onPageChange,
   page,
   scrollTargetId,
+  selector,
   showResultsSummary = true,
   totalPages,
   totalResults,
@@ -35,25 +37,32 @@ export function PaginationBar({
   const paginationRange = getPaginationRange(page, totalPages)
 
   return (
-    <div className={cn('flex flex-col items-center gap-3', className)}>
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPreviousButton onPageChange={onPageChange} page={page} />
-          </PaginationItem>
-          {paginationRange.map((item, index) => (
-            <PaginationPageButton
-              currentPage={page}
-              item={item}
-              key={`pagination-${item}-${index}`}
-              onPageChange={onPageChange}
-            />
-          ))}
-          <PaginationItem>
-            <PaginationNextButton onPageChange={onPageChange} page={page} totalPages={totalPages} />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+    <div className={cn('flex flex-col items-center gap-3 w-full', className)}>
+      <div className="flex items-center gap-5 justify-center">
+        {selector && selector}
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPreviousButton onPageChange={onPageChange} page={page} />
+            </PaginationItem>
+            {paginationRange.map((item, index) => (
+              <PaginationPageButton
+                currentPage={page}
+                item={item}
+                key={`pagination-${item}-${index}`}
+                onPageChange={onPageChange}
+              />
+            ))}
+            <PaginationItem>
+              <PaginationNextButton
+                onPageChange={onPageChange}
+                page={page}
+                totalPages={totalPages}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
 
       <ShowIf condition={showResultsSummary}>
         <PaginationResults page={page} totalPages={totalPages} totalResults={totalResults} />

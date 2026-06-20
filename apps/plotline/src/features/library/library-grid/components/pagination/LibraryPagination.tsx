@@ -24,22 +24,21 @@ export function LibraryPagination() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 justify-center">
+    <div className="flex items-center">
       <PaginationBar
         onPageChange={setPage}
         page={page}
         scrollTargetId="library-results"
-        showResultsSummary={totalPages > 1}
+        selector={
+          <PageSizeSelector
+            className="min-w-[120px]"
+            onPageSizeChange={setPageSize}
+            pageSize={pageSize}
+          />
+        }
         totalPages={totalPages}
         totalResults={totalResults}
       />
-      <div className="flex items-center justify-end">
-        <PageSizeSelector
-          className="min-w-[120px]"
-          onPageSizeChange={setPageSize}
-          pageSize={pageSize}
-        />
-      </div>
     </div>
   )
 }
