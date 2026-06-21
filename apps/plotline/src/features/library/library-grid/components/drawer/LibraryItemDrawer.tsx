@@ -54,7 +54,7 @@ export function LibraryItemDrawer({ item }: LibraryItemDrawerProps) {
 
         <LibraryItemDrawerContent item={item} />
 
-        <LibraryItemDrawerFooter media={media} />
+        <LibraryItemDrawerFooter />
       </DrawerContent>
     </Drawer>
   )

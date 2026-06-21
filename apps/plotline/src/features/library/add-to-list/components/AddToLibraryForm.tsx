@@ -2,9 +2,9 @@
 
 import type { LibraryItem } from '@plotline/payload-types'
 
-import { Button } from '@/components/ui/button'
 import { FieldGroup } from '@/components/ui/field'
 import { ShowIf } from '@/components/utils/ShowIf'
+import { getFieldErrorMessage } from '@/features/forms/services/get-field-error-message'
 import { MediaDisplay } from '@/features/media-grid/types'
 
 import { useAddToLibraryForm } from '../hooks/use-add-to-library-form'
@@ -19,17 +19,7 @@ type AddToLibraryFormProps = {
 }
 
 export function AddToLibraryForm({ existingLibraryItem, media, onSuccess }: AddToLibraryFormProps) {
-  const {
-    disabledWatchlistIds,
-    fieldErrors,
-    isInLibrary,
-    isSubmitting,
-    setNote,
-    setStatus,
-    setWatchlistIds,
-    submit,
-    values,
-  } = useAddToLibraryForm({
+  const { disabledWatchlistIds, form, isInLibrary, isSubmitting } = useAddToLibraryForm({
     existingLibraryItem,
     media,
     onSuccess,
@@ -37,42 +27,56 @@ export function AddToLibraryForm({ existingLibraryItem, media, onSuccess }: AddT
 
   const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
-    void submit()
+    void form.handleSubmit()
   }
-
-  const buttonContent = isSubmitting ? 'Adding…' : 'Add to Library'
 
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       <FieldGroup>
-        <AddToLibraryWatchlistField
-          disabled={isSubmitting}
-          disabledWatchlistIds={disabledWatchlistIds}
-          error={fieldErrors.watchlists}
-          onChange={setWatchlistIds}
-          selectedWatchlistIds={values.watchlistIds}
-        />
+        <form.AppField name="watchlistIds">
+          {(field) => (
+            <AddToLibraryWatchlistField
+              disabled={isSubmitting}
+              disabledWatchlistIds={disabledWatchlistIds}
+              error={getFieldErrorMessage(field.state.meta.errors)}
+              onChange={(watchlistIds) => {
+                field.handleChange(
+                  watchlistIds.filter((watchlistId) => !disabledWatchlistIds.has(watchlistId)),
+                )
+              }}
+              selectedWatchlistIds={field.state.value}
+            />
+          )}
+        </form.AppField>
 
         <ShowIf condition={!isInLibrary}>
-          <AddToLibraryStatusField
-            disabled={isSubmitting}
-            error={fieldErrors.status}
-            onChange={setStatus}
-            value={values.status}
-          />
+          <form.AppField name="status">
+            {(field) => (
+              <AddToLibraryStatusField
+                disabled={isSubmitting}
+                error={getFieldErrorMessage(field.state.meta.errors)}
+                onChange={field.handleChange}
+                value={field.state.value}
+              />
+            )}
+          </form.AppField>
         </ShowIf>
 
-        <AddToLibraryNotesField
-          disabled={isSubmitting}
-          error={fieldErrors.note}
-          onChange={setNote}
-          value={values.note}
-        />
+        <form.AppField name="note">
+          {(field) => (
+            <AddToLibraryNotesField
+              disabled={isSubmitting}
+              error={getFieldErrorMessage(field.state.meta.errors)}
+              onChange={field.handleChange}
+              value={field.state.value}
+            />
+          )}
+        </form.AppField>
       </FieldGroup>
 
-      <Button disabled={isSubmitting} type="submit">
-        {buttonContent}
-      </Button>
+      <form.AppForm>
+        <form.SubmitButton loadingLabel="Adding…">Add to Library</form.SubmitButton>
+      </form.AppForm>
     </form>
   )
 }
