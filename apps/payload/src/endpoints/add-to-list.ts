@@ -1,4 +1,5 @@
-import type { MediaStatus, MediaType } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 import type { Endpoint, PayloadRequest } from 'payload'
 
 import { getRelationId, relationIdsMatch } from '../utilities/relations'
@@ -7,22 +8,12 @@ import { parseId, parseJsonBody, requireProfileContext, requireServiceAuth } fro
 
 type AddToListBody = {
   mediaId?: number | string
-  mediaType?: MediaType
   note?: string
-  overview?: null | string
-  posterPath?: null | string
-  releaseDate?: null | string
-  runtime?: null | number
+  releaseStatus?: TmdbUpsertMediaInput['status']
   status?: MediaStatus
-  title?: string
-  tmdbId?: number
-  tvMeta?: {
-    episodeCount?: null | number
-  }
-  voteAverage?: null | number
   watchlistId?: number | string
   watchlistSlug?: string
-}
+} & Partial<Omit<TmdbUpsertMediaInput, 'metadataSyncedAt' | 'status'>>
 
 async function resolveMedia(req: PayloadRequest, body: AddToListBody) {
   const mediaId = body.mediaId != null ? parseId(body.mediaId) : null
@@ -64,17 +55,30 @@ async function resolveMedia(req: PayloadRequest, body: AddToListBody) {
     return Response.json({ error: 'title is required when using tmdbId' }, { status: 400 })
   }
 
-  return upsertMediaFromTmdb(req, {
-    mediaType: body.mediaType,
-    overview: body.overview,
-    posterPath: body.posterPath,
-    releaseDate: body.releaseDate,
-    runtime: body.runtime,
-    title: body.title,
-    tmdbId: body.tmdbId,
-    tvMeta: body.tvMeta,
-    voteAverage: body.voteAverage,
-  })
+  return upsertMediaFromTmdb(req, toUpsertMediaInput(body))
+}
+
+function toUpsertMediaInput(body: AddToListBody): TmdbUpsertMediaInput {
+  const { releaseStatus, ...rest } = body
+
+  return {
+    backdropPath: rest.backdropPath,
+    externalIds: rest.externalIds,
+    genres: rest.genres,
+    mediaType: rest.mediaType!,
+    originalTitle: rest.originalTitle,
+    overview: rest.overview,
+    popularity: rest.popularity,
+    posterPath: rest.posterPath,
+    releaseDate: rest.releaseDate,
+    runtime: rest.runtime,
+    status: releaseStatus,
+    tagline: rest.tagline,
+    title: rest.title!,
+    tmdbId: rest.tmdbId!,
+    tvMeta: rest.tvMeta,
+    voteAverage: rest.voteAverage,
+  }
 }
 
 export const addToListEndpoint: Endpoint = {

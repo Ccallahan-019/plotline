@@ -11,13 +11,9 @@ import { parseLibrarySort } from './resolve-library-sort'
 
 const VALID_STATUSES = new Set<MediaStatus>([
   'completed',
-
   'dropped',
-
   'on_hold',
-
   'planned',
-
   'watching',
 ])
 
@@ -64,11 +60,8 @@ export function parseLibraryItemsQuery(searchParams: URLSearchParams): LibraryIt
 
   return {
     filters: normalizeMediaFilters(filters),
-
     page: parseOptionalNumber(searchParams.get('page')) ?? 1,
-
     pageSize: parseOptionalNumber(searchParams.get('pageSize')) ?? 24,
-
     sort: parseLibrarySort(searchParams.get('sort')),
   }
 }

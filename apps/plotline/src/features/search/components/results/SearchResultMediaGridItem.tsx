@@ -3,7 +3,7 @@
 import { TmdbSearchResultItem } from '@plotline/shared/tmdb'
 import { Fragment } from 'react/jsx-runtime'
 
-import { StatusBadge } from '@/components/utils/StatusBadge'
+import { AnimatedStatusBadge } from '@/components/utils/AnimatedStatusBadge'
 import { AddToLibraryPopover } from '@/features/library/add-to-list/components/AddToLibraryPopover'
 import { MediaGridItem } from '@/features/media-grid/grid/components/MediaGridItem'
 import { toMediaDisplayFromTmdbResult } from '@/features/media-grid/grid/services/media-display-helpers'
@@ -31,7 +31,7 @@ export function SearchResultMediaGridItem({ item }: SearchResultMediaGridItemPro
       posterOverlay={(isHovered) => (
         <Fragment>
           <div className="absolute top-1 left-1">
-            <StatusBadge
+            <AnimatedStatusBadge
               animationKey={existingLibraryItem?.id?.toString() ?? ''}
               className="shadow-sm h-7 rounded-md"
               status={existingLibraryItem?.status ?? 'untracked'}

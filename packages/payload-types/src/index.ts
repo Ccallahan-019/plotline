@@ -363,21 +363,7 @@ export interface Review {
   media: number | Media;
   rating: number;
   title?: string | null;
-  body?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
+  body?: string | null;
   containsSpoilers?: boolean | null;
   watchedAt?: string | null;
   visibility: 'private' | 'friends' | 'public';

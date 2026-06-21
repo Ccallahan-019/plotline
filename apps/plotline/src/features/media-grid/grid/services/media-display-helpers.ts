@@ -34,6 +34,25 @@ export function formatRuntime(runtime?: null | number): null | string {
   return `${hours}h ${minutes}m`
 }
 
+export function formatSeasonCount(seasonCount?: null | number): null | string {
+  if (!seasonCount) {
+    return null
+  }
+
+  return seasonCount === 1 ? '1 season' : `${seasonCount} seasons`
+}
+
+export function formatTvDurationLabel(
+  seasonCount?: null | number,
+  episodeCount?: null | number,
+): null | string {
+  const parts = [formatSeasonCount(seasonCount), formatEpisodeCount(episodeCount)].filter(
+    (part): part is string => part != null,
+  )
+
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
 export function getMediaFromLibraryItem(item: LibraryItem): Media | null {
   return typeof item.media === 'object' ? item.media : null
 }
@@ -89,6 +108,7 @@ export function toMediaDisplayFromMedia(media: Media): MediaDisplay {
     posterPath: media.posterPath,
     releaseDate: media.releaseDate,
     runtime: media.runtime,
+    seasonCount: media.tvMeta?.seasonCount,
     title: media.title,
   }
 }

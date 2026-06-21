@@ -5,31 +5,21 @@ import type {
   WatchlistMembership,
 } from '@plotline/payload-types'
 import type {
+  MediaReleaseStatus,
   MediaStatus,
-  MediaType,
   StreamingPlatform,
   WatchEventType,
 } from '@plotline/shared/constants/media'
+import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 
 export type AddToListInput = {
   /** Payload media ID — use when media already exists in the system. */
   mediaId?: number | string
-  mediaType?: MediaType
   note?: string
-  overview?: null | string
-  posterPath?: null | string
-  releaseDate?: null | string
-  runtime?: null | number
   status?: MediaStatus
-  title?: string
-  tmdbId?: number
-  tvMeta?: {
-    episodeCount?: null | number
-  }
-  voteAverage?: null | number
   watchlistId?: number | string
   watchlistSlug?: string
-}
+} & AddToListMediaFields
 
 export type AddToListResult = {
   libraryItem: LibraryItem
@@ -46,10 +36,7 @@ export type AddToListsFormInput = {
 }
 
 /** TMDB metadata passed when upserting media server-side during add-to-list. */
-export type AddToListTmdbMediaInput = Pick<
-  AddToListInput,
-  'overview' | 'posterPath' | 'releaseDate' | 'runtime' | 'tvMeta' | 'voteAverage'
-> &
+export type AddToListTmdbMediaInput = AddToListMediaFields &
   Required<Pick<AddToListInput, 'mediaType' | 'title' | 'tmdbId'>>
 
 export type LogWatchInput = {
@@ -72,6 +59,11 @@ export type LogWatchResult = {
   libraryItem: LibraryItem
   watchEvent: WatchEvent
 }
+
+type AddToListMediaFields = {
+  /** Media release lifecycle status — distinct from library item `status`. */
+  releaseStatus?: MediaReleaseStatus | null
+} & Partial<Omit<TmdbUpsertMediaInput, 'metadataSyncedAt' | 'status'>>
 
 export function buildAddToListInputs({
   media,

@@ -28,9 +28,9 @@ export function LogWatchButton({ media }: LogWatchButtonProps) {
   const buttonAddon = isPending ? <Spinner /> : <Check />
 
   return (
-    <Button disabled={isPending} onClick={handleLogWatch} size="sm" variant="outline">
+    <Button disabled={isPending} onClick={handleLogWatch}>
       {buttonAddon}
-      Log watch
+      Log Watch
     </Button>
   )
 }

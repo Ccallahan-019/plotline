@@ -37,7 +37,7 @@ export const Reviews: CollectionConfig = {
     },
     {
       name: 'body',
-      type: 'richText',
+      type: 'textarea',
     },
     {
       defaultValue: false,

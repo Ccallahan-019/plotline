@@ -1,6 +1,8 @@
 import type { LibraryItem } from '@plotline/payload-types'
+import type { MediaStatus, MediaType } from '@plotline/shared/constants/media'
 
 import type { MediaFilters } from '@/features/media-grid/filters/types'
+import type { MediaDisplay } from '@/features/media-grid/types'
 
 export const LIBRARY_SORT_OPTIONS = [
   { label: 'Recently Watched', value: 'recently-watched' },
@@ -34,3 +36,49 @@ export function getLibrarySortLabel(sort: LibrarySort): string {
 }
 
 export const DEFAULT_LIBRARY_PAGE_SIZE = 24
+
+export type LibraryItemDrawerMovieProgress = {
+  type: 'movie'
+  watched: boolean | null
+}
+
+export type LibraryItemDrawerProgress = LibraryItemDrawerMovieProgress | LibraryItemDrawerTvProgress
+
+export type LibraryItemDrawerTvProgress = {
+  episodesWatched: null | number
+  lastEpisode: null | number
+  lastSeason: null | number
+  seasonsCompleted: null | number[]
+  type: 'tv'
+}
+
+export type LibraryItemDrawerViewModel = {
+  completedAt: null | string
+  episodeCount: null | number
+  lastWatchedAt: null | string
+  libraryItemId: number
+  media: MediaDisplay
+  mediaId: number
+  mediaType: MediaType
+  mediaTypeLabel: string
+  personalNotes: null | string
+  progress: LibraryItemDrawerProgress
+  releaseYear: null | string
+  rewatchCount: null | number
+  runtimeLabel: null | string
+  seasonCount: null | number
+  source: LibraryItemSource | null
+  startedAt: null | string
+  status: MediaStatus
+  title: string
+  tvDurationLabel: null | string
+  watchlists: LibraryItemDrawerWatchlist[]
+}
+
+export type LibraryItemDrawerWatchlist = {
+  id: number
+  name: string
+  slug: string
+}
+
+export type LibraryItemSource = NonNullable<LibraryItem['source']>

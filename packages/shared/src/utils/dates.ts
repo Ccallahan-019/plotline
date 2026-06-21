@@ -25,6 +25,26 @@ export function daysUntilRelease(
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
 }
 
+export function formatDate(
+  date: Date | null | string | undefined,
+  locale = 'en-US',
+): null | string {
+  if (!date) {
+    return null
+  }
+
+  if (typeof date === 'string') {
+    date = new Date(date)
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+    year: 'numeric',
+  }).format(date)
+}
+
 export function formatReleaseDateForCalendar(
   value: null | string | undefined,
   locale = 'en-US',

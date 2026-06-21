@@ -14,3 +14,10 @@ export {
   type TmdbWatchProviderList,
   tmdbWatchProviderListSchema,
 } from './schemas'
+export {
+  averageEpisodeRunTime,
+  mapMovieDetailsToUpsertInput,
+  mapTmdbReleaseStatus,
+  mapTvDetailsToUpsertInput,
+  type TmdbUpsertMediaInput,
+} from './to-upsert-media-input'
