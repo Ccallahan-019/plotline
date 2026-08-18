@@ -95,6 +95,10 @@ export function LibraryBrowseProvider({
   }, [])
 
   useEffect(() => {
+    if (!appliedFilters) {
+      return
+    }
+
     setPage(1)
   }, [appliedFilters])
 

@@ -1,3 +1,5 @@
+'use client'
+
 import { motion, MotionProps } from 'motion/react'
 import { ComponentProps } from 'react'
 
