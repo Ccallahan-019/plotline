@@ -46,4 +46,54 @@ describe('buildBatchTvProgressUpdate', () => {
       type: 'tv',
     })
   })
+
+  it('increments episodesWatched once when the same non-rewatch pair is listed twice', () => {
+    const progress = buildBatchTvProgressUpdate(
+      [
+        { episode: 1, season: 1 },
+        { episode: 1, season: 1 },
+      ],
+      {
+        episodesWatched: 4,
+        type: 'tv',
+      },
+    )
+
+    expect(progress).toEqual({
+      episodesWatched: 5,
+      lastEpisode: 1,
+      lastSeason: 1,
+      type: 'tv',
+    })
+  })
+
+  it('counts a mixed rewatch and first-watch of the same pair as one new episode', () => {
+    const progress = buildBatchTvProgressUpdate(
+      [
+        { episode: 1, isRewatch: true, season: 1 },
+        { episode: 1, season: 1 },
+      ],
+      {
+        episodesWatched: 4,
+        type: 'tv',
+      },
+    )
+
+    expect(progress.episodesWatched).toBe(5)
+  })
+
+  it('increments once per distinct non-rewatch episode', () => {
+    const progress = buildBatchTvProgressUpdate(
+      [
+        { episode: 1, season: 1 },
+        { episode: 2, season: 1 },
+      ],
+      {
+        episodesWatched: 4,
+        type: 'tv',
+      },
+    )
+
+    expect(progress.episodesWatched).toBe(6)
+  })
 })

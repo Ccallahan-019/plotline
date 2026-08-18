@@ -17,6 +17,7 @@ export {
 export {
   averageEpisodeRunTime,
   mapMovieDetailsToUpsertInput,
+  mapTmdbGenresToUpsertInput,
   mapTmdbReleaseStatus,
   mapTvDetailsToUpsertInput,
   type TmdbUpsertMediaInput,

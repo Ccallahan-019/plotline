@@ -22,7 +22,15 @@ export function buildBatchTvProgressUpdate(
 
   const latestEpisode = sortedEpisodes.at(-1)
   const currentEpisodesWatched = currentProgress?.episodesWatched ?? 0
-  const newEpisodeCount = loggedEpisodes.filter((episode) => !episode.isRewatch).length
+  const uniqueNewEpisodes = new Set<string>()
+
+  for (const episode of loggedEpisodes) {
+    if (!episode.isRewatch) {
+      uniqueNewEpisodes.add(`${episode.season}:${episode.episode}`)
+    }
+  }
+
+  const newEpisodeCount = uniqueNewEpisodes.size
 
   return {
     type: 'tv',

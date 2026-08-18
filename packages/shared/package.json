@@ -13,6 +13,7 @@
     "./utils/dates": "./src/utils/dates.ts",
     "./utils/formatNumber": "./src/utils/formatNumber.ts",
     "./utils/toFiniteNumber": "./src/utils/toFiniteNumber.ts",
+    "./utils/toNonNegativeInteger": "./src/utils/toNonNegativeInteger.ts",
     "./env": "./src/env.ts"
   },
   "scripts": {

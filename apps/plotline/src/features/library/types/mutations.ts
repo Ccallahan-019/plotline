@@ -39,6 +39,25 @@ export type AddToListsFormInput = {
 export type AddToListTmdbMediaInput = AddToListMediaFields &
   Required<Pick<AddToListInput, 'mediaType' | 'title' | 'tmdbId'>>
 
+export type LogWatchBatchInput = {
+  episodes: Array<{
+    episode: number
+    isRewatch?: boolean
+    season: number
+  }>
+  libraryItemStatus?: MediaStatus
+  mediaId: number | string
+  platform?: StreamingPlatform
+  platformOther?: string
+  visibility?: 'friends' | 'private' | 'public'
+  watchedAt?: string
+}
+
+export type LogWatchBatchResult = {
+  libraryItem: LibraryItem
+  watchEvents: WatchEvent[]
+}
+
 export type LogWatchInput = {
   eventType: WatchEventType
   isRewatch?: boolean

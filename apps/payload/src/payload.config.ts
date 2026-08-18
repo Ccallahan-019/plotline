@@ -14,6 +14,7 @@ import { WatchlistMemberships } from './collections/watchlist-memberships'
 import { Watchlists } from './collections/watchlists'
 import { addToListEndpoint } from './endpoints/add-to-list'
 import { logWatchEndpoint } from './endpoints/log-watch/log-watch'
+import { logWatchBatchEndpoint } from './endpoints/log-watch/log-watch-batch'
 import { recalculateWatchlistStatsEndpoint } from './endpoints/recalculate-watchlist-stats'
 import { tmdbUpsertEndpoint } from './endpoints/tmdb-upsert'
 
@@ -53,6 +54,7 @@ export default buildConfig({
     tmdbUpsertEndpoint,
     addToListEndpoint,
     logWatchEndpoint,
+    logWatchBatchEndpoint,
     recalculateWatchlistStatsEndpoint,
   ],
   secret: process.env.PAYLOAD_SECRET || '',

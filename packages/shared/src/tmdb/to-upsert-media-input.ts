@@ -7,7 +7,7 @@ export type TmdbUpsertMediaInput = {
     imdbId?: null | string
     tvdbId?: null | number
   }
-  genres?: Array<{ id: number; name: string }>
+  genres?: Array<{ name: string; tmdbId: number }>
   mediaType: MediaType
   metadataSyncedAt?: null | string
   originalTitle?: null | string
@@ -45,7 +45,7 @@ export function mapMovieDetailsToUpsertInput(details: TmdbMovieDetails): TmdbUps
   return {
     backdropPath: details.backdrop_path ?? null,
     externalIds: details.imdb_id ? { imdbId: details.imdb_id } : undefined,
-    genres: details.genres,
+    genres: mapTmdbGenresToUpsertInput(details.genres),
     mediaType: 'movie',
     originalTitle: details.original_title ?? null,
     overview: details.overview ?? null,
@@ -59,6 +59,19 @@ export function mapMovieDetailsToUpsertInput(details: TmdbMovieDetails): TmdbUps
     tmdbId: details.id,
     voteAverage: details.vote_average ?? null,
   }
+}
+
+export function mapTmdbGenresToUpsertInput(
+  genres: Array<{ id: number; name: string }> | undefined,
+): Array<{ name: string; tmdbId: number }> | undefined {
+  if (genres == null) {
+    return undefined
+  }
+
+  return genres.map((genre) => ({
+    name: genre.name,
+    tmdbId: genre.id,
+  }))
 }
 
 export function mapTmdbReleaseStatus(
@@ -113,7 +126,7 @@ export function mapTvDetailsToUpsertInput(details: TmdbTvDetails): TmdbUpsertMed
             tvdbId: details.external_ids.tvdb_id ?? null,
           }
         : undefined,
-    genres: details.genres,
+    genres: mapTmdbGenresToUpsertInput(details.genres),
     mediaType: 'tv',
     originalTitle: details.original_name ?? null,
     overview: details.overview ?? null,

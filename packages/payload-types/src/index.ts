@@ -205,8 +205,9 @@ export interface Media {
   runtime?: number | null;
   genres?:
     | {
-        id: number;
+        tmdbId: number;
         name: string;
+        id?: string | null;
       }[]
     | null;
   popularity?: number | null;
@@ -538,8 +539,9 @@ export interface MediaSelect<T extends boolean = true> {
   genres?:
     | T
     | {
-        id?: T;
+        tmdbId?: T;
         name?: T;
+        id?: T;
       };
   popularity?: T;
   voteAverage?: T;

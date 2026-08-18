@@ -21,6 +21,7 @@ export async function resolveOrCreateLibraryItem(
     depth: 0,
     limit: 1,
     overrideAccess: true,
+    req,
     where: {
       and: [{ profile: { equals: profileId } }, { media: { equals: mediaId } }],
     },
@@ -34,6 +35,7 @@ export async function resolveOrCreateLibraryItem(
       depth: 0,
       id: mediaId,
       overrideAccess: true,
+      req,
     })
 
     if (!media) {
