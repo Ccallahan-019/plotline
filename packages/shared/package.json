@@ -12,6 +12,7 @@
     "./watchlist-stats": "./src/watchlist-stats/index.ts",
     "./utils/dates": "./src/utils/dates.ts",
     "./utils/formatNumber": "./src/utils/formatNumber.ts",
+    "./utils/toFiniteNumber": "./src/utils/toFiniteNumber.ts",
     "./env": "./src/env.ts"
   },
   "scripts": {

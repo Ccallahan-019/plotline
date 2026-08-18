@@ -1,4 +1,4 @@
-import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -12,12 +12,10 @@ import { Users } from './collections/users'
 import { WatchEvents } from './collections/watch-events'
 import { WatchlistMemberships } from './collections/watchlist-memberships'
 import { Watchlists } from './collections/watchlists'
-import {
-  addToListEndpoint,
-  logWatchEndpoint,
-  recalculateWatchlistStatsEndpoint,
-  tmdbUpsertEndpoint,
-} from './endpoints'
+import { addToListEndpoint } from './endpoints/add-to-list'
+import { logWatchEndpoint } from './endpoints/log-watch/log-watch'
+import { recalculateWatchlistStatsEndpoint } from './endpoints/recalculate-watchlist-stats'
+import { tmdbUpsertEndpoint } from './endpoints/tmdb-upsert'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -45,7 +43,7 @@ export default buildConfig({
     headers: ['Authorization', 'Content-Type', 'x-clerk-user-id'],
     origins: [plotlineUrl],
   },
-  db: vercelPostgresAdapter({
+  db: postgresAdapter({
     pool: {
       connectionString: process.env.POSTGRES_URL ?? '',
     },
