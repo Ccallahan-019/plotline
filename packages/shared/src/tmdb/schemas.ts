@@ -90,6 +90,21 @@ export const tmdbTvDetailsSchema = tvDetailsSchema
 
 export type TmdbTvDetails = z.infer<typeof tmdbTvDetailsSchema>
 
+const tvSeasonEpisodeSchema = z.object({
+  air_date: z.string().nullable().optional(),
+  episode_number: z.number(),
+  name: z.string().nullable(),
+  runtime: z.number().nullable().optional(),
+})
+
+export const tmdbTvSeasonDetailsSchema = z.object({
+  episodes: z.array(tvSeasonEpisodeSchema),
+  season_number: z.number(),
+})
+
+export type TmdbTvSeasonDetails = z.infer<typeof tmdbTvSeasonDetailsSchema>
+export type TmdbTvSeasonEpisode = z.infer<typeof tvSeasonEpisodeSchema>
+
 export const tmdbGenreListSchema = z.object({
   genres: z.array(genreSchema),
 })

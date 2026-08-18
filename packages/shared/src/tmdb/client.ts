@@ -7,6 +7,8 @@ import {
   tmdbSearchResponseSchema,
   type TmdbTvDetails,
   tmdbTvDetailsSchema,
+  type TmdbTvSeasonDetails,
+  tmdbTvSeasonDetailsSchema,
   type TmdbWatchProviderList,
   tmdbWatchProviderListSchema,
 } from './schemas'
@@ -67,6 +69,10 @@ export class TmdbClient {
 
   async getTvGenreList(): Promise<TmdbGenreList> {
     return this.fetchValidated('/genre/tv/list', tmdbGenreListSchema)
+  }
+
+  async getTvSeasonDetails(tvId: number, seasonNumber: number): Promise<TmdbTvSeasonDetails> {
+    return this.fetchValidated(`/tv/${tvId}/season/${seasonNumber}`, tmdbTvSeasonDetailsSchema)
   }
 
   async getTvWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
