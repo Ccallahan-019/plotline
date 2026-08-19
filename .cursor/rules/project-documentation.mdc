@@ -1,0 +1,45 @@
+---
+description: Project documentation standards, including required comments on service functions
+alwaysApply: true
+---
+
+# Project Documentation
+
+Document intent at the point of use. Prefer comments that explain *why* or *what the caller gets*, not a restatement of the signature.
+
+## Service functions
+
+Every function in a `services/` module (exported or private) must have a comment immediately above its declaration.
+
+- **Preferred:** a full JSDoc block (`@param`, `@returns`, and `@throws` when relevant).
+- **Minimum (simple helpers only):** a one-line `//` comment that states what the function does.
+
+Do not leave service functions undocumented. Update the comment when behavior changes.
+
+```typescript
+// ❌ BAD — no comment
+export function shouldSubmitLogWatchBatch(values: LogWatchFormValues): boolean {
+  return values.episodes.length > 1
+}
+
+// ✅ GOOD — simple helper, inline comment is enough
+// True when the form should submit as a multi-episode batch.
+export function shouldSubmitLogWatchBatch(values: LogWatchFormValues): boolean {
+  return values.episodes.length > 1
+}
+
+// ✅ BETTER — JSDoc for non-trivial mapping, status, or I/O logic
+/**
+ * Maps log-watch form values to a single mutation payload.
+ *
+ * @param options.currentStatus - Existing library status, used to decide status transitions
+ * @param options.mediaId - Library media id to attach the watch event to
+ * @param options.mediaType - `movie` or `tv`; selects event type and TV context
+ * @param options.runtimeMinutes - Optional runtime copied onto the payload when present
+ * @param options.values - Submitted form values
+ * @returns A `LogWatchInput` ready for the log-watch API
+ */
+export function toLogWatchInput(options: ToLogWatchInputOptions): LogWatchInput {
+  // ...
+}
+```
