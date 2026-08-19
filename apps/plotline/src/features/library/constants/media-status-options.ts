@@ -1,6 +1,6 @@
-import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants'
 
-import { MEDIA_STATUSES } from '@plotline/shared/constants/media'
+import { MEDIA_STATUSES } from '@plotline/shared/constants'
 
 export const MEDIA_STATUS_LABELS: Record<MediaStatus, string> = {
   completed: 'Completed',

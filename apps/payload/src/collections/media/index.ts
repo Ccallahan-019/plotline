@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { MEDIA_RELEASE_STATUSES, MEDIA_TYPES } from '@plotline/shared/constants/media'
+import { MEDIA_RELEASE_STATUSES, MEDIA_TYPES } from '@plotline/shared/constants'
 
 import { mediaAccess } from './access'
 import { deriveDecadeAndSearchKeywords } from './hooks/deriveDecadeAndSearchKeywords'

@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload'
 
-import { VISIBILITIES } from '@plotline/shared/constants/media'
 import {
   CHALLENGE_GOAL_TYPES,
   PRIOR_COMPLETION_RULES,
   TV_COUNT_RULES,
-} from '@plotline/shared/constants/watchlist-challenge'
+  VISIBILITIES,
+} from '@plotline/shared/constants'
 import { JSONSchema4 } from 'json-schema'
 
 import { watchlistsAccess } from './access'

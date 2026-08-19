@@ -1,5 +1,5 @@
 import { createTmdbClient, TmdbError } from '@plotline/shared/tmdb'
-import { toNonNegativeInteger } from '@plotline/shared/utils/toNonNegativeInteger'
+import { toNonNegativeInteger } from '@plotline/shared/utils'
 import { NextResponse } from 'next/server'
 
 import { handlePayloadError } from '@/lib/api/handle-payload-error'

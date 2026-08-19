@@ -8,8 +8,6 @@ import type { AddToLibraryFormValues } from './add-to-library-form-schema'
 import { getMediaFromLibraryItem } from '../../services/get-media-from-library-item'
 import { toAddToListTmdbMediaInput } from './to-add-to-list-media-input'
 
-export type { AddToLibraryFormValues } from './add-to-library-form-schema'
-
 export function resolveAddToLibraryMedia(
   media: MediaDisplay,
   existingLibraryItem?: LibraryItem,

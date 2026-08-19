@@ -1,4 +1,4 @@
-import type { MediaStatus, MediaType } from '@plotline/shared/constants/media'
+import type { MediaStatus, MediaType } from '@plotline/shared/constants'
 
 import type { LibraryItemSource } from '@/features/media-grid/filters/constants'
 import type { MediaFilters } from '@/features/media-grid/filters/types'

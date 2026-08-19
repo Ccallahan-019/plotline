@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { VISIBILITIES } from '@plotline/shared/constants/media'
+import { VISIBILITIES } from '@plotline/shared/constants'
 
 import { reviewsAccess } from './access'
 import { validateRating } from './hooks/validateRating'

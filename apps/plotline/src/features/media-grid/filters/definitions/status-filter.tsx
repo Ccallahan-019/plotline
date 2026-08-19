@@ -1,4 +1,4 @@
-import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants'
 
 import { MEDIA_STATUS_LABELS } from '@/features/library/constants/media-status-options'
 

@@ -4,14 +4,13 @@ Shared utilities, constants, and TMDB client stubs used by both Plotline apps.
 
 ## Modules
 
-| Import                                           | Purpose                                                                         |
-| ------------------------------------------------ | ------------------------------------------------------------------------------- |
-| `@plotline/shared/tmdb`                          | TMDB client + Zod schemas                                                       |
-| `@plotline/shared/constants/media`               | `MediaStatus`, `MediaType`, `WatchEventType`, `Visibility`, `StreamingPlatform` |
-| `@plotline/shared/constants/watchlist-challenge` | Challenge list enums (`ListStatus`, `TvCountRule`, etc.)                        |
-| `@plotline/shared/watchlist-stats`               | Pure watchlist/challenge stats computation                                      |
-| `@plotline/shared/utils/dates`                   | Release calendar helpers                                                        |
-| `@plotline/shared/env`                           | Shared `@t3-oss/env-core` validation for server env vars                        |
+| Import                             | Purpose                                                      |
+| ---------------------------------- | ------------------------------------------------------------ |
+| `@plotline/shared/tmdb`            | TMDB client + Zod schemas                                    |
+| `@plotline/shared/constants`       | Media, streaming, and watchlist-challenge enums              |
+| `@plotline/shared/watchlist-stats` | Pure watchlist/challenge stats computation                   |
+| `@plotline/shared/utils`           | Date, number, and numeric helpers                            |
+| `@plotline/shared/env`             | Shared `@t3-oss/env-core` validation for server env vars     |
 
 ## TMDB caching
 
@@ -21,8 +20,8 @@ TMDB responses are **not** stored in this package. The Plotline BFF fetches sear
 
 ```typescript
 import { createTmdbClient } from '@plotline/shared/tmdb'
-import { MEDIA_STATUSES } from '@plotline/shared/constants/media'
-import { daysUntilRelease } from '@plotline/shared/utils/dates'
+import { MEDIA_STATUSES } from '@plotline/shared/constants'
+import { daysUntilRelease } from '@plotline/shared/utils'
 
 const tmdb = createTmdbClient(process.env.TMDB_READ_ACCESS_TOKEN!)
 const results = await tmdb.searchMulti('dune')

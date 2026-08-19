@@ -1,10 +1,7 @@
 import type { Profile } from '@plotline/payload-types'
 
-import {
-  DEFAULT_WATCH_REGION,
-  resolveProfileWatchRegion,
-} from '@/features/search/services/watch-region'
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
+import { DEFAULT_WATCH_REGION, resolveProfileWatchRegion } from '@/utils/watch-region'
 
 export async function getProfileWatchRegion(clerkUserId: string): Promise<string> {
   try {

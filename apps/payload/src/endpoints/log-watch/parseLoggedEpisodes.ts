@@ -1,4 +1,4 @@
-import { toNonNegativeInteger } from '@plotline/shared/utils/toNonNegativeInteger'
+import { toNonNegativeInteger } from '@plotline/shared/utils'
 
 import type { BatchLoggedEpisode } from '../../collections/watch-events/utils/buildBatchTvProgressUpdate'
 

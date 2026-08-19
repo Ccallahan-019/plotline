@@ -1,5 +1,5 @@
 import type { LibraryItem, Media, WatchEvent } from '@plotline/payload-types'
-import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants'
 import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

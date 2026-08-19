@@ -1,4 +1,4 @@
-import { MEDIA_STATUSES } from '@plotline/shared/constants/media'
+import { MEDIA_STATUSES } from '@plotline/shared/constants'
 import { z } from 'zod'
 
 export const addToLibraryFormValuesSchema = z.object({

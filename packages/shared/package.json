@@ -5,15 +5,9 @@
   "type": "module",
   "exports": {
     "./tmdb": "./src/tmdb/index.ts",
-    "./tmdb/client": "./src/tmdb/client.ts",
-    "./tmdb/schemas": "./src/tmdb/schemas.ts",
-    "./constants/media": "./src/constants/media.ts",
-    "./constants/watchlist-challenge": "./src/constants/watchlist-challenge.ts",
+    "./constants": "./src/constants/index.ts",
     "./watchlist-stats": "./src/watchlist-stats/index.ts",
-    "./utils/dates": "./src/utils/dates.ts",
-    "./utils/formatNumber": "./src/utils/formatNumber.ts",
-    "./utils/toFiniteNumber": "./src/utils/toFiniteNumber.ts",
-    "./utils/toNonNegativeInteger": "./src/utils/toNonNegativeInteger.ts",
+    "./utils": "./src/utils/index.ts",
     "./env": "./src/env.ts"
   },
   "scripts": {

@@ -1,6 +1,6 @@
 import type { LibraryItem } from '@plotline/payload-types'
 
-import { toFiniteNumber } from '@plotline/shared/utils/toFiniteNumber'
+import { toFiniteNumber } from '@plotline/shared/utils'
 
 export type TvProgressUpdate = {
   episodesWatched?: number

@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { VISIBILITIES } from '@plotline/shared/constants/media'
+import { VISIBILITIES } from '@plotline/shared/constants'
 
 import { profilesAccess } from './access'
 import { normalizeProfileUsername } from './hooks/normalizeProfileUsername'

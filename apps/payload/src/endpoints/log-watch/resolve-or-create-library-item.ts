@@ -1,5 +1,5 @@
 import type { LibraryItem } from '@plotline/payload-types'
-import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants'
 import type { PayloadRequest } from 'payload'
 
 import { SKIP_COMPLETED_WATCH_EVENT } from '../../collections/library-items/context'

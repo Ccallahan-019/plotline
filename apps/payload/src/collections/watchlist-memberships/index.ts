@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { LIST_STATUSES } from '@plotline/shared/constants/watchlist-challenge'
+import { LIST_STATUSES } from '@plotline/shared/constants'
 
 import { watchlistMembershipsAccess } from './access'
 import { initializeMembershipChallengeFields } from './hooks/initializeMembershipChallengeFields'

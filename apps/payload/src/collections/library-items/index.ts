@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { MEDIA_STATUSES, MEDIA_TYPES } from '@plotline/shared/constants/media'
+import { MEDIA_STATUSES, MEDIA_TYPES } from '@plotline/shared/constants'
 
 import { libraryItemsAccess } from './access'
 import { createCompletedWatchEvent } from './hooks/createCompletedWatchEvent'

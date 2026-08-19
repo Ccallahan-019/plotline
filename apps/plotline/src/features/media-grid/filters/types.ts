@@ -1,4 +1,4 @@
-import type { MediaStatus, MediaType } from '@plotline/shared/constants/media'
+import type { MediaStatus, MediaType } from '@plotline/shared/constants'
 import type { ReactNode } from 'react'
 
 import type { LibraryItemSource } from './constants'

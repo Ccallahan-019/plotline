@@ -2,7 +2,7 @@ import type { WatchEvent } from '@plotline/payload-types'
 import type {
   StreamingPlatform,
   WatchEventType,
-} from '@plotline/shared/constants/media'
+} from '@plotline/shared/constants'
 import type { PayloadRequest } from 'payload'
 
 import { SKIP_PROGRESS_SYNC_FROM_WATCH_EVENT } from '../../collections/library-items/context'

@@ -9,7 +9,7 @@ import type {
   MediaStatus,
   StreamingPlatform,
   WatchEventType,
-} from '@plotline/shared/constants/media'
+} from '@plotline/shared/constants'
 import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 
 export type AddToListInput = {

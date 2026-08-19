@@ -1,4 +1,4 @@
-import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants'
 import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 import type { Endpoint, PayloadRequest } from 'payload'
 

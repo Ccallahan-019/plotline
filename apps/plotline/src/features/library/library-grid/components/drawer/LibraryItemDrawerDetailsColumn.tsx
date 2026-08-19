@@ -1,4 +1,4 @@
-import { formatDate } from '@plotline/shared/utils/dates'
+import { formatDate } from '@plotline/shared/utils'
 import { Bookmark } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'

@@ -1,4 +1,4 @@
-import { formatNumber as formatNumberShared } from '@plotline/shared/utils/formatNumber'
+import { formatNumber as formatNumberShared } from '@plotline/shared/utils'
 
 export function formatBoolean(value: boolean | null): null | string {
   if (value === null) {

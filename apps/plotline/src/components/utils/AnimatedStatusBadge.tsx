@@ -1,4 +1,4 @@
-import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants'
 
 import { Check, ClockCheck, EyeOff, LucideIcon, Pause, Trash, TvMinimalPlay } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'

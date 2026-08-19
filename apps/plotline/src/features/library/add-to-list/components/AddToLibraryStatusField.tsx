@@ -1,6 +1,6 @@
 'use client'
 
-import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants'
 
 import { Field, FieldContent, FieldError, FieldLabel } from '@/components/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'

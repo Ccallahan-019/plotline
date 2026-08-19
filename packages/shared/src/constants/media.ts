@@ -26,20 +26,6 @@ export const VISIBILITIES = ['private', 'friends', 'public', 'unlisted'] as cons
 
 export type Visibility = (typeof VISIBILITIES)[number]
 
-export const STREAMING_PLATFORMS = [
-  'netflix',
-  'disney_plus',
-  'hulu',
-  'max',
-  'apple_tv',
-  'amazon',
-  'theater',
-  'physical',
-  'other',
-] as const
-
-export type StreamingPlatform = (typeof STREAMING_PLATFORMS)[number]
-
 export const MEDIA_RELEASE_STATUSES = [
   'released',
   'upcoming',

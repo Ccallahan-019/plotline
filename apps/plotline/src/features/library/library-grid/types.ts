@@ -1,5 +1,5 @@
 import type { LibraryItem } from '@plotline/payload-types'
-import type { MediaStatus, MediaType } from '@plotline/shared/constants/media'
+import type { MediaStatus, MediaType } from '@plotline/shared/constants'
 
 import type { MediaFilters } from '@/features/media-grid/filters/types'
 import type { MediaDisplay } from '@/features/media-grid/types'

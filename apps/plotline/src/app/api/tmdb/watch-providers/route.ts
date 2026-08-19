@@ -11,6 +11,7 @@ import { getProfileWatchRegion } from '@/features/search/services/get-profile-wa
 import { parseMediaType } from '@/features/search/services/search-filters'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
+import { parseWatchRegionOverride } from '@/utils/watch-region'
 
 export async function GET(request: Request) {
   const authResult = await requireClerkUserId()
@@ -27,10 +28,11 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
   const mediaType = parseMediaType(searchParams.get('mediaType'))
+  const regionOverride = parseWatchRegionOverride(searchParams.get('region'))
 
   try {
     const client = createTmdbClient(accessToken)
-    const region = await getProfileWatchRegion(authResult.clerkUserId)
+    const region = regionOverride ?? (await getProfileWatchRegion(authResult.clerkUserId))
     const providers = await fetchWatchProviders(client, mediaType, region)
 
     const response: TmdbWatchProvidersResponse = {

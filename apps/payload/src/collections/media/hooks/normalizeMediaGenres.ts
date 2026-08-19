@@ -1,6 +1,6 @@
 import type { CollectionBeforeValidateHook } from 'payload'
 
-import { toNonNegativeInteger } from '@plotline/shared/utils/toNonNegativeInteger'
+import { toNonNegativeInteger } from '@plotline/shared/utils'
 
 type GenreRow = {
   id?: number | string

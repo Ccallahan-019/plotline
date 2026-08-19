@@ -2,7 +2,7 @@ import type {
   MediaStatus,
   StreamingPlatform,
   WatchEventType,
-} from '@plotline/shared/constants/media'
+} from '@plotline/shared/constants'
 
 export type LogWatchBatchBody = {
   episodes: LogWatchBatchEpisode[]
