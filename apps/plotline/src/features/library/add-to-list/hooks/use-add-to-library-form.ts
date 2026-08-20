@@ -20,12 +20,27 @@ import { buildAddToListInputs } from '@/features/library/types/mutations'
 
 const EMPTY_MEMBERSHIPS: WatchlistMembership[] = []
 
+export type AddToLibraryFormApi = ReturnType<typeof useAddToLibraryForm>['form']
+
 type UseAddToLibraryFormOptions = {
   existingLibraryItem?: LibraryItem
   media: MediaDisplay
   onSuccess?: () => void
 }
 
+/**
+ * Add-to-library form for attaching a title to one or more watchlists.
+ *
+ * Disables watchlists the title is already on, validates on submit, and posts
+ * memberships (plus an initial status when the title is not yet in the library).
+ * Success toasts, resets the form, then calls `onSuccess`. Submit failures are
+ * shown in the toast and are not rethrown.
+ *
+ * @param options.existingLibraryItem - Existing library row, when the title is already saved
+ * @param options.media - Title being added; used to resolve the mutation payload
+ * @param options.onSuccess - Called after a successful submit (typically to close the UI)
+ * @returns `form`, `isSubmitting`, `isInLibrary`, and `disabledWatchlistIds` for field UI
+ */
 export function useAddToLibraryForm({
   existingLibraryItem,
   media,

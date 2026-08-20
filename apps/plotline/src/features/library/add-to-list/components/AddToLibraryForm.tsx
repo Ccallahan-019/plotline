@@ -4,7 +4,6 @@ import type { LibraryItem } from '@plotline/payload-types'
 
 import { FieldGroup } from '@/components/ui/field'
 import { ShowIf } from '@/components/utils/ShowIf'
-import { getFieldErrorMessage } from '@/features/forms/services/get-field-error-message'
 import { MediaDisplay } from '@/features/media-grid/types'
 
 import { useAddToLibraryForm } from '../hooks/use-add-to-library-form'
@@ -33,45 +32,17 @@ export function AddToLibraryForm({ existingLibraryItem, media, onSuccess }: AddT
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       <FieldGroup>
-        <form.AppField name="watchlistIds">
-          {(field) => (
-            <AddToLibraryWatchlistField
-              disabled={isSubmitting}
-              disabledWatchlistIds={disabledWatchlistIds}
-              error={getFieldErrorMessage(field.state.meta.errors)}
-              onChange={(watchlistIds) => {
-                field.handleChange(
-                  watchlistIds.filter((watchlistId) => !disabledWatchlistIds.has(watchlistId)),
-                )
-              }}
-              selectedWatchlistIds={field.state.value}
-            />
-          )}
-        </form.AppField>
+        <AddToLibraryWatchlistField
+          disabled={isSubmitting}
+          disabledWatchlistIds={disabledWatchlistIds}
+          form={form}
+        />
 
         <ShowIf condition={!isInLibrary}>
-          <form.AppField name="status">
-            {(field) => (
-              <AddToLibraryStatusField
-                disabled={isSubmitting}
-                error={getFieldErrorMessage(field.state.meta.errors)}
-                onChange={field.handleChange}
-                value={field.state.value}
-              />
-            )}
-          </form.AppField>
+          <AddToLibraryStatusField disabled={isSubmitting} form={form} />
         </ShowIf>
 
-        <form.AppField name="note">
-          {(field) => (
-            <AddToLibraryNotesField
-              disabled={isSubmitting}
-              error={getFieldErrorMessage(field.state.meta.errors)}
-              onChange={field.handleChange}
-              value={field.state.value}
-            />
-          )}
-        </form.AppField>
+        <AddToLibraryNotesField disabled={isSubmitting} form={form} />
       </FieldGroup>
 
       <form.AppForm>

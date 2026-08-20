@@ -1,40 +1,30 @@
 'use client'
 
-import { Field, FieldContent, FieldError, FieldLabel } from '@/components/ui/field'
-import { Textarea } from '@/components/ui/textarea'
+import { Field, FieldContent, FieldLabel } from '@/components/ui/field'
+
+import type { AddToLibraryFormApi } from '../hooks/use-add-to-library-form'
 
 type AddToLibraryNotesFieldProps = {
   disabled?: boolean
-  error?: string
-  onChange: (note: string) => void
-  value: string
+  form: AddToLibraryFormApi
 }
 
-export function AddToLibraryNotesField({
-  disabled = false,
-  error,
-  onChange,
-  value,
-}: AddToLibraryNotesFieldProps) {
-  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onChange(event.target.value)
-  }
-
+export function AddToLibraryNotesField({ disabled = false, form }: AddToLibraryNotesFieldProps) {
   return (
-    <Field data-disabled={disabled}>
-      <FieldLabel htmlFor="add-to-library-notes">Notes</FieldLabel>
-      <FieldContent>
-        <Textarea
-          aria-invalid={!!error}
-          disabled={disabled}
-          id="add-to-library-notes"
-          onChange={handleChange}
-          placeholder="Optional note for the selected lists"
-          rows={3}
-          value={value}
-        />
-        <FieldError>{error}</FieldError>
-      </FieldContent>
-    </Field>
+    <form.AppField name="note">
+      {(field) => (
+        <Field data-disabled={disabled}>
+          <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+          <FieldContent>
+            <field.TextAreaField
+              disabled={disabled}
+              placeholder="Optional note for the selected lists"
+              rows={3}
+            />
+          </FieldContent>
+          <field.FormFieldError />
+        </Field>
+      )}
+    </form.AppField>
   )
 }

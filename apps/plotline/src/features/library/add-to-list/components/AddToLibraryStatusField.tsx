@@ -2,55 +2,39 @@
 
 import type { MediaStatus } from '@plotline/shared/constants'
 
-import { Field, FieldContent, FieldError, FieldLabel } from '@/components/ui/field'
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
+import { Field, FieldContent, FieldLabel } from '@/components/ui/field'
 import { MEDIA_STATUS_OPTIONS } from '@/features/library/constants/media-status-options'
+
+import type { AddToLibraryFormApi } from '../hooks/use-add-to-library-form'
+
+const ADD_TO_LIBRARY_STATUS_ITEMS = MEDIA_STATUS_OPTIONS.filter(
+  (option) => option.value !== 'dropped',
+)
 
 type AddToLibraryStatusFieldProps = {
   disabled?: boolean
-  error?: string
-  onChange: (status: MediaStatus) => void
-  value: MediaStatus
+  form: AddToLibraryFormApi
 }
 
 export function AddToLibraryStatusField({
   disabled = false,
-  error,
-  onChange,
-  value,
+  form,
 }: AddToLibraryStatusFieldProps) {
-  const handleValueChange = (nextValue: MediaStatus | null) => {
-    if (nextValue) {
-      onChange(nextValue)
-    }
-  }
-
-  const triggerContent =
-    MEDIA_STATUS_OPTIONS.find((option) => option.value === value && option.value !== 'dropped')
-      ?.label ?? 'Select status'
-
   return (
-    <Field data-disabled={disabled}>
-      <FieldLabel htmlFor="add-to-library-status">Status</FieldLabel>
-      <FieldContent>
-        <Select disabled={disabled} onValueChange={handleValueChange} value={value}>
-          <SelectTrigger aria-invalid={!!error} className="w-full" id="add-to-library-status">
-            {triggerContent}
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false} className="p-1">
-            {MEDIA_STATUS_OPTIONS.map((option) => {
-              if (option.value !== 'dropped') {
-                return (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                )
-              }
-            })}
-          </SelectContent>
-        </Select>
-        <FieldError>{error}</FieldError>
-      </FieldContent>
-    </Field>
+    <form.AppField name="status">
+      {(field) => (
+        <Field data-disabled={disabled}>
+          <FieldLabel htmlFor={field.name}>Status</FieldLabel>
+          <FieldContent>
+            <field.SelectField<MediaStatus>
+              disabled={disabled}
+              items={ADD_TO_LIBRARY_STATUS_ITEMS}
+              placeholder="Select status"
+            />
+          </FieldContent>
+          <field.FormFieldError />
+        </Field>
+      )}
+    </form.AppField>
   )
 }
