@@ -1,5 +1,5 @@
 ---
-description: Project documentation standards, including required comments on service functions
+description: Project documentation standards for service functions and custom hooks
 alwaysApply: true
 ---
 
@@ -7,14 +7,14 @@ alwaysApply: true
 
 Document intent at the point of use. Prefer comments that explain *why* or *what the caller gets*, not a restatement of the signature.
 
+Update the comment when behavior changes. Do not leave required declarations undocumented.
+
 ## Service functions
 
 Every function in a `services/` module (exported or private) must have a comment immediately above its declaration.
 
 - **Preferred:** a full JSDoc block (`@param`, `@returns`, and `@throws` when relevant).
 - **Minimum (simple helpers only):** a one-line `//` comment that states what the function does.
-
-Do not leave service functions undocumented. Update the comment when behavior changes.
 
 ```typescript
 // ❌ BAD — no comment
@@ -40,6 +40,53 @@ export function shouldSubmitLogWatchBatch(values: LogWatchFormValues): boolean {
  * @returns A `LogWatchInput` ready for the log-watch API
  */
 export function toLogWatchInput(options: ToLogWatchInputOptions): LogWatchInput {
+  // ...
+}
+```
+
+## Custom hooks
+
+Every custom hook (`use*` in a `hooks/` module, exported or private) must have a **full JSDoc block** immediately above its declaration. A one-line `//` comment is not enough.
+
+Include `@param` for each argument (and option fields the caller must understand), `@returns` for what the caller gets, and `@throws` when the hook can throw to the caller.
+
+```typescript
+// ❌ BAD — no comment
+export function useTvSeasonEpisodes(
+  tmdbId: null | number | undefined,
+  seasonNumber: null | number | undefined,
+  options?: UseTvSeasonEpisodesOptions,
+) {
+  // ...
+}
+
+// ❌ BAD — one-line comment is not enough for hooks
+// Fetches TMDB episodes for a TV season.
+export function useTvSeasonEpisodes(
+  tmdbId: null | number | undefined,
+  seasonNumber: null | number | undefined,
+  options?: UseTvSeasonEpisodesOptions,
+) {
+  // ...
+}
+
+// ✅ GOOD — full JSDoc: what the caller gets, when the query runs, and the return shape
+/**
+ * Loads TMDB episode titles for a TV season when the log-watch UI is open.
+ *
+ * The query is disabled until both `tmdbId` and `seasonNumber` are present (and
+ * `options.enabled` is not `false`). Cached for about an hour.
+ *
+ * @param tmdbId - TMDB series id; falsy values skip the fetch
+ * @param seasonNumber - Season to load; `null`/`undefined` skip the fetch
+ * @param options.enabled - When `false`, the query does not run even if ids are set
+ * @returns A React Query result for `TmdbTvSeasonDetails`
+ */
+export function useTvSeasonEpisodes(
+  tmdbId: null | number | undefined,
+  seasonNumber: null | number | undefined,
+  options?: UseTvSeasonEpisodesOptions,
+) {
   // ...
 }
 ```

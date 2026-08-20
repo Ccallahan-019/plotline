@@ -30,6 +30,13 @@ type SuggestNextEpisodeOptions = {
   seasonEpisodeCount?: number
 }
 
+type ToLibraryItemAfterLogWatchOptions = {
+  currentLibraryItem: LibraryItem
+  mediaType: MediaType
+  resultLibraryItem: LibraryItem
+  values: LogWatchFormValues
+}
+
 type ToLogWatchBatchInputOptions = {
   currentStatus?: MediaStatus
   mediaId: number | string
@@ -173,6 +180,48 @@ export function suggestNextEpisode({
   }
 
   return { ...FALLBACK_NEXT_EPISODE }
+}
+
+/**
+ * Library item to use after a successful log so the form can default the next TV episode.
+ *
+ * The single log-watch API returns the item from before watch-event progress sync, so TV
+ * `lastSeason`/`lastEpisode` are taken from the submitted values. Populated media is kept
+ * from the current item so season-end suggestions can still use `tvMeta`.
+ *
+ * @param options.currentLibraryItem - Form session item; used for populated `media`
+ * @param options.mediaType - `movie` skips episode overlay
+ * @param options.resultLibraryItem - Mutation result; supplies updated status and ids
+ * @param options.values - Submitted form values; TV episode overlay source
+ * @returns A library item whose progress matches the watch that was just logged
+ */
+export function toLibraryItemAfterLogWatch({
+  currentLibraryItem,
+  mediaType,
+  resultLibraryItem,
+  values,
+}: ToLibraryItemAfterLogWatchOptions): LibraryItem {
+  const media =
+    typeof currentLibraryItem.media === 'object' ? currentLibraryItem.media : resultLibraryItem.media
+  const submittedEpisode = values.episodes[0] ?? values.episode
+
+  if (mediaType !== 'tv' || submittedEpisode == null) {
+    return {
+      ...resultLibraryItem,
+      media,
+    }
+  }
+
+  return {
+    ...resultLibraryItem,
+    media,
+    progress: {
+      ...resultLibraryItem.progress,
+      lastEpisode: submittedEpisode.episode,
+      lastSeason: submittedEpisode.season,
+      type: 'tv',
+    },
+  }
 }
 
 /**
