@@ -10,6 +10,12 @@ export type TvProgressUpdate = {
   type: 'tv'
 }
 
+/**
+ * Rebuilds TV progress after a watch event.
+ *
+ * Always copies last season/episode from `tvContext`. Increments `episodesWatched` only
+ * for first-watch logs; rewatches keep the current count.
+ */
 export function buildTvProgressUpdate(
   tvContext: {
     episode?: null | number

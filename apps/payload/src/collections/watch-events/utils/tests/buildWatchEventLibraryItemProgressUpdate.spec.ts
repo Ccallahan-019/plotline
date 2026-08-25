@@ -66,4 +66,59 @@ describe('buildWatchEventLibraryItemProgressUpdate', () => {
       },
     })
   })
+
+  it('updates TV lastSeason/lastEpisode on a rewatched event without incrementing episodesWatched', () => {
+    expect(
+      buildWatchEventLibraryItemProgressUpdate(
+        {
+          eventType: 'rewatched',
+          isRewatch: true,
+          tvContext: { episode: 2, season: 3 },
+        },
+        { progress: { episodesWatched: 8, type: 'tv' }, rewatchCount: 0 },
+      ),
+    ).toEqual({
+      progress: {
+        episodesWatched: 8,
+        lastEpisode: 2,
+        lastSeason: 3,
+        type: 'tv',
+      },
+    })
+  })
+
+  it('treats eventType rewatched with tvContext as a cursor-only TV update when isRewatch is omitted', () => {
+    expect(
+      buildWatchEventLibraryItemProgressUpdate(
+        {
+          eventType: 'rewatched',
+          tvContext: { episode: 5, season: 1 },
+        },
+        { progress: { episodesWatched: 12, type: 'tv' }, rewatchCount: 0 },
+      ),
+    ).toEqual({
+      progress: {
+        episodesWatched: 12,
+        lastEpisode: 5,
+        lastSeason: 1,
+        type: 'tv',
+      },
+    })
+  })
+
+  it('ignores empty TV context on a movie rewatch so progress stays movie-shaped', () => {
+    expect(
+      buildWatchEventLibraryItemProgressUpdate(
+        {
+          eventType: 'rewatched',
+          isRewatch: true,
+          tvContext: { episode: null, season: null },
+        },
+        { progress: { type: 'movie', watched: true }, rewatchCount: 1 },
+      ),
+    ).toEqual({
+      progress: { type: 'movie', watched: true },
+      rewatchCount: 2,
+    })
+  })
 })

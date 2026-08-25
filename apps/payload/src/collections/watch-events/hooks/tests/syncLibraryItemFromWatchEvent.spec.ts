@@ -200,4 +200,38 @@ describe('syncLibraryItemFromWatchEvent', () => {
       },
     ])
   })
+
+  it('updates TV lastSeason/lastEpisode on a rewatched event without incrementing episodesWatched', async () => {
+    const episodesWatchedRef = { value: 6 }
+    const { args, updates } = createHookArgs({
+      doc: {
+        eventType: 'rewatched',
+        isRewatch: true,
+        tvContext: { episode: 4, season: 2 },
+      },
+      episodesWatchedRef,
+    })
+
+    await syncLibraryItemFromWatchEvent(args)
+
+    expect(episodesWatchedRef.value).toBe(6)
+    expect(updates).toEqual([
+      {
+        collection: 'library-items',
+        data: {
+          lastWatchedAt: '2026-08-17T12:00:00.000Z',
+          progress: {
+            episodesWatched: 6,
+            lastEpisode: 4,
+            lastSeason: 2,
+            type: 'tv',
+          },
+        },
+      },
+      {
+        collection: 'profiles',
+        data: { statsCache: null },
+      },
+    ])
+  })
 })

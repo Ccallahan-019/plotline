@@ -19,8 +19,10 @@ type WatchEventProgressSource = {
 /**
  * Progress and rewatch fields to merge onto a library item after a watch-event create.
  *
- * TV `progress` events still rebuild last episode / `episodesWatched`. Movie `completed` and
- * rewatch events set `progress.watched`. Rewatches increment `rewatchCount` for movies only.
+ * Any event with season/episode `tvContext` rebuilds last season/episode, including
+ * `rewatched`. First-watch TV events also increment `episodesWatched`. Movie `completed`
+ * and rewatch events set `progress.watched`. Rewatches increment `rewatchCount` for movies
+ * only.
  *
  * @param doc - Created watch event (event type, rewatch flag, optional TV context)
  * @param libraryItem - Current library item used for media type and the existing rewatch count
@@ -33,7 +35,7 @@ export function buildWatchEventLibraryItemProgressUpdate(
   const update: WatchEventLibraryItemProgressUpdate = {}
   const isRewatch = isRewatchWatchEvent(doc)
 
-  if (doc.eventType === 'progress' && doc.tvContext) {
+  if (hasTvEpisodeContext(doc.tvContext)) {
     update.progress = buildTvProgressUpdate(doc.tvContext, libraryItem?.progress, { isRewatch })
   } else if (isMovieWatchedEvent(doc, libraryItem, isRewatch)) {
     update.progress = {
@@ -47,6 +49,21 @@ export function buildWatchEventLibraryItemProgressUpdate(
   }
 
   return update
+}
+
+/**
+ * True when the event has a season or episode so TV cursor/count can be rebuilt.
+ *
+ * Empty Payload group objects (`{ season: null, episode: null }`) are ignored so movie
+ * events do not pick up a TV progress patch.
+ *
+ * @param tvContext - Optional watch-event TV group
+ * @returns Whether `tvContext` has at least one episode coordinate
+ */
+export function hasTvEpisodeContext(
+  tvContext: WatchEventProgressSource['tvContext'],
+): tvContext is NonNullable<WatchEventProgressSource['tvContext']> {
+  return tvContext != null && (tvContext.season != null || tvContext.episode != null)
 }
 
 /**

@@ -292,7 +292,12 @@ describe('logWatchEndpoint', () => {
         isRewatch: true,
       }),
     )
-    expect(db.libraryItem.progress.episodesWatched).toBe(3)
+    expect(db.libraryItem.progress).toEqual({
+      episodesWatched: 3,
+      lastEpisode: 4,
+      lastSeason: 1,
+      type: 'tv',
+    })
   })
 
   it('derives a TV rewatch when the show is already completed', async () => {
@@ -315,6 +320,11 @@ describe('logWatchEndpoint', () => {
         isRewatch: true,
       }),
     )
-    expect(db.libraryItem.progress.episodesWatched).toBe(3)
+    expect(db.libraryItem.progress).toEqual({
+      episodesWatched: 3,
+      lastEpisode: 1,
+      lastSeason: 1,
+      type: 'tv',
+    })
   })
 })

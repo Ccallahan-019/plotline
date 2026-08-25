@@ -7,6 +7,7 @@ import {
 } from '../../library-items/context'
 import {
   buildWatchEventLibraryItemProgressUpdate,
+  hasTvEpisodeContext,
   isRewatchWatchEvent,
 } from '../utils/buildWatchEventLibraryItemProgressUpdate'
 import { withLibraryItemRowLock } from '../utils/withLibraryItemRowLock'
@@ -48,7 +49,7 @@ export const syncLibraryItemFromWatchEvent: CollectionAfterChangeHook = async ({
       })
     }
 
-    const shouldSyncTvProgress = doc.eventType === 'progress' && doc.tvContext
+    const shouldSyncTvProgress = hasTvEpisodeContext(doc.tvContext)
     const shouldSyncMovieWatch = doc.eventType === 'completed' || isRewatchWatchEvent(doc)
 
     if (!skipProgressSync && (shouldSyncTvProgress || shouldSyncMovieWatch)) {
