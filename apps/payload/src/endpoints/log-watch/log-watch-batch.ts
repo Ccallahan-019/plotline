@@ -4,11 +4,15 @@ import type { Endpoint, PayloadRequest } from 'payload'
 import type { LogWatchBatchBody } from './types'
 
 import { SKIP_COMPLETED_WATCH_EVENT } from '../../collections/library-items/context'
-import { buildBatchTvProgressUpdate } from '../../collections/watch-events/utils/buildBatchTvProgressUpdate'
+import {
+  type BatchLoggedEpisode,
+  buildBatchTvProgressUpdate,
+} from '../../collections/watch-events/utils/buildBatchTvProgressUpdate'
 import { withLibraryItemRowLock } from '../../collections/watch-events/utils/withLibraryItemRowLock'
 import { runInPayloadTransaction } from '../../utilities/runInPayloadTransaction'
 import { parseId, parseJsonBody, requireProfileContext, requireServiceAuth } from '../helpers'
 import { createWatchEvent } from './create-watch-event'
+import { deriveLogWatchRewatch, loadLogWatchRewatchContext } from './derive-rewatch'
 import { parseLoggedEpisodes } from './parseLoggedEpisodes'
 import { resolveOrCreateLibraryItem } from './resolve-or-create-library-item'
 
@@ -67,6 +71,7 @@ export const logWatchBatchEndpoint: Endpoint = {
     const watchedAt = body.watchedAt ?? new Date().toISOString()
 
     const result = await runInPayloadTransaction(req, async () => {
+      // Status from this request is applied after derive so a first watch is not classified as a rewatch.
       const libraryItemResult = await resolveOrCreateLibraryItem(req, {
         mediaId,
         profileId,
@@ -77,13 +82,26 @@ export const logWatchBatchEndpoint: Endpoint = {
       }
 
       return withLibraryItemRowLock(req, libraryItemResult.id, async () => {
+        const context = await loadLogWatchRewatchContext(req, libraryItemResult.id)
+        const classifiedEpisodes: BatchLoggedEpisode[] = []
         const watchEvents: WatchEvent[] = []
 
         for (const episode of episodes) {
+          const derived = deriveLogWatchRewatch(context, {
+            episode: episode.episode,
+            season: episode.season,
+          })
+
+          classifiedEpisodes.push({
+            episode: episode.episode,
+            isRewatch: derived.isRewatch,
+            season: episode.season,
+          })
+
           watchEvents.push(
             await createWatchEvent(req, {
-              eventType: episode.isRewatch ? 'rewatched' : 'progress',
-              isRewatch: episode.isRewatch,
+              eventType: derived.eventType,
+              isRewatch: derived.isRewatch,
               libraryItemId: libraryItemResult.id,
               mediaId,
               platform: body.platform,
@@ -100,14 +118,6 @@ export const logWatchBatchEndpoint: Endpoint = {
           )
         }
 
-        const libraryItem = await req.payload.findByID({
-          collection: 'library-items',
-          depth: 0,
-          id: libraryItemResult.id,
-          overrideAccess: true,
-          req,
-        })
-
         const updatedLibraryItem = await req.payload.update({
           collection: 'library-items',
           context: {
@@ -115,7 +125,7 @@ export const logWatchBatchEndpoint: Endpoint = {
           },
           data: {
             lastWatchedAt: watchedAt,
-            progress: buildBatchTvProgressUpdate(episodes, libraryItem.progress),
+            progress: buildBatchTvProgressUpdate(classifiedEpisodes, context.libraryItem.progress),
             ...(body.libraryItemStatus ? { status: body.libraryItemStatus } : {}),
           },
           depth: 0,

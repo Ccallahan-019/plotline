@@ -13,15 +13,28 @@ async function errorMessage(result: unknown): Promise<string | undefined> {
 }
 
 describe('parseLoggedEpisodes', () => {
-  it('accepts integer season/episode values and per-episode isRewatch', () => {
+  it('accepts integer season/episode values including season 0 specials', () => {
     expect(
       parseLoggedEpisodes([
         { episode: 1, season: 0 },
-        { episode: '2', isRewatch: true, season: 1 },
+        { episode: '2', season: 1 },
       ]),
     ).toEqual([
       { episode: 1, season: 0 },
-      { episode: 2, isRewatch: true, season: 1 },
+      { episode: 2, season: 1 },
+    ])
+  })
+
+  it('ignores client isRewatch flags and keeps unique season/episode pairs only', () => {
+    expect(
+      parseLoggedEpisodes([
+        { episode: 1, isRewatch: true, season: 1 },
+        { episode: 1, season: 1 },
+        { episode: 2, isRewatch: false, season: 1 },
+      ]),
+    ).toEqual([
+      { episode: 1, season: 1 },
+      { episode: 2, season: 1 },
     ])
   })
 
@@ -54,32 +67,5 @@ describe('parseLoggedEpisodes', () => {
       { episode: 1, season: 1 },
       { episode: 2, season: 1 },
     ])
-  })
-
-  it('prefers first-watch when a rewatch of the same pair is listed first', () => {
-    expect(
-      parseLoggedEpisodes([
-        { episode: 1, isRewatch: true, season: 1 },
-        { episode: 1, season: 1 },
-      ]),
-    ).toEqual([{ episode: 1, season: 1 }])
-  })
-
-  it('keeps first-watch when a rewatch of the same pair is listed later', () => {
-    expect(
-      parseLoggedEpisodes([
-        { episode: 1, season: 1 },
-        { episode: 1, isRewatch: true, season: 1 },
-      ]),
-    ).toEqual([{ episode: 1, season: 1 }])
-  })
-
-  it('keeps rewatch when every occurrence of the same pair is a rewatch', () => {
-    expect(
-      parseLoggedEpisodes([
-        { episode: 1, isRewatch: true, season: 1 },
-        { episode: 1, isRewatch: true, season: 1 },
-      ]),
-    ).toEqual([{ episode: 1, isRewatch: true, season: 1 }])
   })
 })

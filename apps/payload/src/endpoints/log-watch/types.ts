@@ -1,8 +1,4 @@
-import type {
-  MediaStatus,
-  StreamingPlatform,
-  WatchEventType,
-} from '@plotline/shared/constants'
+import type { MediaStatus, StreamingPlatform } from '@plotline/shared/constants'
 
 export type LogWatchBatchBody = {
   episodes: LogWatchBatchEpisode[]
@@ -16,13 +12,10 @@ export type LogWatchBatchBody = {
 
 export type LogWatchBatchEpisode = {
   episode: number
-  isRewatch?: boolean
   season: number
 }
 
 export type LogWatchBody = {
-  eventType: WatchEventType
-  isRewatch?: boolean
   libraryItemStatus?: MediaStatus
   mediaId: number | string
   platform?: StreamingPlatform

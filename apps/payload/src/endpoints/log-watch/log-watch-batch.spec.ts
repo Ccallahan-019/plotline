@@ -38,6 +38,7 @@ vi.mock('../../collections/watch-events/utils/withLibraryItemRowLock', () => ({
 }))
 
 type BatchDb = {
+  existingWatchEvents: Array<{ tvContext?: null | WatchEvent['tvContext'] }>
   libraryItem: null | Pick<LibraryItem, 'id' | 'progress' | 'status'>
   media: Pick<Media, 'id' | 'mediaType'>
   profile: { id: number; statsCache: null | object }
@@ -82,6 +83,7 @@ describe('logWatchBatchEndpoint', () => {
     callOrder = []
     snapshot = null
     db = {
+      existingWatchEvents: [],
       libraryItem: createTvLibraryItem(),
       media: { id: 5, mediaType: 'tv' },
       profile: { id: 22, statsCache: { stale: true } },
@@ -91,7 +93,7 @@ describe('logWatchBatchEndpoint', () => {
   })
 
   function createReq(body: {
-    episodes: Array<{ episode: number; isRewatch?: boolean; season: number }>
+    episodes: Array<{ episode: number; season: number }>
     libraryItemStatus?: MediaStatus
     mediaId: number
   }) {
@@ -138,6 +140,10 @@ describe('logWatchBatchEndpoint', () => {
         find: vi.fn(async ({ collection }: { collection: string }) => {
           if (collection === 'library-items') {
             return { docs: db.libraryItem ? [db.libraryItem] : [] }
+          }
+
+          if (collection === 'watch-events') {
+            return { docs: db.existingWatchEvents, hasNextPage: false }
           }
 
           return { docs: [] }
@@ -315,18 +321,60 @@ describe('logWatchBatchEndpoint', () => {
     expect(response).toBeInstanceOf(Response)
     expect(response).toHaveProperty('status', 200)
     expect(createWatchEvent).toHaveBeenCalledTimes(1)
+    expect(createWatchEvent).toHaveBeenCalledWith(
+      req,
+      expect.objectContaining({
+        eventType: 'progress',
+        isRewatch: false,
+        tvContext: { episode: 1, season: 1 },
+      }),
+    )
     expect(db.watchEvents).toHaveLength(1)
     expect(db.libraryItem?.progress.episodesWatched).toBe(4)
     expect(commitTransaction).toHaveBeenCalled()
   })
 
-  it('creates a first-watch event and increments episodesWatched when a rewatch precedes a first-watch of the same pair', async () => {
+  it('derives a rewatch for a previously logged pair and leaves episodesWatched unchanged', async () => {
+    db.existingWatchEvents = [{ tvContext: { episode: 1, season: 1 } }]
     mockCreateWatchEvent()
 
     const { commitTransaction, req } = createReq({
+      episodes: [{ episode: 1, season: 1 }],
+      mediaId: 5,
+    })
+
+    const response = await logWatchBatchEndpoint.handler(req)
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response).toHaveProperty('status', 200)
+    expect(createWatchEvent).toHaveBeenCalledWith(
+      req,
+      expect.objectContaining({
+        eventType: 'rewatched',
+        isRewatch: true,
+        tvContext: { episode: 1, season: 1 },
+      }),
+    )
+    expect(db.libraryItem?.progress).toEqual({
+      episodesWatched: 3,
+      lastEpisode: 1,
+      lastSeason: 1,
+      type: 'tv',
+    })
+    expect(commitTransaction).toHaveBeenCalled()
+  })
+
+  it('mixes first-watch and rewatch in one batch and ignores events without tvContext', async () => {
+    db.existingWatchEvents = [
+      { tvContext: { episode: 1, season: 1 } },
+      { tvContext: null },
+    ]
+    mockCreateWatchEvent()
+
+    const { req } = createReq({
       episodes: [
-        { episode: 1, isRewatch: true, season: 1 },
         { episode: 1, season: 1 },
+        { episode: 2, season: 1 },
       ],
       mediaId: 5,
     })
@@ -335,16 +383,48 @@ describe('logWatchBatchEndpoint', () => {
 
     expect(response).toBeInstanceOf(Response)
     expect(response).toHaveProperty('status', 200)
-    expect(createWatchEvent).toHaveBeenCalledTimes(1)
-    expect(createWatchEvent).toHaveBeenCalledWith(
+    expect(createWatchEvent).toHaveBeenNthCalledWith(
+      1,
       req,
       expect.objectContaining({
-        eventType: 'progress',
+        eventType: 'rewatched',
+        isRewatch: true,
         tvContext: { episode: 1, season: 1 },
       }),
     )
-    expect(db.watchEvents).toHaveLength(1)
+    expect(createWatchEvent).toHaveBeenNthCalledWith(
+      2,
+      req,
+      expect.objectContaining({
+        eventType: 'progress',
+        isRewatch: false,
+        tvContext: { episode: 2, season: 1 },
+      }),
+    )
     expect(db.libraryItem?.progress.episodesWatched).toBe(4)
-    expect(commitTransaction).toHaveBeenCalled()
+  })
+
+  it('derives rewatch for every episode when the show is already completed', async () => {
+    db.libraryItem = createTvLibraryItem('completed')
+    mockCreateWatchEvent()
+
+    const { req } = createReq({
+      episodes: [
+        { episode: 1, season: 1 },
+        { episode: 2, season: 1 },
+      ],
+      mediaId: 5,
+    })
+
+    const response = await logWatchBatchEndpoint.handler(req)
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response).toHaveProperty('status', 200)
+    expect(createWatchEvent).toHaveBeenCalledTimes(2)
+    expect(createWatchEvent).toHaveBeenCalledWith(
+      req,
+      expect.objectContaining({ eventType: 'rewatched', isRewatch: true }),
+    )
+    expect(db.libraryItem?.progress.episodesWatched).toBe(3)
   })
 })
