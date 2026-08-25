@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildWatchEventLibraryItemProgressUpdate } from './buildWatchEventLibraryItemProgressUpdate'
+import { buildWatchEventLibraryItemProgressUpdate } from '../buildWatchEventLibraryItemProgressUpdate'
 
 describe('buildWatchEventLibraryItemProgressUpdate', () => {
   it('sets movie progress.watched on a first-watch completed event without incrementing rewatchCount', () => {

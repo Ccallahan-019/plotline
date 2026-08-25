@@ -2,10 +2,10 @@ import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { SKIP_PROGRESS_SYNC_FROM_WATCH_EVENT } from '../../library-items/context'
-import { syncLibraryItemFromWatchEvent } from './syncLibraryItemFromWatchEvent'
+import { SKIP_PROGRESS_SYNC_FROM_WATCH_EVENT } from '../../../library-items/context'
+import { syncLibraryItemFromWatchEvent } from '../syncLibraryItemFromWatchEvent'
 
-vi.mock('../utils/withLibraryItemRowLock', () => {
+vi.mock('../../utils/withLibraryItemRowLock', () => {
   let mutex = Promise.resolve()
 
   return {

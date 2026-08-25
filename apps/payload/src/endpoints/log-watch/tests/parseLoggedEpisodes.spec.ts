@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseLoggedEpisodes } from './parseLoggedEpisodes'
+import { parseLoggedEpisodes } from '../parseLoggedEpisodes'
 
 async function errorMessage(result: unknown): Promise<string | undefined> {
   if (!(result instanceof Response)) {

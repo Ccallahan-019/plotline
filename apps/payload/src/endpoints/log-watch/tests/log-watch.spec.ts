@@ -4,12 +4,12 @@ import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { withLibraryItemRowLock } from '../../collections/watch-events/utils/withLibraryItemRowLock'
-import { createWatchEvent } from './create-watch-event'
-import { logWatchEndpoint } from './log-watch'
+import { withLibraryItemRowLock } from '../../../collections/watch-events/utils/withLibraryItemRowLock'
+import { createWatchEvent } from '../create-watch-event'
+import { logWatchEndpoint } from '../log-watch'
 
-vi.mock('../helpers', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../helpers')>()
+vi.mock('../../helpers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../helpers')>()
 
   return {
     ...actual,
@@ -18,9 +18,9 @@ vi.mock('../helpers', async (importOriginal) => {
   }
 })
 
-vi.mock('./create-watch-event')
+vi.mock('../create-watch-event')
 
-vi.mock('../../collections/watch-events/utils/withLibraryItemRowLock', () => ({
+vi.mock('../../../collections/watch-events/utils/withLibraryItemRowLock', () => ({
   withLibraryItemRowLock: vi.fn(
     async (_req: PayloadRequest, _libraryItemId: number | string, fn: () => Promise<unknown>) =>
       fn(),

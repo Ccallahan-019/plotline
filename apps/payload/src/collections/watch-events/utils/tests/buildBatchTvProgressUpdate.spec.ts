@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildBatchTvProgressUpdate } from './buildBatchTvProgressUpdate'
+import { buildBatchTvProgressUpdate } from '../buildBatchTvProgressUpdate'
 
 describe('buildBatchTvProgressUpdate', () => {
   it('increments only non-rewatch episodes and keeps last position from the latest log, including rewatches', () => {

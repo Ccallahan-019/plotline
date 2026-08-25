@@ -3,7 +3,7 @@ import type { PayloadRequest } from 'payload'
 
 import { describe, expect, it, vi } from 'vitest'
 
-import { deriveLogWatchRewatch, loadLogWatchRewatchContext } from './derive-rewatch'
+import { deriveLogWatchRewatch, loadLogWatchRewatchContext } from '../derive-rewatch'
 
 function createMovieLibraryItem(
   overrides?: Partial<Pick<LibraryItem, 'progress' | 'status'>>,

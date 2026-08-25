@@ -1,7 +1,7 @@
 import { commitTransaction, initTransaction, killTransaction, type PayloadRequest } from 'payload'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { runInPayloadTransaction } from './runInPayloadTransaction'
+import { runInPayloadTransaction } from '../runInPayloadTransaction'
 
 vi.mock('payload', () => ({
   commitTransaction: vi.fn(),

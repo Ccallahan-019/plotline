@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { normalizeMediaGenreRows } from './normalizeMediaGenres'
+import { normalizeMediaGenreRows } from '../normalizeMediaGenres'
 
 describe('normalizeMediaGenreRows', () => {
   it('moves TMDB numeric ids onto tmdbId so Payload can generate array row ids', () => {
