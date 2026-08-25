@@ -185,14 +185,16 @@ export function suggestNextEpisode({
 /**
  * Library item to use after a successful log so the form can default the next TV episode.
  *
- * The single log-watch API returns the item from before watch-event progress sync, so TV
- * `lastSeason`/`lastEpisode` are taken from the submitted values. Populated media is kept
- * from the current item so season-end suggestions can still use `tvMeta`.
+ * Movies overlay `progress.watched` and `rewatchCount` from the submitted values (count is
+ * taken from the current item so a fresh API result is not incremented twice). TV
+ * `lastSeason`/`lastEpisode` come from the chronologically latest submitted episode.
+ * Populated media is kept from the current item so season-end suggestions can still use
+ * `tvMeta`.
  *
  * @param options.currentLibraryItem - Form session item; used for populated `media`
- * @param options.mediaType - `movie` skips episode overlay
+ * @param options.mediaType - `movie` overlays watched/rewatch; `tv` overlays episode progress
  * @param options.resultLibraryItem - Mutation result; supplies updated status and ids
- * @param options.values - Submitted form values; TV episode overlay source
+ * @param options.values - Submitted form values; movie rewatch and TV episode overlay source
  * @returns A library item whose progress matches the watch that was just logged
  */
 export function toLibraryItemAfterLogWatch({
@@ -202,10 +204,27 @@ export function toLibraryItemAfterLogWatch({
   values,
 }: ToLibraryItemAfterLogWatchOptions): LibraryItem {
   const media =
-    typeof currentLibraryItem.media === 'object' ? currentLibraryItem.media : resultLibraryItem.media
-  const submittedEpisode = values.episodes[0] ?? values.episode
+    typeof currentLibraryItem.media === 'object'
+      ? currentLibraryItem.media
+      : resultLibraryItem.media
+  const submittedEpisode = resolveLatestSubmittedEpisode(values)
 
-  if (mediaType !== 'tv' || submittedEpisode == null) {
+  if (mediaType === 'movie') {
+    return {
+      ...resultLibraryItem,
+      media,
+      progress: {
+        ...resultLibraryItem.progress,
+        type: 'movie',
+        watched: true,
+      },
+      ...(values.isRewatch === true
+        ? { rewatchCount: (currentLibraryItem.rewatchCount ?? 0) + 1 }
+        : {}),
+    }
+  }
+
+  if (submittedEpisode == null) {
     return {
       ...resultLibraryItem,
       media,
@@ -227,8 +246,8 @@ export function toLibraryItemAfterLogWatch({
 /**
  * Maps log-watch form values to a multi-episode mutation payload.
  *
- * Form-level `isRewatch` is merged onto every episode so a rewatch checkbox applies to the
- * whole batch, matching single-episode submit.
+ * Each selected row keeps its own `isRewatch`; form-level rewatch is not applied to the
+ * batch. Status transitions still use the TV planned → watching rule.
  *
  * @param currentStatus - Existing library status, used to decide status transitions
  * @param mediaId - Library media id to attach the watch events to
@@ -246,7 +265,7 @@ export function toLogWatchBatchInput({
   })
 
   return {
-    episodes: values.episodes.map((episode) => toBatchEpisode(episode, values.isRewatch)),
+    episodes: values.episodes.map(toBatchEpisode),
     mediaId,
     ...mapSharedWatchFields(values),
     ...(libraryItemStatus ? { libraryItemStatus } : {}),
@@ -376,9 +395,39 @@ function mapSharedWatchFields(
   }
 }
 
-// Form-level rewatch wins; otherwise the per-episode flag.
+// Explicit per-episode flag wins; otherwise the form-level quick-log checkbox.
 function resolveEpisodeRewatch(episode: LogWatchEpisodeInput, formIsRewatch: boolean): boolean {
-  return formIsRewatch || episode.isRewatch === true
+  if (typeof episode.isRewatch === 'boolean') {
+    return episode.isRewatch
+  }
+
+  return formIsRewatch
+}
+
+// Chronologically latest TV episode from the dialog selection, else the quick-log episode.
+function resolveLatestSubmittedEpisode(
+  values: LogWatchFormValues,
+): LogWatchEpisodeInput | undefined {
+  const submitted =
+    values.episodes.length > 0
+      ? [...values.episodes]
+      : values.episode != null
+        ? [values.episode]
+        : []
+
+  if (submitted.length === 0) {
+    return undefined
+  }
+
+  submitted.sort((left, right) => {
+    if (left.season !== right.season) {
+      return left.season - right.season
+    }
+
+    return left.episode - right.episode
+  })
+
+  return submitted.at(-1)
 }
 
 // First selected TV episode, with form-level and per-episode rewatch merged.
@@ -410,14 +459,11 @@ function seasonEpisodeCountFromTvMeta(tvMeta: Media['tvMeta'] | undefined): numb
   return tvMeta.episodeCount
 }
 
-// Batch episode row; includes `isRewatch` only when the merged flag is true.
-function toBatchEpisode(
-  episode: LogWatchEpisodeInput,
-  formIsRewatch: boolean,
-): LogWatchBatchInput['episodes'][number] {
+// Batch episode row; includes `isRewatch` only when that row is marked a rewatch.
+function toBatchEpisode(episode: LogWatchEpisodeInput): LogWatchBatchInput['episodes'][number] {
   return {
     episode: episode.episode,
     season: episode.season,
-    ...(resolveEpisodeRewatch(episode, formIsRewatch) ? { isRewatch: true } : {}),
+    ...(episode.isRewatch === true ? { isRewatch: true } : {}),
   }
 }

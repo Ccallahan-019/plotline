@@ -33,18 +33,25 @@ vi.mock('../utils/withLibraryItemRowLock', () => {
 
 function createHookArgs(options: {
   context?: Record<string, unknown>
-  episodesWatchedRef: { value: number }
+  doc?: Record<string, unknown>
+  episodesWatchedRef?: { value: number }
+  libraryItem?: Record<string, unknown>
+  rewatchCountRef?: { value: number }
 }) {
   const updates: Array<{ collection: string; data: Record<string, unknown> }> = []
+  const episodesWatchedRef = options.episodesWatchedRef ?? { value: 0 }
+  const rewatchCountRef = options.rewatchCountRef ?? { value: 0 }
 
   const req = {
     context: {},
     payload: {
       findByID: vi.fn(async () => ({
         progress: {
-          episodesWatched: options.episodesWatchedRef.value,
+          episodesWatched: episodesWatchedRef.value,
           type: 'tv',
         },
+        rewatchCount: rewatchCountRef.value,
+        ...options.libraryItem,
       })),
       update: vi.fn(async ({ collection, data }: { collection: string; data: Record<string, unknown> }) => {
         updates.push({ collection, data })
@@ -52,8 +59,12 @@ function createHookArgs(options: {
         if (collection === 'library-items' && data.progress != null) {
           const progress = data.progress as { episodesWatched?: number }
           if (progress.episodesWatched != null) {
-            options.episodesWatchedRef.value = progress.episodesWatched
+            episodesWatchedRef.value = progress.episodesWatched
           }
+        }
+
+        if (collection === 'library-items' && typeof data.rewatchCount === 'number') {
+          rewatchCountRef.value = data.rewatchCount
         }
       }),
     },
@@ -69,6 +80,7 @@ function createHookArgs(options: {
         profile: 22,
         tvContext: { episode: 2, season: 1 },
         watchedAt: '2026-08-17T12:00:00.000Z',
+        ...options.doc,
       },
       operation: 'create' as const,
       req,
@@ -123,5 +135,69 @@ describe('syncLibraryItemFromWatchEvent', () => {
 
     expect(watchedCounts.sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([6, 7])
     expect(episodesWatchedRef.value).toBe(7)
+  })
+
+  it('marks a movie as watched on a completed first-watch event', async () => {
+    const { args, updates } = createHookArgs({
+      doc: {
+        eventType: 'completed',
+        isRewatch: false,
+        tvContext: undefined,
+      },
+      libraryItem: {
+        progress: { type: 'movie', watched: false },
+        rewatchCount: 0,
+      },
+    })
+
+    await syncLibraryItemFromWatchEvent(args)
+
+    expect(updates).toEqual([
+      {
+        collection: 'library-items',
+        data: {
+          lastWatchedAt: '2026-08-17T12:00:00.000Z',
+          progress: { type: 'movie', watched: true },
+        },
+      },
+      {
+        collection: 'profiles',
+        data: { statsCache: null },
+      },
+    ])
+  })
+
+  it('increments movie rewatchCount and keeps watched true on a rewatch event', async () => {
+    const rewatchCountRef = { value: 0 }
+    const { args, updates } = createHookArgs({
+      doc: {
+        eventType: 'rewatched',
+        isRewatch: true,
+        tvContext: undefined,
+      },
+      libraryItem: {
+        progress: { type: 'movie', watched: true },
+        rewatchCount: 0,
+      },
+      rewatchCountRef,
+    })
+
+    await syncLibraryItemFromWatchEvent(args)
+
+    expect(rewatchCountRef.value).toBe(1)
+    expect(updates).toEqual([
+      {
+        collection: 'library-items',
+        data: {
+          lastWatchedAt: '2026-08-17T12:00:00.000Z',
+          progress: { type: 'movie', watched: true },
+          rewatchCount: 1,
+        },
+      },
+      {
+        collection: 'profiles',
+        data: { statsCache: null },
+      },
+    ])
   })
 })

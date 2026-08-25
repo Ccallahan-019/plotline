@@ -3,6 +3,7 @@ import { LibraryItem, Media } from '@plotline/payload-types'
 import { ShowIf } from '@/components/utils/ShowIf'
 
 import { useLogWatchForm } from '../../hooks/use-log-watch-form'
+import { syncQuickLogEpisode } from '../../services/episode-field'
 import { LogWatchDialog } from '../LogWatchDialog'
 import { LogWatchQuickForm } from '../LogWatchQuickForm'
 import { LogWatchPopoverChrome } from './LogWatchPopoverChrome'
@@ -41,7 +42,21 @@ export function LogWatchPopoverShell({
     onPopoverOpenChange(nextOpen)
   }
 
+  // Dialog cancel/dismiss must not leave a hidden multi-select; the popover only edits
+  // `episode`, and submit keys off `episodes.length`. Collapse back to the quick-log row.
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      syncQuickLogEpisode(form)
+    }
+
+    onDialogOpenChange(nextOpen)
+  }
+
   const handleMoreOptions = () => {
+    if (form.getFieldValue('episodes').length <= 1) {
+      syncQuickLogEpisode(form)
+    }
+
     onDialogOpenChange(true)
     onPopoverOpenChange(false)
   }
@@ -68,7 +83,7 @@ export function LogWatchPopoverShell({
         form={form}
         isSubmitting={isSubmitting}
         media={media}
-        onOpenChange={onDialogOpenChange}
+        onOpenChange={handleDialogOpenChange}
         open={dialogOpen}
       />
     </>

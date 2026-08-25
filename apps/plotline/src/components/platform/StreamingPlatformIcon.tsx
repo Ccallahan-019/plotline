@@ -1,9 +1,6 @@
 'use client'
 
-import type {
-  StreamingPlatform,
-  StreamingPlatformLucideIcon,
-} from '@plotline/shared/constants'
+import type { StreamingPlatform, StreamingPlatformLucideIcon } from '@plotline/shared/constants'
 import type { LucideIcon } from 'lucide-react'
 
 import { getStreamingPlatformMeta } from '@plotline/shared/constants'
@@ -41,14 +38,12 @@ export function StreamingPlatformIcon({
   size = 'sm',
 }: StreamingPlatformIconProps) {
   const meta = getStreamingPlatformMeta(platform)
-  const glyph = (
-    <PlatformGlyph logoPath={logoPath} lucideIcon={meta.lucideIcon} size={size} />
-  )
+  const glyph = <PlatformGlyph logoPath={logoPath} lucideIcon={meta.lucideIcon} size={size} />
 
   const content = (
     <span
       aria-label={showLabel ? undefined : meta.label}
-      className={cn('inline-flex items-center gap-1.5', className)}
+      className={cn('flex flex-col items-center gap-2', className)}
     >
       {glyph}
       {showLabel ? <span className="text-sm">{meta.label}</span> : null}
@@ -77,7 +72,8 @@ function PlatformGlyph({
   size: 'md' | 'sm'
 }) {
   const pixelSize = SIZE_PX[size]
-  const sizeClass = size === 'sm' ? 'size-5' : 'size-7'
+  const sizeClass = size === 'sm' ? 'size-5' : 'size-9'
+  const iconSizeClass = size === 'sm' ? 'size-4' : 'size-6'
 
   if (logoPath) {
     return (
@@ -94,5 +90,9 @@ function PlatformGlyph({
 
   const Icon = lucideIcon ? LUCIDE_ICONS[lucideIcon] : Tv
 
-  return <Icon aria-hidden className={sizeClass} />
+  return (
+    <div className="rounded-sm bg-muted p-2">
+      <Icon aria-hidden className={iconSizeClass} strokeWidth={1.5} />
+    </div>
+  )
 }

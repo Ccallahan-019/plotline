@@ -46,7 +46,10 @@ export function ToggleGroupField<T extends string>({
 
   return (
     <ToggleGroup
-      className={cn('flex w-full flex-wrap', className)}
+      className={cn(
+        'grid w-full gap-2 grid-cols-[repeat(auto-fill,minmax(min(100%,7rem),1fr))]',
+        className,
+      )}
       onBlur={(event) => {
         field.handleBlur()
         onBlur?.(event)
@@ -62,6 +65,7 @@ export function ToggleGroupField<T extends string>({
           disabled={item.disabled}
           key={item.value}
           value={item.value}
+          variant="outline"
         >
           {renderItem?.(item) ?? item.label}
         </ToggleGroupItem>

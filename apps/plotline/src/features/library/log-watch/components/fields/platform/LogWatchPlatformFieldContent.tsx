@@ -4,9 +4,9 @@ import { useMemo } from 'react'
 import { StreamingPlatformIcon } from '@/components/platform/StreamingPlatformIcon'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ToggleGroupField } from '@/features/forms/components/ToggleGroupField'
-import { cn } from '@/lib/utils'
 
 import { useStreamingPlatformLogos } from '../../../hooks/use-streaming-platform-logos'
+import { LogWatchPlatformPopoverField } from './LogWatchPlatformPopoverField'
 
 type LogWatchPlatformFieldContentProps = {
   disabled?: boolean
@@ -38,14 +38,15 @@ export function LogWatchPlatformFieldContent({
     )
   }
 
+  if (isCompact) {
+    return <LogWatchPlatformPopoverField disabled={disabled} placeholder="Select a platform..." />
+  }
+
   return (
     <ToggleGroupField
       allowDeselect
       disabled={disabled}
-      itemClassName={cn(
-        'data-[state=on]:ring-1 data-[state=on]:ring-ring',
-        isCompact ? 'size-8 p-0' : 'h-auto px-2 py-1.5',
-      )}
+      itemClassName="data-[state=on]:ring-1 data-[state=on]:ring-ring h-auto px-2 py-1.5"
       items={items}
       renderItem={(item) => (
         <StreamingPlatformIcon

@@ -23,7 +23,7 @@ export function LibraryItemDrawerContent({ item }: LibraryItemDrawerContentProps
 
   return (
     <div className="grid gap-6 md:grid-cols-3 md:gap-8 p-4">
-      <LibraryItemDrawerPrimaryColumn media={media} viewModel={viewModel} />
+      <LibraryItemDrawerPrimaryColumn libraryItem={item} viewModel={viewModel} />
       <LibraryItemDrawerProgressColumn viewModel={viewModel} />
       <LibraryItemDrawerDetailsColumn
         isLoadingWatchlists={isLoadingWatchlists}

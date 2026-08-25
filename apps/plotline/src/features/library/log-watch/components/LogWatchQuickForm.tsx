@@ -1,7 +1,7 @@
 'use client'
 
 import type { Media } from '@plotline/payload-types'
-import type { FormEvent } from 'react'
+import type { SubmitEvent } from 'react'
 
 import { Button } from '@/components/ui/button'
 
@@ -22,7 +22,7 @@ export function LogWatchQuickForm({
   media,
   onMoreOptions,
 }: LogWatchQuickFormProps) {
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
     void form.handleSubmit()
   }

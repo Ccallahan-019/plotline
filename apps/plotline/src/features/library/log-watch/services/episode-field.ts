@@ -1,6 +1,17 @@
 import type { TmdbTvSeasonEpisode } from '@plotline/shared/tmdb'
 
 import type { LogWatchFormApi } from '../hooks/use-log-watch-form'
+import type { LogWatchEpisodeInput } from './log-watch-form-schema'
+
+// `S1E3 — Episode Title` when TMDB provided a name; otherwise `S1E3`.
+export function formatEpisodeOption(
+  season: number,
+  episodeNumber: number,
+  name?: null | string,
+) {
+  const code = `S${season}E${episodeNumber}`
+  return name ? `${code} — ${name}` : code
+}
 
 /**
  * Season `<Select>` values from series metadata, always including the current season.
@@ -28,6 +39,75 @@ export function getSeasonSelectOptions(
   }
 
   return seasons
+}
+
+// Selected row for a season/episode pair, if the user included it in the batch.
+export function getSelectedEpisode(
+  episodes: readonly LogWatchEpisodeInput[],
+  season: number,
+  episode: number,
+): LogWatchEpisodeInput | undefined {
+  return episodes.find((entry) => entry.season === season && entry.episode === episode)
+}
+
+// True when the season/episode pair is already in the batch selection.
+export function isEpisodeSelected(
+  episodes: readonly LogWatchEpisodeInput[],
+  season: number,
+  episode: number,
+): boolean {
+  return episodes.some((entry) => entry.season === season && entry.episode === episode)
+}
+
+/**
+ * Rewatch flag to store on a dialog episode row when the user selects it.
+ *
+ * Already-selected rows keep their own flag, including an explicit `false`. Newly selected
+ * rows inherit the form-level quick-log Rewatch checkbox so opening More Options cannot
+ * drop a rewatch the user already marked.
+ *
+ * @param existing - Current row for that season/episode, if it is already selected
+ * @param formIsRewatch - Form-level Rewatch checkbox from the quick-log UI
+ * @returns The per-row `isRewatch` value to persist
+ */
+export function rewatchForSelectedEpisode(
+  existing: LogWatchEpisodeInput | undefined,
+  formIsRewatch: boolean,
+): boolean {
+  return existing?.isRewatch ?? formIsRewatch
+}
+
+/**
+ * Sets `isRewatch` on a selected episode row; unmatched rows are left unchanged.
+ *
+ * @param episodes - Currently selected episode rows
+ * @param season - Season of the row to update
+ * @param episode - Episode number of the row to update
+ * @param isRewatch - Per-episode rewatch flag for that row
+ * @returns A new selected-episode list
+ */
+export function setSelectedEpisodeRewatch(
+  episodes: readonly LogWatchEpisodeInput[],
+  season: number,
+  episode: number,
+  isRewatch: boolean,
+): LogWatchEpisodeInput[] {
+  return episodes.map((entry) =>
+    entry.season === season && entry.episode === episode ? { ...entry, isRewatch } : entry,
+  )
+}
+
+// Chronological order: season ascending, then episode ascending.
+export function sortLogWatchEpisodes(
+  episodes: readonly LogWatchEpisodeInput[],
+): LogWatchEpisodeInput[] {
+  return [...episodes].sort((left, right) => {
+    if (left.season !== right.season) {
+      return left.season - right.season
+    }
+
+    return left.episode - right.episode
+  })
 }
 
 /**
@@ -66,6 +146,29 @@ export function syncQuickLogEpisodeAfterSeasonChange(form: LogWatchFormApi) {
 }
 
 /**
+ * Copies a single selected dialog episode back onto the quick-log fields.
+ *
+ * Multiple selected rows leave `episode` / `isRewatch` alone so per-episode rewatch stays
+ * the source of truth for batch submit. Clearing the last row also clears `episode`.
+ *
+ * @param form - Log-watch form API used to read and write episode fields
+ */
+export function syncQuickLogEpisodeFromSelection(form: LogWatchFormApi) {
+  const episodes = form.getFieldValue('episodes')
+  const selected = episodes[0]
+
+  if (episodes.length === 1 && selected != null) {
+    form.setFieldValue('episode', selected)
+    form.setFieldValue('isRewatch', selected.isRewatch === true)
+    return
+  }
+
+  if (episodes.length === 0) {
+    form.setFieldValue('episode', undefined)
+  }
+}
+
+/**
  * Maps TMDB episodes to select items labeled `S{n}E{m} — {name}` when a title exists.
  *
  * @param season - Season number used in the label prefix
@@ -79,8 +182,26 @@ export function toEpisodeSelectItems(season: number, episodes: TmdbTvSeasonEpiso
   }))
 }
 
-// `S1E3 — Episode Title` when TMDB provided a name; otherwise `S1E3`.
-function formatEpisodeOption(season: number, episodeNumber: number, name: null | string) {
-  const code = `S${season}E${episodeNumber}`
-  return name ? `${code} — ${name}` : code
+/**
+ * Adds or removes an episode from the dialog multi-select, keeping chronological order.
+ *
+ * @param episodes - Currently selected episode rows
+ * @param next - Season/episode to toggle; `isRewatch` is used only when selecting
+ * @param selected - Whether the episode should remain in the batch
+ * @returns A new selected-episode list
+ */
+export function upsertSelectedEpisode(
+  episodes: readonly LogWatchEpisodeInput[],
+  next: LogWatchEpisodeInput,
+  selected: boolean,
+): LogWatchEpisodeInput[] {
+  const without = episodes.filter(
+    (entry) => entry.season !== next.season || entry.episode !== next.episode,
+  )
+
+  if (!selected) {
+    return without
+  }
+
+  return sortLogWatchEpisodes([...without, next])
 }

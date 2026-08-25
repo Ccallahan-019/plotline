@@ -9,25 +9,33 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
+import { ShowIf } from '../utils/ShowIf'
+
 type DatePickerProps = {
   'aria-invalid'?: boolean
+  calendarClassName?: string
   className?: string
   disabled?: boolean
   id?: string
   maxDate?: Date
   onChange: (date: Date | undefined) => void
+  onOpenChange?: (open: boolean) => void
   placeholder?: string
+  size?: 'default' | 'lg' | 'sm'
   value?: Date
 }
 
 function DatePicker({
   'aria-invalid': ariaInvalid,
+  calendarClassName,
   className,
   disabled = false,
   id,
   maxDate,
   onChange,
+  onOpenChange,
   placeholder = 'Pick a date',
+  size = 'default',
   value,
 }: DatePickerProps) {
   const selectedDate = toValidDate(value)
@@ -48,6 +56,7 @@ function DatePicker({
       setMonth(selectedDate ?? maxSelectableDate ?? startOfDay(new Date()))
     }
     setOpen(nextOpen)
+    onOpenChange?.(nextOpen)
   }
 
   const handleSelect = (date: Date | undefined) => {
@@ -69,6 +78,7 @@ function DatePicker({
               className,
             )}
             disabled={disabled}
+            size={size}
             type="button"
             variant="outline"
           />
@@ -78,10 +88,12 @@ function DatePicker({
         {selectedDate ? format(selectedDate, 'PPP') : <span>{placeholder}</span>}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">
-        {open ? (
+        <ShowIf condition={open}>
           <Calendar
-            autoFocus
+            // Do not autoFocus: the popup is portaled and not yet positioned,
+            // so focusing a day would scroll the page to the top.
             captionLayout="dropdown"
+            className={cn(calendarClassName, '[--cell-size:--spacing(10)]')}
             disabled={maxSelectableDate ? { after: maxSelectableDate } : undefined}
             endMonth={maxSelectableDate}
             mode="single"
@@ -90,7 +102,7 @@ function DatePicker({
             onSelect={handleSelect}
             selected={selectedDate}
           />
-        ) : null}
+        </ShowIf>
       </PopoverContent>
     </Popover>
   )

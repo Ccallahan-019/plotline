@@ -1,6 +1,6 @@
 'use client'
 
-import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field'
+import { FieldGroup } from '@/components/ui/field'
 
 import type { LogWatchFormApi } from '../../../hooks/use-log-watch-form'
 
@@ -25,41 +25,36 @@ export function LogWatchEpisodeField({
   const hasTmdbId = tmdbId != null && tmdbId > 0
 
   return (
-    <FieldSet>
-      <FieldLegend>Episode</FieldLegend>
-      <FieldGroup>
-        <div className="grid grid-cols-2 gap-2">
-          <form.Subscribe selector={(state) => state.values.episode?.season ?? 1}>
-            {(season) => (
-              <>
-                <SeasonField
-                  disabled={disabled}
-                  form={form}
-                  hasTmdbId={hasTmdbId}
-                  season={season}
-                  seasonCount={seasonCount}
-                />
+    <FieldGroup className="gap-5!">
+      <form.Subscribe selector={(state) => state.values.episode?.season ?? 1}>
+        {(season) => (
+          <>
+            <SeasonField
+              disabled={disabled}
+              form={form}
+              hasTmdbId={hasTmdbId}
+              season={season}
+              seasonCount={seasonCount}
+            />
 
-                <EpisodeNumberField
-                  disabled={disabled}
-                  form={form}
-                  hasTmdbId={hasTmdbId}
-                  season={season}
-                  tmdbId={tmdbId}
-                />
-              </>
-            )}
-          </form.Subscribe>
-        </div>
+            <EpisodeNumberField
+              disabled={disabled}
+              form={form}
+              hasTmdbId={hasTmdbId}
+              season={season}
+              tmdbId={tmdbId}
+            />
+          </>
+        )}
+      </form.Subscribe>
 
-        <LogWatchRewatchField
-          disabled={disabled}
-          form={form}
-          onCheckedChange={() => {
-            syncQuickLogEpisode(form)
-          }}
-        />
-      </FieldGroup>
-    </FieldSet>
+      <LogWatchRewatchField
+        disabled={disabled}
+        form={form}
+        onCheckedChange={() => {
+          syncQuickLogEpisode(form)
+        }}
+      />
+    </FieldGroup>
   )
 }

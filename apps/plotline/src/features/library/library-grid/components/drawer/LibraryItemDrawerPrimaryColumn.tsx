@@ -1,23 +1,23 @@
-import { Media } from '@plotline/payload-types'
+import { LibraryItem } from '@plotline/payload-types'
 import { PencilLine } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { StatusBadge } from '@/components/utils/StatusBadge'
+import { LogWatchPopover } from '@/features/library/log-watch/components/popover/LogWatchPopover'
 import { MediaGridPoster } from '@/features/media-grid/grid/components/MediaGridPoster'
 
 import { LibraryItemDrawerViewModel } from '../../types'
-import { LogWatchButton } from '../grid/LogWatchButton'
 import { LibraryItemDrawerPlaceholder } from './LibraryItemDrawerPlaceholder'
 import { LibraryItemDrawerSection } from './LibraryItemDrawerSection'
 
 type LibraryItemDrawerPrimaryColumnProps = {
-  media: Media
+  libraryItem: LibraryItem
   viewModel: LibraryItemDrawerViewModel
 }
 
 export function LibraryItemDrawerPrimaryColumn({
-  media,
+  libraryItem,
   viewModel,
 }: LibraryItemDrawerPrimaryColumnProps) {
   const durationLabel =
@@ -57,7 +57,7 @@ export function LibraryItemDrawerPrimaryColumn({
       </div>
 
       <div className="flex gap-2">
-        <LogWatchButton media={media} />
+        <LogWatchPopover libraryItem={libraryItem} />
         <Button className="w-fit" disabled type="button" variant="secondary">
           Update Status
         </Button>

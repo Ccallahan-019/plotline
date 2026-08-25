@@ -5,7 +5,10 @@ import {
   SKIP_COMPLETED_WATCH_EVENT,
   SKIP_PROGRESS_SYNC_FROM_WATCH_EVENT,
 } from '../../library-items/context'
-import { buildTvProgressUpdate } from '../utils/buildTvProgressUpdate'
+import {
+  buildWatchEventLibraryItemProgressUpdate,
+  isRewatchWatchEvent,
+} from '../utils/buildWatchEventLibraryItemProgressUpdate'
 import { withLibraryItemRowLock } from '../utils/withLibraryItemRowLock'
 
 export const syncLibraryItemFromWatchEvent: CollectionAfterChangeHook = async ({
@@ -45,7 +48,10 @@ export const syncLibraryItemFromWatchEvent: CollectionAfterChangeHook = async ({
       })
     }
 
-    if (!skipProgressSync && doc.eventType === 'progress' && doc.tvContext) {
+    const shouldSyncTvProgress = doc.eventType === 'progress' && doc.tvContext
+    const shouldSyncMovieWatch = doc.eventType === 'completed' || isRewatchWatchEvent(doc)
+
+    if (!skipProgressSync && (shouldSyncTvProgress || shouldSyncMovieWatch)) {
       await withLibraryItemRowLock(req, libraryItemId, async () => {
         const libraryItem = await req.payload.findByID({
           collection: 'library-items',
@@ -55,9 +61,7 @@ export const syncLibraryItemFromWatchEvent: CollectionAfterChangeHook = async ({
           req,
         })
 
-        updateData.progress = buildTvProgressUpdate(doc.tvContext, libraryItem?.progress, {
-          isRewatch: doc.isRewatch ?? false,
-        })
+        Object.assign(updateData, buildWatchEventLibraryItemProgressUpdate(doc, libraryItem))
 
         await applyLibraryItemUpdate()
       })

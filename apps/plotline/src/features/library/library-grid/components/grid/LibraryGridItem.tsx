@@ -4,11 +4,11 @@ import type { LibraryItem } from '@plotline/payload-types'
 
 import { AnimatedStatusBadge } from '@/components/utils/AnimatedStatusBadge'
 import { LibraryItemDrawer } from '@/features/library/library-grid/components/drawer/LibraryItemDrawer'
+import { LogWatchPopover } from '@/features/library/log-watch/components/popover/LogWatchPopover'
 import { getMediaFromLibraryItem } from '@/features/library/services/get-media-from-library-item'
 import { MediaGridItem } from '@/features/media-grid/grid/components/MediaGridItem'
 
 import { toMediaDisplayFromLibraryItem } from '../../services/to-media-display-from-library-item'
-import { AnimatedLogWatchButton } from './AnimatedLogWatchButton'
 
 type LibraryGridItemProps = {
   item: LibraryItem
@@ -35,11 +35,7 @@ export function LibraryGridItem({ item }: LibraryGridItemProps) {
               triggerAnimation={isHovered}
             />
             <div className="flex justify-end gap-2">
-              <AnimatedLogWatchButton
-                animationKey={item.id.toString()}
-                media={media}
-                triggerAnimation={isHovered}
-              />
+              <LogWatchPopover libraryItem={item} />
               <LibraryItemDrawer item={item} />
             </div>
           </div>

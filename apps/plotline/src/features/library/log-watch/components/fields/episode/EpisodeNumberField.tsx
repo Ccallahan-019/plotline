@@ -22,7 +22,10 @@ export function EpisodeNumberField({
     enabled: hasTmdbId,
   })
 
+  const tmdbEpisodes = data?.episodes ?? []
   const showTmdbEpisodeSelect = hasTmdbId && !isError
+  // Empty TMDB seasons still need the numeric field; otherwise the select has no options.
+  const isEmptyTmdbSeason = showTmdbEpisodeSelect && tmdbEpisodes.length === 0
 
   if (isPending) {
     return <Skeleton className="h-8 w-full" />
@@ -38,14 +41,15 @@ export function EpisodeNumberField({
       name="episode.episode"
     >
       {(field) => (
-        <Field data-disabled={disabled}>
-          <FieldLabel>Episode</FieldLabel>
-          <FieldContent>
-            {showTmdbEpisodeSelect ? (
+        <Field className="items-center!" data-disabled={disabled} orientation="horizontal">
+          <FieldLabel className="max-w-20">Episode</FieldLabel>
+          <FieldContent className="min-w-0">
+            {showTmdbEpisodeSelect && !isEmptyTmdbSeason ? (
               <field.SelectField
+                align="start"
                 aria-label="Episode"
                 disabled={disabled}
-                items={toEpisodeSelectItems(season, data?.episodes ?? [])}
+                items={toEpisodeSelectItems(season, tmdbEpisodes)}
               />
             ) : (
               <field.NumberField aria-label="Episode" disabled={disabled} min={0} />

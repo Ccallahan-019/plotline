@@ -29,8 +29,8 @@ export function SeasonField({
       name="episode.season"
     >
       {(field) => (
-        <Field data-disabled={disabled}>
-          <FieldLabel>Season</FieldLabel>
+        <Field className="items-center!" data-disabled={disabled} orientation="horizontal">
+          <FieldLabel className="max-w-20">Season</FieldLabel>
           <FieldContent>
             {hasTmdbId ? (
               <field.SelectField

@@ -58,8 +58,16 @@ export const logWatchEndpoint: Endpoint = {
       watchedAt: body.watchedAt,
     })
 
+    const libraryItem = await req.payload.findByID({
+      collection: 'library-items',
+      depth: 0,
+      id: libraryItemResult.id,
+      overrideAccess: true,
+      req,
+    })
+
     return Response.json({
-      libraryItem: libraryItemResult,
+      libraryItem,
       watchEvent,
     })
   },

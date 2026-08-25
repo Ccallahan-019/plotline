@@ -27,9 +27,9 @@ export function DateField({ allowEmpty = false, id, onChange, ...props }: DateFi
     <DatePicker
       aria-invalid={isInvalid}
       id={inputId}
-      {...props}
       onChange={handleChange}
       value={field.state.value}
+      {...props}
     />
   )
 }

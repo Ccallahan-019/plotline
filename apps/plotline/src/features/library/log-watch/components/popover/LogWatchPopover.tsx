@@ -1,3 +1,5 @@
+'use client'
+
 import { LibraryItem } from '@plotline/payload-types'
 import { useState } from 'react'
 

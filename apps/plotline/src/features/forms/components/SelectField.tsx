@@ -1,6 +1,14 @@
 'use client'
 
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
+import { ComponentProps } from 'react'
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 import { useFieldContext } from '../contexts/form-contexts'
@@ -12,6 +20,7 @@ export type SelectFieldItem<T extends number | string = string> = {
 }
 
 type SelectFieldProps<T extends number | string> = {
+  align?: ComponentProps<typeof SelectContent>['align']
   allowEmpty?: boolean
   'aria-label'?: string
   className?: string
@@ -26,6 +35,7 @@ type SelectFieldProps<T extends number | string> = {
 >
 
 export function SelectField<T extends number | string>({
+  align = 'start',
   allowEmpty = false,
   'aria-label': ariaLabel,
   className,
@@ -73,23 +83,25 @@ export function SelectField<T extends number | string>({
     <Select
       name={field.name}
       onValueChange={handleValueChange}
-      value={field.state.value}
+      value={field.state.value ?? null}
       {...props}
     >
       <SelectTrigger
         aria-invalid={isInvalid}
         aria-label={ariaLabel}
-        className={cn('w-full', className)}
+        className={cn('min-w-0 w-full', className)}
         id={triggerId}
       >
-        {triggerContent}
+        <span className="min-w-0 flex-1 truncate text-left">{triggerContent}</span>
       </SelectTrigger>
-      <SelectContent alignItemWithTrigger={false} className="p-1">
-        {items.map((item) => (
-          <SelectItem disabled={item.disabled} key={String(item.value)} value={item.value}>
-            {renderItem?.(item) ?? item.label}
-          </SelectItem>
-        ))}
+      <SelectContent align={align} className="min-w-fit">
+        <SelectGroup>
+          {items.map((item) => (
+            <SelectItem disabled={item.disabled} key={String(item.value)} value={item.value}>
+              {renderItem?.(item) ?? item.label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
       </SelectContent>
     </Select>
   )
