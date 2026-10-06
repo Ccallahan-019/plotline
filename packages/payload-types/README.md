@@ -5,9 +5,9 @@ Generated TypeScript types for the Plotline Payload CMS schema.
 ## Usage
 
 ```typescript
-import type { Config } from "@plotline/payload-types";
+import type { Config } from '@plotline/payload-types'
 
-type Media = Config["collections"]["media"];
+type Media = Config['collections']['media']
 ```
 
 Both `apps/payload` and `apps/plotline` depend on this package for typed REST responses and collection shapes.

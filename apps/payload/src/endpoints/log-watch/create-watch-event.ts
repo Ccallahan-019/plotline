@@ -1,0 +1,74 @@
+import type { WatchEvent } from '@plotline/payload-types'
+import type { StreamingPlatform, WatchEventType } from '@plotline/shared/constants'
+import type { PayloadRequest } from 'payload'
+
+import { SKIP_PROGRESS_SYNC_FROM_WATCH_EVENT } from '../../collections/library-items/context'
+
+export type CreateWatchEventInput = {
+  eventType: WatchEventType
+  isRewatch?: boolean
+  libraryItemId: number
+  mediaId: number
+  platform?: StreamingPlatform
+  platformOther?: string
+  profileId: number
+  runtimeMinutes?: number
+  skipProgressSync?: boolean
+  tvContext?: {
+    episode?: number
+    season?: number
+  }
+  visibility?: 'friends' | 'private' | 'public'
+  watchedAt?: string
+}
+
+export async function createWatchEvent(
+  req: PayloadRequest,
+  input: CreateWatchEventInput,
+): Promise<WatchEvent> {
+  const {
+    eventType,
+    isRewatch,
+    libraryItemId,
+    mediaId,
+    platform,
+    platformOther,
+    profileId,
+    runtimeMinutes,
+    skipProgressSync,
+    tvContext,
+    visibility,
+    watchedAt,
+  } = input
+
+  try {
+    return await req.payload.create({
+      collection: 'watch-events',
+      context: skipProgressSync
+        ? {
+            [SKIP_PROGRESS_SYNC_FROM_WATCH_EVENT]: true,
+          }
+        : undefined,
+      data: {
+        eventType,
+        isRewatch: isRewatch ?? false,
+        libraryItem: libraryItemId,
+        media: mediaId,
+        platform,
+        platformOther,
+        profile: profileId,
+        runtimeMinutes,
+        tvContext,
+        visibility: visibility ?? 'private',
+        watchedAt: watchedAt ?? new Date().toISOString(),
+      },
+      overrideAccess: true,
+      req,
+    })
+  } finally {
+    // Payload merges `context` into `req.context`; drop the flag so it only covers this create.
+    if (skipProgressSync && req.context) {
+      delete req.context[SKIP_PROGRESS_SYNC_FROM_WATCH_EVENT]
+    }
+  }
+}

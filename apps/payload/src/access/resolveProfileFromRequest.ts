@@ -2,9 +2,7 @@ import type { PayloadRequest } from 'payload'
 
 const PROFILE_ID_CONTEXT_KEY = 'profileId'
 
-export async function resolveProfileFromRequest(
-  req: PayloadRequest,
-): Promise<null | number> {
+export async function resolveProfileFromRequest(req: PayloadRequest): Promise<null | number> {
   req.context ??= {}
 
   const existingProfileId = req.context[PROFILE_ID_CONTEXT_KEY]

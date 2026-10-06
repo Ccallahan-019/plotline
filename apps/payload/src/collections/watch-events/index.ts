@@ -4,7 +4,7 @@ import {
   STREAMING_PLATFORMS,
   VISIBILITIES,
   WATCH_EVENT_TYPES,
-} from '@plotline/shared/constants/media'
+} from '@plotline/shared/constants'
 
 import { watchEventsAccess } from './access'
 import { syncLibraryItemFromWatchEvent } from './hooks/syncLibraryItemFromWatchEvent'

@@ -1,15 +1,84 @@
-import type { MediaStatus } from '@plotline/shared/constants/media'
+import type { MediaStatus } from '@plotline/shared/constants'
+import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 import type { Endpoint, PayloadRequest } from 'payload'
 
 import { getRelationId, relationIdsMatch } from '../utilities/relations'
+import { upsertMediaFromTmdb } from '../utilities/upsertMediaFromTmdb'
 import { parseId, parseJsonBody, requireProfileContext, requireServiceAuth } from './helpers'
 
 type AddToListBody = {
-  mediaId: number | string
+  mediaId?: number | string
   note?: string
+  releaseStatus?: TmdbUpsertMediaInput['status']
   status?: MediaStatus
   watchlistId?: number | string
   watchlistSlug?: string
+} & Partial<Omit<TmdbUpsertMediaInput, 'metadataSyncedAt' | 'status'>>
+
+async function resolveMedia(req: PayloadRequest, body: AddToListBody) {
+  const mediaId = body.mediaId != null ? parseId(body.mediaId) : null
+
+  if (body.mediaId != null && mediaId === null) {
+    return Response.json({ error: 'mediaId must be a valid number' }, { status: 400 })
+  }
+
+  if (mediaId != null && body.tmdbId != null) {
+    return Response.json(
+      { error: 'Provide either mediaId or tmdbId with mediaType, not both' },
+      { status: 400 },
+    )
+  }
+
+  if (mediaId != null) {
+    const media = await req.payload.findByID({
+      collection: 'media',
+      depth: 0,
+      id: mediaId,
+      overrideAccess: true,
+    })
+
+    if (!media) {
+      return Response.json({ error: 'Media not found' }, { status: 404 })
+    }
+
+    return media
+  }
+
+  if (body.tmdbId == null || body.mediaType == null) {
+    return Response.json(
+      { error: 'mediaId or (tmdbId, mediaType, and title) are required' },
+      { status: 400 },
+    )
+  }
+
+  if (!body.title?.trim()) {
+    return Response.json({ error: 'title is required when using tmdbId' }, { status: 400 })
+  }
+
+  return upsertMediaFromTmdb(req, toUpsertMediaInput(body))
+}
+
+function toUpsertMediaInput(body: AddToListBody): TmdbUpsertMediaInput {
+  const { releaseStatus, ...rest } = body
+
+  return {
+    backdropPath: rest.backdropPath,
+    externalIds: rest.externalIds,
+    genres: rest.genres,
+    mediaType: rest.mediaType!,
+    originalTitle: rest.originalTitle,
+    overview: rest.overview,
+    popularity: rest.popularity,
+    posterPath: rest.posterPath,
+    releaseDate: rest.releaseDate,
+    runtime: rest.runtime,
+    status: releaseStatus,
+    tagline: rest.tagline,
+    title: rest.title!,
+    tmdbId: rest.tmdbId!,
+    tvMeta: rest.tvMeta,
+    voteAverage: rest.voteAverage,
+  }
 }
 
 export const addToListEndpoint: Endpoint = {
@@ -30,12 +99,6 @@ export const addToListEndpoint: Endpoint = {
 
     if (body instanceof Response) {
       return body
-    }
-
-    const mediaId = parseId(body.mediaId)
-
-    if (mediaId === null) {
-      return Response.json({ error: 'mediaId is required' }, { status: 400 })
     }
 
     if (body.watchlistId == null && body.watchlistSlug == null) {
@@ -87,16 +150,14 @@ export const addToListEndpoint: Endpoint = {
       return Response.json({ error: 'Watchlist not found' }, { status: 404 })
     }
 
-    const media = await req.payload.findByID({
-      collection: 'media',
-      depth: 0,
-      id: mediaId,
-      overrideAccess: true,
-    })
+    const mediaResult = await resolveMedia(req, body)
 
-    if (!media) {
-      return Response.json({ error: 'Media not found' }, { status: 404 })
+    if (mediaResult instanceof Response) {
+      return mediaResult
     }
+
+    const media = mediaResult
+    const mediaId = media.id
 
     const existingLibraryItems = await req.payload.find({
       collection: 'library-items',

@@ -58,5 +58,9 @@ export const isWatchlistMembershipOwner: Access = async ({ data, id, req }) => {
     return relationIdsMatch(getRelationId(watchlist.owner), profileId)
   }
 
-  return false
+  return {
+    'watchlist.owner': {
+      equals: profileId,
+    },
+  }
 }

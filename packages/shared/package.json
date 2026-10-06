@@ -5,16 +5,15 @@
   "type": "module",
   "exports": {
     "./tmdb": "./src/tmdb/index.ts",
-    "./tmdb/client": "./src/tmdb/client.ts",
-    "./tmdb/schemas": "./src/tmdb/schemas.ts",
-    "./constants/media": "./src/constants/media.ts",
-    "./constants/watchlist-challenge": "./src/constants/watchlist-challenge.ts",
+    "./constants": "./src/constants/index.ts",
     "./watchlist-stats": "./src/watchlist-stats/index.ts",
-    "./utils/dates": "./src/utils/dates.ts",
+    "./log-watch": "./src/log-watch/index.ts",
+    "./utils": "./src/utils/index.ts",
     "./env": "./src/env.ts"
   },
   "scripts": {
     "lint": "eslint .",
+    "test": "vitest run --config ./vitest.config.mts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -25,6 +24,7 @@
     "@plotline/eslint-config": "workspace:*",
     "@plotline/typescript-config": "workspace:*",
     "eslint": "^9.39.1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "4.0.18"
   }
 }

@@ -1,10 +1,11 @@
 import type { CollectionConfig } from 'payload'
 
-import { MEDIA_RELEASE_STATUSES, MEDIA_TYPES } from '@plotline/shared/constants/media'
+import { MEDIA_RELEASE_STATUSES, MEDIA_TYPES } from '@plotline/shared/constants'
 
 import { mediaAccess } from './access'
 import { deriveDecadeAndSearchKeywords } from './hooks/deriveDecadeAndSearchKeywords'
 import { enforceUniqueTmdbMedia } from './hooks/enforceUniqueTmdbMedia'
+import { normalizeMediaGenres } from './hooks/normalizeMediaGenres'
 
 export const Media: CollectionConfig = {
   access: mediaAccess,
@@ -73,7 +74,7 @@ export const Media: CollectionConfig = {
     {
       fields: [
         {
-          name: 'id',
+          name: 'tmdbId',
           required: true,
           type: 'number',
         },
@@ -106,6 +107,22 @@ export const Media: CollectionConfig = {
         {
           name: 'episodeCount',
           type: 'number',
+        },
+        {
+          fields: [
+            {
+              name: 'season',
+              required: true,
+              type: 'number',
+            },
+            {
+              name: 'episodeCount',
+              required: true,
+              type: 'number',
+            },
+          ],
+          name: 'seasonEpisodeCounts',
+          type: 'array',
         },
         {
           name: 'inProduction',
@@ -154,7 +171,7 @@ export const Media: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [deriveDecadeAndSearchKeywords],
-    beforeValidate: [enforceUniqueTmdbMedia],
+    beforeValidate: [normalizeMediaGenres, enforceUniqueTmdbMedia],
   },
   indexes: [
     {

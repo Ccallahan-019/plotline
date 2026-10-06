@@ -205,8 +205,9 @@ export interface Media {
   runtime?: number | null;
   genres?:
     | {
-        id: number;
+        tmdbId: number;
         name: string;
+        id?: string | null;
       }[]
     | null;
   popularity?: number | null;
@@ -214,6 +215,13 @@ export interface Media {
   tvMeta?: {
     seasonCount?: number | null;
     episodeCount?: number | null;
+    seasonEpisodeCounts?:
+      | {
+          season: number;
+          episodeCount: number;
+          id?: string | null;
+        }[]
+      | null;
     inProduction?: boolean | null;
     nextEpisodeDate?: string | null;
     nextEpisodeSeason?: number | null;
@@ -363,21 +371,7 @@ export interface Review {
   media: number | Media;
   rating: number;
   title?: string | null;
-  body?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
+  body?: string | null;
   containsSpoilers?: boolean | null;
   watchedAt?: string | null;
   visibility: 'private' | 'friends' | 'public';
@@ -552,8 +546,9 @@ export interface MediaSelect<T extends boolean = true> {
   genres?:
     | T
     | {
-        id?: T;
+        tmdbId?: T;
         name?: T;
+        id?: T;
       };
   popularity?: T;
   voteAverage?: T;
@@ -562,6 +557,13 @@ export interface MediaSelect<T extends boolean = true> {
     | {
         seasonCount?: T;
         episodeCount?: T;
+        seasonEpisodeCounts?:
+          | T
+          | {
+              season?: T;
+              episodeCount?: T;
+              id?: T;
+            };
         inProduction?: T;
         nextEpisodeDate?: T;
         nextEpisodeSeason?: T;

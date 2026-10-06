@@ -1,89 +1,126 @@
 import {
+  type TmdbGenreList,
+  tmdbGenreListSchema,
   type TmdbMovieDetails,
   tmdbMovieDetailsSchema,
   type TmdbSearchResponse,
   tmdbSearchResponseSchema,
   type TmdbTvDetails,
   tmdbTvDetailsSchema,
-} from "./schemas";
+  type TmdbTvSeasonDetails,
+  tmdbTvSeasonDetailsSchema,
+  type TmdbWatchProviderList,
+  tmdbWatchProviderListSchema,
+} from './schemas'
 
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 
 export type TmdbClientOptions = {
-  apiKey: string;
-  baseUrl?: string;
-};
+  accessToken: string
+  baseUrl?: string
+}
 
 export class TmdbClient {
-  private readonly apiKey: string;
-  private readonly baseUrl: string;
+  private readonly accessToken: string
+  private readonly baseUrl: string
 
   constructor(options: TmdbClientOptions) {
-    this.apiKey = options.apiKey;
-    this.baseUrl = options.baseUrl ?? TMDB_BASE_URL;
+    this.accessToken = normalizeAccessToken(options.accessToken)
+    this.baseUrl = options.baseUrl ?? TMDB_BASE_URL
+  }
+
+  async discoverMovie(page = 1, params: Record<string, string> = {}): Promise<TmdbSearchResponse> {
+    return this.fetchValidated('/discover/movie', tmdbSearchResponseSchema, {
+      page: String(page),
+      sort_by: 'popularity.desc',
+      ...params,
+    })
+  }
+
+  async discoverTv(page = 1, params: Record<string, string> = {}): Promise<TmdbSearchResponse> {
+    return this.fetchValidated('/discover/tv', tmdbSearchResponseSchema, {
+      page: String(page),
+      sort_by: 'popularity.desc',
+      ...params,
+    })
   }
 
   async getMovieDetails(id: number): Promise<TmdbMovieDetails> {
     return this.fetchValidated(`/movie/${id}`, tmdbMovieDetailsSchema, {
-      append_to_response: "external_ids",
-    });
+      append_to_response: 'external_ids',
+    })
+  }
+
+  async getMovieGenreList(): Promise<TmdbGenreList> {
+    return this.fetchValidated('/genre/movie/list', tmdbGenreListSchema)
+  }
+
+  async getMovieWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
+    return this.fetchValidated('/watch/providers/movie', tmdbWatchProviderListSchema, {
+      watch_region: watchRegion,
+    })
   }
 
   async getTvDetails(id: number): Promise<TmdbTvDetails> {
     return this.fetchValidated(`/tv/${id}`, tmdbTvDetailsSchema, {
-      append_to_response: "external_ids",
-    });
+      append_to_response: 'external_ids',
+    })
   }
 
-  async searchMovies(
-    query: string,
-    page = 1,
-  ): Promise<TmdbSearchResponse> {
-    return this.fetchValidated(
-      "/search/movie",
-      tmdbSearchResponseSchema,
-      { page: String(page), query },
-    );
+  async getTvGenreList(): Promise<TmdbGenreList> {
+    return this.fetchValidated('/genre/tv/list', tmdbGenreListSchema)
+  }
+
+  async getTvSeasonDetails(tvId: number, seasonNumber: number): Promise<TmdbTvSeasonDetails> {
+    return this.fetchValidated(`/tv/${tvId}/season/${seasonNumber}`, tmdbTvSeasonDetailsSchema)
+  }
+
+  async getTvWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
+    return this.fetchValidated('/watch/providers/tv', tmdbWatchProviderListSchema, {
+      watch_region: watchRegion,
+    })
+  }
+
+  async searchMovies(query: string, page = 1): Promise<TmdbSearchResponse> {
+    return this.fetchValidated('/search/movie', tmdbSearchResponseSchema, {
+      page: String(page),
+      query,
+    })
   }
 
   async searchMulti(query: string, page = 1): Promise<TmdbSearchResponse> {
-    return this.fetchValidated(
-      "/search/multi",
-      tmdbSearchResponseSchema,
-      { page: String(page), query },
-    );
+    return this.fetchValidated('/search/multi', tmdbSearchResponseSchema, {
+      page: String(page),
+      query,
+    })
   }
 
   async searchTv(query: string, page = 1): Promise<TmdbSearchResponse> {
-    return this.fetchValidated(
-      "/search/tv",
-      tmdbSearchResponseSchema,
-      { page: String(page), query },
-    );
+    return this.fetchValidated('/search/tv', tmdbSearchResponseSchema, {
+      page: String(page),
+      query,
+    })
   }
 
-  private async fetch(
-    path: string,
-    params: Record<string, string> = {},
-  ): Promise<unknown> {
-    const url = new URL(`${this.baseUrl}${path}`);
-    url.searchParams.set("api_key", this.apiKey);
+  private async fetch(path: string, params: Record<string, string> = {}): Promise<unknown> {
+    const url = new URL(`${this.baseUrl}${path}`)
 
     for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, value);
+      url.searchParams.set(key, value)
     }
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        accept: 'application/json',
+        Authorization: `Bearer ${this.accessToken}`,
+      },
+    })
 
     if (!response.ok) {
-      throw new TmdbError(
-        `TMDB request failed: ${response.statusText}`,
-        response.status,
-        path,
-      );
+      throw new TmdbError(`TMDB request failed: ${response.statusText}`, response.status, path)
     }
 
-    return response.json();
+    return response.json()
   }
 
   private async fetchValidated<T>(
@@ -91,8 +128,8 @@ export class TmdbClient {
     schema: { parse: (data: unknown) => T },
     params: Record<string, string> = {},
   ): Promise<T> {
-    const data: unknown = await this.fetch(path, params);
-    return schema.parse(data);
+    const data: unknown = await this.fetch(path, params)
+    return schema.parse(data)
   }
 }
 
@@ -102,11 +139,15 @@ export class TmdbError extends Error {
     readonly status: number,
     readonly path: string,
   ) {
-    super(message);
-    this.name = "TmdbError";
+    super(message)
+    this.name = 'TmdbError'
   }
 }
 
-export function createTmdbClient(apiKey: string): TmdbClient {
-  return new TmdbClient({ apiKey });
+export function createTmdbClient(accessToken: string): TmdbClient {
+  return new TmdbClient({ accessToken })
+}
+
+function normalizeAccessToken(token: string): string {
+  return token.replace(/^Bearer\s+/i, '').trim()
 }

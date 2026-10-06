@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 
-import { handlePayloadError, requireClerkUserId } from '@/lib/api/auth'
-import { addToList } from '@/lib/payload'
+import { addToList } from '@/features/library/add-to-list/services/add-to-list'
+import { handlePayloadError } from '@/lib/api/handle-payload-error'
+import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 
 export async function POST(request: Request) {
   const authResult = await requireClerkUserId()

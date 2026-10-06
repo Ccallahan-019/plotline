@@ -1,8 +1,7 @@
-import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
-import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { LibraryItems } from './collections/library-items'
@@ -13,12 +12,12 @@ import { Users } from './collections/users'
 import { WatchEvents } from './collections/watch-events'
 import { WatchlistMemberships } from './collections/watchlist-memberships'
 import { Watchlists } from './collections/watchlists'
-import {
-  addToListEndpoint,
-  logWatchEndpoint,
-  recalculateWatchlistStatsEndpoint,
-  tmdbUpsertEndpoint,
-} from './endpoints'
+import { addToListEndpoint } from './endpoints/add-to-list'
+import { logWatchEndpoint } from './endpoints/log-watch/log-watch'
+import { logWatchBatchEndpoint } from './endpoints/log-watch/log-watch-batch'
+import { recalculateWatchlistStatsEndpoint } from './endpoints/recalculate-watchlist-stats'
+import { tmdbUpsertEndpoint } from './endpoints/tmdb-upsert'
+import { watchedEpisodesEndpoint } from './endpoints/watched-episodes'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -46,7 +45,7 @@ export default buildConfig({
     headers: ['Authorization', 'Content-Type', 'x-clerk-user-id'],
     origins: [plotlineUrl],
   },
-  db: vercelPostgresAdapter({
+  db: postgresAdapter({
     pool: {
       connectionString: process.env.POSTGRES_URL ?? '',
     },
@@ -56,10 +55,12 @@ export default buildConfig({
     tmdbUpsertEndpoint,
     addToListEndpoint,
     logWatchEndpoint,
+    logWatchBatchEndpoint,
+    watchedEpisodesEndpoint,
     recalculateWatchlistStatsEndpoint,
   ],
   secret: process.env.PAYLOAD_SECRET || '',
-  sharp,
+
   typescript: {
     declare: false,
     outputFile: path.resolve(dirname, '../../../packages/payload-types/src/index.ts'),
