@@ -4,12 +4,7 @@ import type {
   Watchlist,
   WatchlistMembership,
 } from '@plotline/payload-types'
-import type {
-  MediaReleaseStatus,
-  MediaStatus,
-  StreamingPlatform,
-  WatchEventType,
-} from '@plotline/shared/constants'
+import type { MediaReleaseStatus, MediaStatus, StreamingPlatform } from '@plotline/shared/constants'
 import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 
 export type AddToListInput = {
@@ -42,7 +37,6 @@ export type AddToListTmdbMediaInput = AddToListMediaFields &
 export type LogWatchBatchInput = {
   episodes: Array<{
     episode: number
-    isRewatch?: boolean
     season: number
   }>
   libraryItemStatus?: MediaStatus
@@ -59,8 +53,6 @@ export type LogWatchBatchResult = {
 }
 
 export type LogWatchInput = {
-  eventType: WatchEventType
-  isRewatch?: boolean
   libraryItemStatus?: MediaStatus
   mediaId: number | string
   platform?: StreamingPlatform

@@ -4,8 +4,6 @@ import { FieldGroup } from '@/components/ui/field'
 
 import type { LogWatchFormApi } from '../../../hooks/use-log-watch-form'
 
-import { syncQuickLogEpisode } from '../../../services/episode-field'
-import { LogWatchRewatchField } from '../LogWatchRewatchField'
 import { EpisodeNumberField } from './EpisodeNumberField'
 import { SeasonField } from './SeasonField'
 
@@ -47,14 +45,6 @@ export function LogWatchEpisodeField({
           </>
         )}
       </form.Subscribe>
-
-      <LogWatchRewatchField
-        disabled={disabled}
-        form={form}
-        onCheckedChange={() => {
-          syncQuickLogEpisode(form)
-        }}
-      />
     </FieldGroup>
   )
 }

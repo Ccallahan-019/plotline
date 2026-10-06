@@ -8,7 +8,10 @@ import type { LogWatchInput, LogWatchResult } from '../../types/mutations'
 
 import { invalidateAfterLibraryMutation } from '../../services/invalidate-library-queries'
 import { postLogWatch } from '../services/fetch-log-watch'
-import { patchLibraryItemFromLogWatch } from '../services/optimistic-library-item'
+import {
+  cachedWatchedEpisodeKeys,
+  patchLibraryItemFromLogWatch,
+} from '../services/optimistic-library-item'
 
 type LogWatchContext = {
   previousGridItems: ReadonlyArray<readonly [QueryKey, LibraryItemsResponse | undefined]>
@@ -19,9 +22,11 @@ type LogWatchContext = {
  * Mutation that logs a single movie or TV-episode watch.
  *
  * Optimistically patches matching library-item status, movie `progress.watched` /
- * `rewatchCount`, and TV progress (`lastSeason`, `lastEpisode`, `episodesWatched`) in the
- * grid and lookup caches, rolls those writes back on error, and invalidates library
- * queries when the request settles.
+ * `rewatchCount` (when the cached item is already watched or completed), and TV progress
+ * in the grid and lookup caches. `episodesWatched` increases only for pairs missing from
+ * the watched-episodes cache and not repeated in this payload. A completed show does not
+ * increase the count. Rolls those writes back on error and invalidates library queries
+ * when the request settles.
  *
  * @returns A React Query mutation for `LogWatchInput` → `LogWatchResult`
  */
@@ -67,14 +72,23 @@ export function useLogWatch() {
 
           return {
             ...response,
-            docs: response.docs.map((item) => patchLibraryItemFromLogWatch(item, input)),
+            docs: response.docs.map((item) =>
+              patchLibraryItemFromLogWatch(
+                item,
+                input,
+                cachedWatchedEpisodeKeys(queryClient, item.id),
+              ),
+            ),
           }
         },
       )
 
       queryClient.setQueriesData<LibraryItem[]>(
         { queryKey: ['library-items', 'lookup'] },
-        (items) => items?.map((item) => patchLibraryItemFromLogWatch(item, input)),
+        (items) =>
+          items?.map((item) =>
+            patchLibraryItemFromLogWatch(item, input, cachedWatchedEpisodeKeys(queryClient, item.id)),
+          ),
       )
 
       return { previousGridItems, previousLookupItems }

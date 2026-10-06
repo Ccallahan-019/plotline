@@ -31,8 +31,9 @@ export function LibraryItemDrawer({ item }: LibraryItemDrawerProps) {
 
   const title = typeof item.media === 'object' ? item.media.title : 'Library item'
 
+  // Non-modal so the log-watch popover, portaled outside this drawer, can be clicked and focused.
   return (
-    <Drawer>
+    <Drawer modal={false}>
       <DrawerTrigger asChild>
         <Button
           aria-label={`View details for ${title}`}

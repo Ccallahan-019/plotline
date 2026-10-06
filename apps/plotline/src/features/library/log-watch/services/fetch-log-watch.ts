@@ -5,7 +5,7 @@ import type { LogWatchInput, LogWatchResult } from '../../types/mutations'
 /**
  * Posts a single movie or TV-episode watch to the log-watch API.
  *
- * @param input - Watch payload including event type and optional TV context
+ * @param input - Watch payload, including optional TV season and episode
  * @returns The updated library item and created watch event
  */
 export function postLogWatch(input: LogWatchInput): Promise<LogWatchResult> {

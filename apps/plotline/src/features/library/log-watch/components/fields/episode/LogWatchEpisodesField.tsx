@@ -1,19 +1,19 @@
 'use client'
 
 import { Tv } from 'lucide-react'
+import { useMemo } from 'react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldGroup } from '@/components/ui/field'
 import { ShowIf } from '@/components/utils/ShowIf'
 
 import type { LogWatchFormApi } from '../../../hooks/use-log-watch-form'
+import type { LogWatchWatchedCoverage } from '../../../services/episode-field'
 
 import { useLogWatchEpisodesField } from '../../../hooks/use-log-watch-episodes-field'
 import {
-  getSelectedEpisode,
-  rewatchForSelectedEpisode,
-  setSelectedEpisodeRewatch,
   syncQuickLogEpisodeFromSelection,
+  toLogWatchWatchedEpisodeKeys,
   upsertSelectedEpisode,
 } from '../../../services/episode-field'
 import { EpisodesFieldSeasonSelector } from './EpisodesFieldSeasonSelector'
@@ -24,6 +24,7 @@ type LogWatchEpisodesFieldProps = {
   form: LogWatchFormApi
   seasonCount?: null | number
   tmdbId?: null | number
+  watchedCoverage?: LogWatchWatchedCoverage
 }
 
 export function LogWatchEpisodesField({
@@ -31,6 +32,7 @@ export function LogWatchEpisodesField({
   form,
   seasonCount,
   tmdbId,
+  watchedCoverage,
 }: LogWatchEpisodesFieldProps) {
   const defaultSeason =
     form.getFieldValue('episode')?.season ?? form.getFieldValue('episodes')[0]?.season ?? 1
@@ -40,6 +42,11 @@ export function LogWatchEpisodesField({
       seasonCount,
       tmdbId,
     })
+  const showCompleted = watchedCoverage?.showCompleted === true
+  const watchedEpisodeKeys = useMemo(
+    () => toLogWatchWatchedEpisodeKeys(watchedCoverage?.watchedEpisodes ?? []),
+    [watchedCoverage?.watchedEpisodes],
+  )
 
   return (
     <Card className="mx-0.5 mb-0.5" size="sm">
@@ -50,7 +57,7 @@ export function LogWatchEpisodesField({
         </div>
       </CardHeader>
       <CardContent>
-        <FieldGroup>
+        <FieldGroup className="gap-4">
           <Field data-disabled={disabled}>
             <FieldContent>
               <EpisodesFieldSeasonSelector
@@ -81,30 +88,15 @@ export function LogWatchEpisodesField({
                 nextEpisode: number,
                 selected: boolean,
               ) => {
-                const existing = getSelectedEpisode(selectedEpisodes, nextSeason, nextEpisode)
                 field.handleChange(
                   upsertSelectedEpisode(
                     selectedEpisodes,
                     {
                       episode: nextEpisode,
-                      isRewatch: rewatchForSelectedEpisode(
-                        existing,
-                        form.getFieldValue('isRewatch'),
-                      ),
                       season: nextSeason,
                     },
                     selected,
                   ),
-                )
-              }
-
-              const handleRewatchChange = (
-                nextSeason: number,
-                nextEpisode: number,
-                isRewatch: boolean,
-              ) => {
-                field.handleChange(
-                  setSelectedEpisodeRewatch(selectedEpisodes, nextSeason, nextEpisode, isRewatch),
                 )
               }
 
@@ -120,12 +112,13 @@ export function LogWatchEpisodesField({
                   <TmdbEpisodeList
                     disabled={disabled}
                     isPending={isPending}
-                    onRewatchChange={handleRewatchChange}
                     onSelectedChange={handleSelectedChange}
                     season={season}
                     selectedEpisodes={selectedEpisodes}
+                    showCompleted={showCompleted}
                     showTmdbEpisodeList={showTmdbEpisodeList}
                     tmdbEpisodes={data?.episodes ?? []}
+                    watchedEpisodeKeys={watchedEpisodeKeys}
                   />
 
                   <field.FormFieldError />

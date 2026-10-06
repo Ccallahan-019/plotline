@@ -6,9 +6,9 @@ import { FieldGroup } from '@/components/ui/field'
 import { ShowIf } from '@/components/utils/ShowIf'
 
 import type { LogWatchFormApi } from '../../hooks/use-log-watch-form'
+import type { LogWatchWatchedCoverage } from '../../services/episode-field'
 
 import { LogWatchEpisodeOrEpisodesField } from './episode/LogWatchEpisodeOrEpisodesField'
-import { LogWatchRewatchField } from './LogWatchRewatchField'
 import { LogWatchPlatformField } from './platform/LogWatchPlatformField'
 import { PlatformOtherField } from './platform/PlatformOtherField'
 import { LogWatchWhenField } from './when/LogWatchWhenField'
@@ -19,6 +19,7 @@ type LogWatchFormFieldsProps = {
   isSubmitting: boolean
   media: Media
   platformLayout?: 'compact' | 'expanded'
+  watchedCoverage?: LogWatchWatchedCoverage
 }
 
 export function LogWatchFormFields({
@@ -27,6 +28,7 @@ export function LogWatchFormFields({
   isSubmitting,
   media,
   platformLayout = 'compact',
+  watchedCoverage,
 }: LogWatchFormFieldsProps) {
   const whenMode = platformLayout === 'compact' ? 'popover' : 'dialog'
 
@@ -49,11 +51,8 @@ export function LogWatchFormFields({
           episodeMode={episodeMode}
           form={form}
           media={media}
+          watchedCoverage={watchedCoverage}
         />
-      </ShowIf>
-
-      <ShowIf condition={media.mediaType === 'movie'}>
-        <LogWatchRewatchField disabled={isSubmitting} form={form} />
       </ShowIf>
     </FieldGroup>
   )

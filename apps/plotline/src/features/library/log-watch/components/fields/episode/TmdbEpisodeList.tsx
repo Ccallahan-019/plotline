@@ -1,31 +1,34 @@
-import { TmdbTvSeasonEpisode } from '@plotline/shared/tmdb'
+import type { TmdbTvSeasonEpisode } from '@plotline/shared/tmdb'
 
 import { FieldDescription } from '@/components/ui/field'
 
-import { LogWatchEpisodeInput } from '../../../services/log-watch-form-schema'
+import type { LogWatchEpisodeInput } from '../../../services/log-watch-form-schema'
+
 import { LogWatchEpisodesFallbackList } from './LogWatchEpisodesFallbackList'
 import { TmdbEpisodeListContent } from './TmdbEpisodeListContent'
 
 type TmdbEpisodeListProps = {
   disabled: boolean
   isPending: boolean
-  onRewatchChange: (season: number, episode: number, isRewatch: boolean) => void
   onSelectedChange: (season: number, episode: number, selected: boolean) => void
   season: number
   selectedEpisodes: readonly LogWatchEpisodeInput[]
+  showCompleted: boolean
   showTmdbEpisodeList: boolean
   tmdbEpisodes: readonly TmdbTvSeasonEpisode[]
+  watchedEpisodeKeys: ReadonlySet<string>
 }
 
 export function TmdbEpisodeList({
   disabled,
   isPending,
-  onRewatchChange,
   onSelectedChange,
   season,
   selectedEpisodes,
+  showCompleted,
   showTmdbEpisodeList,
   tmdbEpisodes,
+  watchedEpisodeKeys,
 }: TmdbEpisodeListProps) {
   // Empty TMDB seasons still need the numeric add UI; otherwise submit stays blocked.
   const isEmptyTmdbSeason = showTmdbEpisodeList && !isPending && tmdbEpisodes.length === 0
@@ -34,10 +37,11 @@ export function TmdbEpisodeList({
     const fallbackList = (
       <LogWatchEpisodesFallbackList
         disabled={disabled}
-        onRewatchChange={onRewatchChange}
         onSelectedChange={onSelectedChange}
         season={season}
         selectedEpisodes={selectedEpisodes}
+        showCompleted={showCompleted}
+        watchedEpisodeKeys={watchedEpisodeKeys}
       />
     )
 
@@ -57,11 +61,12 @@ export function TmdbEpisodeList({
     <TmdbEpisodeListContent
       disabled={disabled}
       isPending={isPending}
-      onRewatchChange={onRewatchChange}
       onSelectedChange={onSelectedChange}
       season={season}
       selectedEpisodes={selectedEpisodes}
+      showCompleted={showCompleted}
       tmdbEpisodes={tmdbEpisodes}
+      watchedEpisodeKeys={watchedEpisodeKeys}
     />
   )
 }

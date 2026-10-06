@@ -8,6 +8,7 @@ import { DialogFooter } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 import type { LogWatchFormApi } from '../hooks/use-log-watch-form'
+import type { LogWatchWatchedCoverage } from '../services/episode-field'
 
 import { LogWatchFormFields } from './fields/LogWatchFormFields'
 
@@ -16,9 +17,16 @@ type LogWatchFullFormProps = {
   isSubmitting: boolean
   media: Media
   onCancel: () => void
+  watchedCoverage?: LogWatchWatchedCoverage
 }
 
-export function LogWatchFullForm({ form, isSubmitting, media, onCancel }: LogWatchFullFormProps) {
+export function LogWatchFullForm({
+  form,
+  isSubmitting,
+  media,
+  onCancel,
+  watchedCoverage,
+}: LogWatchFullFormProps) {
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
     void form.handleSubmit()
@@ -33,6 +41,7 @@ export function LogWatchFullForm({ form, isSubmitting, media, onCancel }: LogWat
           isSubmitting={isSubmitting}
           media={media}
           platformLayout="expanded"
+          watchedCoverage={watchedCoverage}
         />
       </ScrollArea>
 

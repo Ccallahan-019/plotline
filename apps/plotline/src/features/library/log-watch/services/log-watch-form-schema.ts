@@ -9,7 +9,6 @@ export type LogWatchWhenPreset = (typeof LOG_WATCH_WHEN_PRESETS)[number]
 
 export const logWatchEpisodeInputSchema = z.object({
   episode: z.number().int().nonnegative(),
-  isRewatch: z.boolean().optional(),
   season: z.number().int().nonnegative(),
 })
 
@@ -18,7 +17,6 @@ export type LogWatchEpisodeInput = z.infer<typeof logWatchEpisodeInputSchema>
 export const logWatchFormValuesSchema = z.object({
   episode: logWatchEpisodeInputSchema.optional(),
   episodes: z.array(logWatchEpisodeInputSchema),
-  isRewatch: z.boolean(),
   platform: z.enum(STREAMING_PLATFORMS).optional(),
   platformOther: z.string(),
   watchedAt: z.date(),

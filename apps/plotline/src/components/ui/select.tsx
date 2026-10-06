@@ -28,7 +28,7 @@ function SelectContent({
         align={align}
         alignItemWithTrigger={alignItemWithTrigger}
         alignOffset={alignOffset}
-        className="isolate z-50"
+        className="isolate z-50 pointer-events-auto"
         side={side}
         sideOffset={sideOffset}
       >

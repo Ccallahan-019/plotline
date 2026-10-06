@@ -53,19 +53,17 @@ type ToLogWatchInputOptions = {
 
 const FALLBACK_NEXT_EPISODE: LogWatchEpisodeInput = {
   episode: 1,
-  isRewatch: false,
   season: 1,
 }
 
 /**
  * Builds the log-watch form's initial values, including the next TV episode when known.
  *
- * For finished series the suggested episode is a rewatch of S1E1, and that flag is copied
- * onto the form-level `isRewatch` so single and batch submits stay consistent.
+ * Finished series still default to S1E1. The server decides whether that submit is a rewatch.
  *
  * @param options.libraryItem - Existing library item used to infer media type and progress
  * @param options.mediaType - Overrides the media type when the library item is missing
- * @param options.seasonEpisodeCount - Current season length, preferred over TMDB series totals
+ * @param options.seasonEpisodeCount - Length of the season in progress; wins over stored totals
  * @returns Today-dated form values with an optional next-episode suggestion
  */
 export function getDefaultLogWatchFormValues(
@@ -85,7 +83,6 @@ export function getDefaultLogWatchFormValues(
   return {
     episode: nextEpisode,
     episodes: nextEpisode ? [{ ...nextEpisode }] : [],
-    isRewatch: nextEpisode?.isRewatch === true,
     platform: undefined,
     platformOther: '',
     watchedAt: startOfDay(new Date()),
@@ -122,13 +119,17 @@ export function shouldSubmitLogWatchBatch(values: LogWatchFormValues): boolean {
 /**
  * Suggests the next episode to log from library progress, then TMDB "next episode".
  *
- * Completed non-final seasons advance to S(n+1)E1. Completing the final season returns S1E1
- * as a rewatch so submitting the default cannot reset progress as a first watch.
+ * Completed non-final seasons advance to S(n+1)E1. Completing the final season returns
+ * S1E1. The server classifies that submit when the show is already covered.
+ *
+ * Season-end detection uses `progress.seasonsCompleted`, then an explicit season length,
+ * then `tvMeta.seasonEpisodeCounts`. Series-wide `episodeCount` is used only for a
+ * one-season show.
  *
  * @param libraryItem - Progress used to decide last season/episode and completed seasons
- * @param media - TV metadata for season count and TMDB next-episode fields
- * @param seasonEpisodeCount - Known length of the current season; wins over TMDB totals
- * @returns Season, episode, and whether the suggestion is a rewatch
+ * @param media - TV metadata for season lengths and TMDB next-episode fields
+ * @param seasonEpisodeCount - Known length of the season in progress; wins over stored totals
+ * @returns The season and episode to prefill
  */
 export function suggestNextEpisode({
   libraryItem,
@@ -153,18 +154,16 @@ export function suggestNextEpisode({
       if (seasonCount == null || lastSeason < seasonCount) {
         return {
           episode: 1,
-          isRewatch: false,
           season: lastSeason + 1,
         }
       }
 
-      return { ...FALLBACK_NEXT_EPISODE, isRewatch: true }
-    } else {
-      return {
-        episode: lastEpisode + 1,
-        isRewatch: false,
-        season: lastSeason,
-      }
+      return { ...FALLBACK_NEXT_EPISODE }
+    }
+
+    return {
+      episode: lastEpisode + 1,
+      season: lastSeason,
     }
   }
 
@@ -174,7 +173,6 @@ export function suggestNextEpisode({
   if (nextEpisodeSeason != null && nextEpisodeNumber != null) {
     return {
       episode: nextEpisodeNumber,
-      isRewatch: false,
       season: nextEpisodeSeason,
     }
   }
@@ -185,16 +183,15 @@ export function suggestNextEpisode({
 /**
  * Library item to use after a successful log so the form can default the next TV episode.
  *
- * Movies overlay `progress.watched` and `rewatchCount` from the submitted values (count is
- * taken from the current item so a fresh API result is not incremented twice). TV
+ * Movies keep `rewatchCount` from the mutation result and mark `progress.watched`. TV
  * `lastSeason`/`lastEpisode` come from the chronologically latest submitted episode.
  * Populated media is kept from the current item so season-end suggestions can still use
  * `tvMeta`.
  *
  * @param options.currentLibraryItem - Form session item; used for populated `media`
- * @param options.mediaType - `movie` overlays watched/rewatch; `tv` overlays episode progress
- * @param options.resultLibraryItem - Mutation result; supplies updated status and ids
- * @param options.values - Submitted form values; movie rewatch and TV episode overlay source
+ * @param options.mediaType - `movie` overlays watched progress; `tv` overlays episode progress
+ * @param options.resultLibraryItem - Mutation result; supplies status, ids, and movie rewatch count
+ * @param options.values - Submitted form values; TV episode overlay source
  * @returns A library item whose progress matches the watch that was just logged
  */
 export function toLibraryItemAfterLogWatch({
@@ -218,9 +215,6 @@ export function toLibraryItemAfterLogWatch({
         type: 'movie',
         watched: true,
       },
-      ...(values.isRewatch === true
-        ? { rewatchCount: (currentLibraryItem.rewatchCount ?? 0) + 1 }
-        : {}),
     }
   }
 
@@ -246,8 +240,8 @@ export function toLibraryItemAfterLogWatch({
 /**
  * Maps log-watch form values to a multi-episode mutation payload.
  *
- * Each selected row keeps its own `isRewatch`; form-level rewatch is not applied to the
- * batch. Status transitions still use the TV planned → watching rule.
+ * Each row is a season and episode only. The server classifies rewatches. Status
+ * transitions still use the TV planned → watching rule.
  *
  * @param currentStatus - Existing library status, used to decide status transitions
  * @param mediaId - Library media id to attach the watch events to
@@ -275,9 +269,12 @@ export function toLogWatchBatchInput({
 /**
  * Maps log-watch form values to a single mutation payload.
  *
+ * The server assigns `completed`, `progress`, or `rewatched`. This payload carries the
+ * season and episode for TV and does not send an event type.
+ *
  * @param currentStatus - Existing library status, used to decide status transitions
  * @param mediaId - Library media id to attach the watch event to
- * @param mediaType - `movie` or `tv`; selects event type and TV context
+ * @param mediaType - `movie` or `tv`; selects the status transition and TV context
  * @param runtimeMinutes - Optional runtime copied onto the payload when present
  * @param values - Submitted form values
  * @returns A `LogWatchInput` ready for the log-watch API
@@ -294,28 +291,11 @@ export function toLogWatchInput({
     mediaType,
   })
   const sharedFields = mapSharedWatchFields(values)
-
-  if (mediaType === 'movie') {
-    const isRewatch = values.isRewatch === true
-
-    return {
-      eventType: isRewatch ? 'rewatched' : 'completed',
-      mediaId,
-      ...sharedFields,
-      ...(isRewatch ? { isRewatch: true } : {}),
-      ...(libraryItemStatus ? { libraryItemStatus } : {}),
-      ...(runtimeMinutes != null ? { runtimeMinutes } : {}),
-    }
-  }
-
-  const episode = resolveSingleTvEpisode(values)
-  const isRewatch = episode?.isRewatch === true
+  const episode = mediaType === 'tv' ? resolveSingleTvEpisode(values) : undefined
 
   return {
-    eventType: isRewatch ? 'rewatched' : 'progress',
     mediaId,
     ...sharedFields,
-    ...(isRewatch ? { isRewatch: true } : {}),
     ...(libraryItemStatus ? { libraryItemStatus } : {}),
     ...(runtimeMinutes != null ? { runtimeMinutes } : {}),
     ...(episode
@@ -353,8 +333,9 @@ export function whenPresetForWatchedAt(watchedAt: Date, now = new Date()): LogWa
 /**
  * Whether last watched progress sits at (or past) the end of that season.
  *
- * Prefers `seasonsCompleted`, then an explicit season length, then TMDB only when the series
- * is known to be a single season. Series-wide `episodeCount` is not treated as season length.
+ * Prefers `seasonsCompleted`, then an explicit season length, then stored per-season
+ * counts. Series-wide `episodeCount` is not treated as season length except for a
+ * one-season show.
  *
  * @returns True when the current season should be considered finished
  */
@@ -375,8 +356,11 @@ function hasCompletedCurrentSeason({
     return true
   }
 
-  const resolvedSeasonEpisodeCount =
-    seasonEpisodeCount ?? seasonEpisodeCountFromTvMeta(media?.tvMeta)
+  const resolvedSeasonEpisodeCount = resolveSeasonEpisodeCount({
+    season: lastSeason,
+    seasonEpisodeCount,
+    tvMeta: media?.tvMeta,
+  })
 
   return resolvedSeasonEpisodeCount != null && lastEpisode >= resolvedSeasonEpisodeCount
 }
@@ -393,15 +377,6 @@ function mapSharedWatchFields(
     ...(platformOther ? { platformOther } : {}),
     watchedAt: values.watchedAt.toISOString(),
   }
-}
-
-// Explicit per-episode flag wins; otherwise the form-level quick-log checkbox.
-function resolveEpisodeRewatch(episode: LogWatchEpisodeInput, formIsRewatch: boolean): boolean {
-  if (typeof episode.isRewatch === 'boolean') {
-    return episode.isRewatch
-  }
-
-  return formIsRewatch
 }
 
 // Chronologically latest TV episode from the dialog selection, else the quick-log episode.
@@ -430,40 +405,58 @@ function resolveLatestSubmittedEpisode(
   return submitted.at(-1)
 }
 
-// First selected TV episode, with form-level and per-episode rewatch merged.
-function resolveSingleTvEpisode(values: LogWatchFormValues): LogWatchEpisodeInput | undefined {
-  const selectedEpisode = values.episodes[0] ?? values.episode
-
-  if (selectedEpisode == null) {
-    return undefined
-  }
-
-  return {
-    episode: selectedEpisode.episode,
-    isRewatch: resolveEpisodeRewatch(selectedEpisode, values.isRewatch),
-    season: selectedEpisode.season,
-  }
-}
-
 /**
- * Per-season episode count from TMDB, only when the series is a single season.
+ * Episode length used to decide whether `season` is finished.
  *
- * Multi-season and unknown `seasonCount` return `undefined` because TMDB `episodeCount` is
- * series-wide, not the length of the current season.
+ * An explicit length wins, then `tvMeta.seasonEpisodeCounts` for that season. Series-wide
+ * `episodeCount` applies only when the show has a single season and `season` is 1.
+ * Missing or non-positive lengths are omitted so the caller does not guess.
+ *
+ * @param season - Season whose length is needed
+ * @param seasonEpisodeCount - Caller-supplied length for that season
+ * @param tvMeta - Stored TV metadata, including per-season counts
+ * @returns A positive episode count, or `undefined` when the length is unknown
  */
-function seasonEpisodeCountFromTvMeta(tvMeta: Media['tvMeta'] | undefined): number | undefined {
-  if (tvMeta?.episodeCount == null || tvMeta.seasonCount !== 1) {
-    return undefined
+function resolveSeasonEpisodeCount({
+  season,
+  seasonEpisodeCount,
+  tvMeta,
+}: {
+  season: number
+  seasonEpisodeCount?: number
+  tvMeta: Media['tvMeta'] | undefined
+}): number | undefined {
+  if (seasonEpisodeCount != null && seasonEpisodeCount > 0) {
+    return seasonEpisodeCount
   }
 
-  return tvMeta.episodeCount
+  const storedCount = tvMeta?.seasonEpisodeCounts?.find((entry) => entry.season === season)
+
+  if (storedCount != null && storedCount.episodeCount > 0) {
+    return storedCount.episodeCount
+  }
+
+  if (
+    tvMeta?.seasonCount === 1 &&
+    season === 1 &&
+    tvMeta.episodeCount != null &&
+    tvMeta.episodeCount > 0
+  ) {
+    return tvMeta.episodeCount
+  }
+
+  return undefined
 }
 
-// Batch episode row; includes `isRewatch` only when that row is marked a rewatch.
+// First selected TV episode, preferring the dialog list over the quick-log field.
+function resolveSingleTvEpisode(values: LogWatchFormValues): LogWatchEpisodeInput | undefined {
+  return values.episodes[0] ?? values.episode
+}
+
+// Batch episode row: season and episode only. The server classifies rewatches.
 function toBatchEpisode(episode: LogWatchEpisodeInput): LogWatchBatchInput['episodes'][number] {
   return {
     episode: episode.episode,
     season: episode.season,
-    ...(episode.isRewatch === true ? { isRewatch: true } : {}),
   }
 }

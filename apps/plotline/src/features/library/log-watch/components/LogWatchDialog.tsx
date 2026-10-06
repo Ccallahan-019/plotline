@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 
 import type { LogWatchFormApi } from '../hooks/use-log-watch-form'
+import type { LogWatchWatchedCoverage } from '../services/episode-field'
 
 import { LogWatchFullForm } from './LogWatchFullForm'
 
@@ -20,6 +21,7 @@ type LogWatchDialogProps = {
   media: Media
   onOpenChange: (open: boolean) => void
   open: boolean
+  watchedCoverage?: LogWatchWatchedCoverage
 }
 
 export function LogWatchDialog({
@@ -28,6 +30,7 @@ export function LogWatchDialog({
   media,
   onOpenChange,
   open,
+  watchedCoverage,
 }: LogWatchDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -42,6 +45,7 @@ export function LogWatchDialog({
           isSubmitting={isSubmitting}
           media={media}
           onCancel={() => onOpenChange(false)}
+          watchedCoverage={watchedCoverage}
         />
       </DialogContent>
     </Dialog>

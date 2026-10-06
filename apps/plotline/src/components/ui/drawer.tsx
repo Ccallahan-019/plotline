@@ -5,8 +5,14 @@ import { Drawer as DrawerPrimitive } from 'vaul'
 
 import { cn } from '@/lib/utils'
 
-function Drawer({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+const DrawerModalContext = React.createContext(true)
+
+function Drawer({ modal = true, ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
+  return (
+    <DrawerModalContext.Provider value={modal}>
+      <DrawerPrimitive.Root data-slot="drawer" modal={modal} {...props} />
+    </DrawerModalContext.Provider>
+  )
 }
 
 function DrawerClose({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Close>) {
@@ -16,8 +22,12 @@ function DrawerClose({ ...props }: React.ComponentProps<typeof DrawerPrimitive.C
 function DrawerContent({
   children,
   className,
+  onPointerDownOutside,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+  const modal = React.useContext(DrawerModalContext)
+  useDrawerScrollLock(!modal)
+
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />
@@ -28,8 +38,15 @@ function DrawerContent({
         )}
         data-slot="drawer-content"
         {...props}
+        onPointerDownOutside={(event) => {
+          onPointerDownOutside?.(event)
+
+          if (isPortaledLayerTarget(event.target)) {
+            event.preventDefault()
+          }
+        }}
       >
-        <div className="mx-auto mt-4 hidden h-1 w-[100px] shrink-0 rounded-full bg-muted group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
+        <div className="mx-auto mt-4 hidden h-1 w-25 shrink-0 rounded-full bg-muted group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
@@ -76,15 +93,24 @@ function DrawerOverlay({
   className,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Overlay>) {
+  const modal = React.useContext(DrawerModalContext)
+  const overlayClassName = cn(
+    'fixed inset-0 z-50 bg-black/10 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+    className,
+  )
+
+  // Vaul renders no overlay when `modal` is false, which is what lets portaled
+  // popups receive clicks and focus. This stand-in still dismisses the drawer.
+  if (!modal) {
+    return (
+      <DrawerPrimitive.Close asChild>
+        <div aria-hidden className={overlayClassName} data-slot="drawer-overlay" />
+      </DrawerPrimitive.Close>
+    )
+  }
+
   return (
-    <DrawerPrimitive.Overlay
-      className={cn(
-        'fixed inset-0 z-50 bg-black/10 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
-        className,
-      )}
-      data-slot="drawer-overlay"
-      {...props}
-    />
+    <DrawerPrimitive.Overlay className={overlayClassName} data-slot="drawer-overlay" {...props} />
   )
 }
 
@@ -104,6 +130,45 @@ function DrawerTitle({ className, ...props }: React.ComponentProps<typeof Drawer
 
 function DrawerTrigger({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
   return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />
+}
+
+const PORTED_LAYER_SELECTOR = [
+  '[data-slot="combobox-content"]',
+  '[data-slot="dialog-content"]',
+  '[data-slot="dialog-overlay"]',
+  '[data-slot="dropdown-menu-content"]',
+  '[data-slot="dropdown-menu-sub-content"]',
+  '[data-slot="popover-content"]',
+  '[data-slot="select-content"]',
+].join(', ')
+
+// True when the outside press landed on a popup portaled outside the drawer.
+function isPortaledLayerTarget(target: EventTarget | null) {
+  return target instanceof Element && target.closest(PORTED_LAYER_SELECTOR) != null
+}
+
+/**
+ * Locks document scroll while a non-modal drawer is open.
+ *
+ * Vaul only scroll-locks modal drawers. Non-modal is required so portaled popups
+ * can be clicked and focused.
+ *
+ * @param enabled - When false, body overflow is left unchanged
+ */
+function useDrawerScrollLock(enabled: boolean) {
+  React.useEffect(() => {
+    if (!enabled) {
+      return
+    }
+
+    const { body } = document
+    const previousOverflow = body.style.overflow
+    body.style.overflow = 'hidden'
+
+    return () => {
+      body.style.overflow = previousOverflow
+    }
+  }, [enabled])
 }
 
 export {

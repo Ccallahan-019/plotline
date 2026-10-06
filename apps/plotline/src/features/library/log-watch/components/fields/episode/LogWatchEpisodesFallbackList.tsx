@@ -9,23 +9,25 @@ import { ShowIf } from '@/components/utils/ShowIf'
 
 import type { LogWatchEpisodeInput } from '../../../services/log-watch-form-schema'
 
-import { formatEpisodeOption, isEpisodeSelected } from '../../../services/episode-field'
+import { formatEpisodeOption, isEpisodeSelected, isLoggedEpisodeWatched } from '../../../services/episode-field'
 import { LogWatchEpisodeRow } from './LogWatchEpisodeRow'
 
 type LogWatchEpisodesFallbackListProps = {
   disabled?: boolean
-  onRewatchChange: (season: number, episode: number, isRewatch: boolean) => void
   onSelectedChange: (season: number, episode: number, selected: boolean) => void
   season: number
   selectedEpisodes: readonly LogWatchEpisodeInput[]
+  showCompleted: boolean
+  watchedEpisodeKeys: ReadonlySet<string>
 }
 
 export function LogWatchEpisodesFallbackList({
   disabled = false,
-  onRewatchChange,
   onSelectedChange,
   season,
   selectedEpisodes,
+  showCompleted,
+  watchedEpisodeKeys,
 }: LogWatchEpisodesFallbackListProps) {
   const [draftEpisode, setDraftEpisode] = useState(1)
   const [seasonForDraft, setSeasonForDraft] = useState(season)
@@ -85,22 +87,20 @@ export function LogWatchEpisodesFallbackList({
         <div className="flex max-h-56 flex-col gap-2 overflow-y-auto" data-slot="checkbox-group">
           {selectedEpisodes.map((entry) => {
             const selectedId = `log-watch-episode-${entry.season}-${entry.episode}`
-            const rewatchId = `log-watch-rewatch-${entry.season}-${entry.episode}`
 
             return (
               <LogWatchEpisodeRow
                 disabled={disabled}
-                isRewatch={entry.isRewatch === true}
                 isSelected
+                isWatched={isLoggedEpisodeWatched(entry.season, entry.episode, {
+                  showCompleted,
+                  watchedEpisodeKeys,
+                })}
                 key={`${entry.season}-${entry.episode}`}
                 label={formatEpisodeOption(entry.season, entry.episode)}
-                onRewatchChange={(checked) => {
-                  onRewatchChange(entry.season, entry.episode, checked)
-                }}
                 onSelectedChange={(checked) => {
                   onSelectedChange(entry.season, entry.episode, checked)
                 }}
-                rewatchId={rewatchId}
                 selectedId={selectedId}
               />
             )

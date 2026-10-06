@@ -1,33 +1,36 @@
-import { TmdbTvSeasonEpisode } from '@plotline/shared/tmdb'
+import type { TmdbTvSeasonEpisode } from '@plotline/shared/tmdb'
 
 import { Skeleton } from '@/components/ui/skeleton'
 
+import type { LogWatchEpisodeInput } from '../../../services/log-watch-form-schema'
+
 import {
   formatEpisodeOption,
-  getSelectedEpisode,
   isEpisodeSelected,
+  isLoggedEpisodeWatched,
 } from '../../../services/episode-field'
-import { LogWatchEpisodeInput } from '../../../services/log-watch-form-schema'
 import { LogWatchEpisodeRow } from './LogWatchEpisodeRow'
 
 type TmdbEpisodeListContentProps = {
   disabled: boolean
   isPending: boolean
-  onRewatchChange: (season: number, episode: number, isRewatch: boolean) => void
   onSelectedChange: (season: number, episode: number, selected: boolean) => void
   season: number
   selectedEpisodes: readonly LogWatchEpisodeInput[]
+  showCompleted: boolean
   tmdbEpisodes: readonly TmdbTvSeasonEpisode[]
+  watchedEpisodeKeys: ReadonlySet<string>
 }
 
 export function TmdbEpisodeListContent({
   disabled,
   isPending,
-  onRewatchChange,
   onSelectedChange,
   season,
   selectedEpisodes,
+  showCompleted,
   tmdbEpisodes,
+  watchedEpisodeKeys,
 }: TmdbEpisodeListContentProps) {
   if (isPending) {
     return (
@@ -44,24 +47,20 @@ export function TmdbEpisodeListContent({
       {tmdbEpisodes.map((entry) => {
         const episodeNumber = entry.episode_number
         const selectedId = `log-watch-episode-${season}-${episodeNumber}`
-        const rewatchId = `log-watch-rewatch-${season}-${episodeNumber}`
 
         return (
           <LogWatchEpisodeRow
             disabled={disabled}
-            isRewatch={
-              getSelectedEpisode(selectedEpisodes, season, episodeNumber)?.isRewatch === true
-            }
             isSelected={isEpisodeSelected(selectedEpisodes, season, episodeNumber)}
+            isWatched={isLoggedEpisodeWatched(season, episodeNumber, {
+              showCompleted,
+              watchedEpisodeKeys,
+            })}
             key={episodeNumber}
             label={formatEpisodeOption(season, episodeNumber, entry.name)}
-            onRewatchChange={(checked) => {
-              onRewatchChange(season, episodeNumber, checked)
-            }}
             onSelectedChange={(checked) => {
               onSelectedChange(season, episodeNumber, checked)
             }}
-            rewatchId={rewatchId}
             selectedId={selectedId}
           />
         )
