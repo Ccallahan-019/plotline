@@ -83,11 +83,7 @@ describe('loadLogWatchRewatchContext', () => {
     const req = createReq({
       libraryItem,
       watchEventPages: [
-        [
-          { tvContext: { episode: 1, season: 1 } },
-          { tvContext: null },
-          {},
-        ],
+        [{ tvContext: { episode: 1, season: 1 } }, { tvContext: null }, {}],
         [{ tvContext: { episode: 2, season: 1 } }],
       ],
     })
@@ -101,7 +97,14 @@ describe('loadLogWatchRewatchContext', () => {
       expect.objectContaining({
         collection: 'watch-events',
         page: 1,
-        where: { libraryItem: { equals: 11 } },
+        select: { tvContext: true },
+        where: {
+          and: [
+            { libraryItem: { equals: 11 } },
+            { 'tvContext.season': { exists: true } },
+            { 'tvContext.episode': { exists: true } },
+          ],
+        },
       }),
     )
     expect(req.payload.find).toHaveBeenNthCalledWith(
@@ -148,16 +151,12 @@ describe('deriveLogWatchRewatch', () => {
       watchedEpisodeKeys: new Set<string>(),
     }
 
-    expect(
-      deriveLogWatchRewatch(context, { episode: 4, season: 1 }),
-    ).toEqual({
+    expect(deriveLogWatchRewatch(context, { episode: 4, season: 1 })).toEqual({
       eventType: 'progress',
       isRewatch: false,
     })
     expect(context.watchedEpisodeKeys).toEqual(new Set(['1:4']))
-    expect(
-      deriveLogWatchRewatch(context, { episode: 4, season: 1 }),
-    ).toEqual({
+    expect(deriveLogWatchRewatch(context, { episode: 4, season: 1 })).toEqual({
       eventType: 'rewatched',
       isRewatch: true,
     })
@@ -169,9 +168,7 @@ describe('deriveLogWatchRewatch', () => {
       watchedEpisodeKeys: new Set(['2:3']),
     }
 
-    expect(
-      deriveLogWatchRewatch(context, { episode: 3, season: 2 }),
-    ).toEqual({
+    expect(deriveLogWatchRewatch(context, { episode: 3, season: 2 })).toEqual({
       eventType: 'rewatched',
       isRewatch: true,
     })
@@ -184,9 +181,7 @@ describe('deriveLogWatchRewatch', () => {
       watchedEpisodeKeys: new Set<string>(),
     }
 
-    expect(
-      deriveLogWatchRewatch(context, { episode: 1, season: 1 }),
-    ).toEqual({
+    expect(deriveLogWatchRewatch(context, { episode: 1, season: 1 })).toEqual({
       eventType: 'rewatched',
       isRewatch: true,
     })

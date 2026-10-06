@@ -1,15 +1,16 @@
-import type { Media } from '@plotline/payload-types'
 import type { Endpoint, PayloadRequest } from 'payload'
 
 import type { LogWatchBody } from './types'
 
 import { SKIP_COMPLETED_WATCH_EVENT } from '../../collections/library-items/context'
 import { buildWatchEventLibraryItemProgressUpdate } from '../../collections/watch-events/utils/buildWatchEventLibraryItemProgressUpdate'
+import { loadSeasonEpisodeCounts } from '../../collections/watch-events/utils/loadSeasonEpisodeCounts'
 import { withLibraryItemRowLock } from '../../collections/watch-events/utils/withLibraryItemRowLock'
 import { runInPayloadTransaction } from '../../utilities/runInPayloadTransaction'
 import { parseId, parseJsonBody, requireProfileContext, requireServiceAuth } from '../helpers'
 import { createWatchEvent } from './create-watch-event'
 import { deriveLogWatchRewatch, loadLogWatchRewatchContext } from './derive-rewatch'
+import { parseLogWatchTvContext } from './parseLoggedEpisodes'
 import { resolveOrCreateLibraryItem } from './resolve-or-create-library-item'
 
 export const logWatchEndpoint: Endpoint = {
@@ -38,6 +39,12 @@ export const logWatchEndpoint: Endpoint = {
       return Response.json({ error: 'mediaId is required' }, { status: 400 })
     }
 
+    const parsedTvContext = parseLogWatchTvContext(body.tvContext)
+
+    if (parsedTvContext instanceof Response) {
+      return parsedTvContext
+    }
+
     const { profileId } = profileResult
     const watchedAt = body.watchedAt ?? new Date().toISOString()
 
@@ -54,14 +61,16 @@ export const logWatchEndpoint: Endpoint = {
 
       return withLibraryItemRowLock(req, libraryItemResult.id, async () => {
         const context = await loadLogWatchRewatchContext(req, libraryItemResult.id)
-        const derived = deriveLogWatchRewatch(context, body.tvContext)
-        const seasonProgress =
-          context.libraryItem.progress.type === 'tv'
-            ? {
-                seasonEpisodeCounts: await loadSeasonEpisodeCounts(req, mediaId),
-                watchedEpisodeKeys: context.watchedEpisodeKeys,
-              }
-            : undefined
+        const isTv = context.libraryItem.progress.type === 'tv'
+        // Movies never carry episode coordinates, so a stray tvContext is dropped.
+        const tvContext = isTv ? parsedTvContext : undefined
+        const derived = deriveLogWatchRewatch(context, tvContext)
+        const seasonProgress = isTv
+          ? {
+              seasonEpisodeCounts: await loadSeasonEpisodeCounts(req, mediaId),
+              watchedEpisodeKeys: context.watchedEpisodeKeys,
+            }
+          : undefined
 
         const watchEvent = await createWatchEvent(req, {
           eventType: derived.eventType,
@@ -73,7 +82,7 @@ export const logWatchEndpoint: Endpoint = {
           profileId,
           runtimeMinutes: body.runtimeMinutes,
           skipProgressSync: true,
-          tvContext: body.tvContext,
+          tvContext,
           visibility: body.visibility,
           watchedAt,
         })
@@ -89,7 +98,7 @@ export const logWatchEndpoint: Endpoint = {
               {
                 eventType: derived.eventType,
                 isRewatch: derived.isRewatch,
-                tvContext: body.tvContext,
+                tvContext,
               },
               context.libraryItem,
               seasonProgress,
@@ -98,6 +107,17 @@ export const logWatchEndpoint: Endpoint = {
           },
           depth: 0,
           id: libraryItemResult.id,
+          overrideAccess: true,
+          req,
+        })
+
+        // The watch-event hook is skipped, so stats are invalidated here once.
+        await req.payload.update({
+          collection: 'profiles',
+          data: {
+            statsCache: null,
+          },
+          id: profileId,
           overrideAccess: true,
           req,
         })
@@ -117,29 +137,4 @@ export const logWatchEndpoint: Endpoint = {
   },
   method: 'post',
   path: '/library/log-watch',
-}
-
-/**
- * Stored per-season lengths for the locked TV progress update.
- *
- * This is a local media read. Log-watch must not call TMDB under the row lock, and a
- * missing `tvMeta` leaves `seasonsCompleted` to be copied through rather than guessed.
- *
- * @param req - Payload request (uses the open transaction when present)
- * @param mediaId - Media row whose `tvMeta.seasonEpisodeCounts` to read
- * @returns Season lengths, or `undefined` when the media row has no TV metadata
- */
-async function loadSeasonEpisodeCounts(
-  req: PayloadRequest,
-  mediaId: number,
-): Promise<NonNullable<Media['tvMeta']>['seasonEpisodeCounts'] | undefined> {
-  const media = await req.payload.findByID({
-    collection: 'media',
-    depth: 0,
-    id: mediaId,
-    overrideAccess: true,
-    req,
-  })
-
-  return media?.tvMeta?.seasonEpisodeCounts
 }

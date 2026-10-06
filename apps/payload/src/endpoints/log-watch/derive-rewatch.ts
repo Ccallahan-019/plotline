@@ -8,7 +8,10 @@ import {
   toWatchedEpisodeKeySet,
 } from '@plotline/shared/log-watch'
 
-import { loadWatchedEpisodePairs } from '../../collections/watch-events/utils/loadWatchedEpisodePairs'
+import {
+  loadWatchedEpisodePairs,
+  type LoadWatchedEpisodePairsOptions,
+} from '../../collections/watch-events/utils/loadWatchedEpisodePairs'
 
 export type LogWatchRewatchContext = {
   libraryItem: LibraryItem
@@ -72,11 +75,13 @@ export function deriveLogWatchRewatch(
  *
  * @param req - Payload request (uses the open transaction when present)
  * @param libraryItemId - Locked library item to reload
+ * @param options.excludeEventId - Watch event to leave out of coverage (a create hook's own row)
  * @returns The item snapshot and a mutable watched-key set for this request
  */
 export async function loadLogWatchRewatchContext(
   req: PayloadRequest,
   libraryItemId: number,
+  options?: LoadWatchedEpisodePairsOptions,
 ): Promise<LogWatchRewatchContext> {
   const libraryItem = await req.payload.findByID({
     collection: 'library-items',
@@ -88,9 +93,8 @@ export async function loadLogWatchRewatchContext(
 
   const watchedEpisodeKeys =
     libraryItem.progress.type === 'tv'
-      ? toWatchedEpisodeKeySet(await loadWatchedEpisodePairs(req, libraryItemId))
+      ? toWatchedEpisodeKeySet(await loadWatchedEpisodePairs(req, libraryItemId, options))
       : new Set<string>()
 
   return { libraryItem, watchedEpisodeKeys }
 }
-

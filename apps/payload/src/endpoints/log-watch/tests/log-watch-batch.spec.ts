@@ -4,7 +4,10 @@ import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { withLibraryItemRowLock } from '../../../collections/watch-events/utils/withLibraryItemRowLock'
+import {
+  withLibraryItemCreateLock,
+  withLibraryItemRowLock,
+} from '../../../collections/watch-events/utils/withLibraryItemRowLock'
 import { createWatchEvent } from '../create-watch-event'
 import { logWatchBatchEndpoint } from '../log-watch-batch'
 import { resolveOrCreateLibraryItem } from '../resolve-or-create-library-item'
@@ -31,6 +34,14 @@ vi.mock('../resolve-or-create-library-item', async (importOriginal) => {
 })
 
 vi.mock('../../../collections/watch-events/utils/withLibraryItemRowLock', () => ({
+  withLibraryItemCreateLock: vi.fn(
+    async (
+      _req: PayloadRequest,
+      _profileId: number,
+      _mediaId: number,
+      fn: () => Promise<unknown>,
+    ) => fn(),
+  ),
   withLibraryItemRowLock: vi.fn(
     async (_req: PayloadRequest, _libraryItemId: number | string, fn: () => Promise<unknown>) =>
       fn(),
@@ -89,6 +100,9 @@ describe('logWatchBatchEndpoint', () => {
       profile: { id: 22, statsCache: { stale: true } },
       watchEvents: [],
     }
+    vi.mocked(withLibraryItemCreateLock).mockImplementation(
+      async (_req, _profileId, _mediaId, fn) => fn(),
+    )
     vi.mocked(withLibraryItemRowLock).mockImplementation(async (_req, _id, fn) => fn())
   })
 
@@ -365,10 +379,7 @@ describe('logWatchBatchEndpoint', () => {
   })
 
   it('mixes first-watch and rewatch in one batch and ignores events without tvContext', async () => {
-    db.existingWatchEvents = [
-      { tvContext: { episode: 1, season: 1 } },
-      { tvContext: null },
-    ]
+    db.existingWatchEvents = [{ tvContext: { episode: 1, season: 1 } }, { tvContext: null }]
     mockCreateWatchEvent()
 
     const { req } = createReq({

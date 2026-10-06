@@ -4,7 +4,10 @@ import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { withLibraryItemRowLock } from '../../../collections/watch-events/utils/withLibraryItemRowLock'
+import {
+  withLibraryItemCreateLock,
+  withLibraryItemRowLock,
+} from '../../../collections/watch-events/utils/withLibraryItemRowLock'
 import { createWatchEvent } from '../create-watch-event'
 import { logWatchEndpoint } from '../log-watch'
 
@@ -21,6 +24,14 @@ vi.mock('../../helpers', async (importOriginal) => {
 vi.mock('../create-watch-event')
 
 vi.mock('../../../collections/watch-events/utils/withLibraryItemRowLock', () => ({
+  withLibraryItemCreateLock: vi.fn(
+    async (
+      _req: PayloadRequest,
+      _profileId: number,
+      _mediaId: number,
+      fn: () => Promise<unknown>,
+    ) => fn(),
+  ),
   withLibraryItemRowLock: vi.fn(
     async (_req: PayloadRequest, _libraryItemId: number | string, fn: () => Promise<unknown>) =>
       fn(),
@@ -79,6 +90,9 @@ describe('logWatchEndpoint', () => {
       existingWatchEvents: [],
       libraryItem: createMovieLibraryItem(),
     }
+    vi.mocked(withLibraryItemCreateLock).mockImplementation(
+      async (_req, _profileId, _mediaId, fn) => fn(),
+    )
     vi.mocked(withLibraryItemRowLock).mockImplementation(async (_req, _id, fn) => fn())
   })
 

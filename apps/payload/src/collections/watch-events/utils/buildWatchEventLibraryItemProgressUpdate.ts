@@ -21,8 +21,8 @@ type WatchEventProgressSource = {
 /**
  * Progress and rewatch fields to merge onto a library item after a watch-event create.
  *
- * Any event with season/episode `tvContext` rebuilds last season/episode, including
- * `rewatched`. First-watch TV events also increment `episodesWatched`. When watched keys
+ * Any TV event with season/episode `tvContext` rebuilds last season/episode, including
+ * `rewatched`; movie items ignore `tvContext`. First-watch TV events also increment `episodesWatched`. When watched keys
  * and stored season lengths are provided, completed seasons are appended; omitting them
  * copies `seasonsCompleted` through. Movie `completed` and rewatch events set
  * `progress.watched`. Rewatches increment `rewatchCount` for movies only.
@@ -40,7 +40,8 @@ export function buildWatchEventLibraryItemProgressUpdate(
   const update: WatchEventLibraryItemProgressUpdate = {}
   const isRewatch = isRewatchWatchEvent(doc)
 
-  if (hasTvEpisodeContext(doc.tvContext)) {
+  // A movie item never takes a TV patch, even when the event carries a stray tvContext.
+  if (hasTvEpisodeContext(doc.tvContext) && libraryItem?.progress?.type !== 'movie') {
     update.progress = buildTvProgressUpdate(doc.tvContext, libraryItem?.progress, {
       ...options,
       isRewatch,
@@ -93,7 +94,5 @@ function isMovieWatchedEvent(
   libraryItem: null | Pick<LibraryItem, 'progress'> | undefined,
   isRewatch: boolean,
 ): boolean {
-  return (
-    libraryItem?.progress?.type === 'movie' && (doc.eventType === 'completed' || isRewatch)
-  )
+  return libraryItem?.progress?.type === 'movie' && (doc.eventType === 'completed' || isRewatch)
 }

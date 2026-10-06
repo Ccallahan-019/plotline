@@ -35,6 +35,7 @@ function createHookArgs(options: {
   context?: Record<string, unknown>
   doc?: Record<string, unknown>
   episodesWatchedRef?: { value: number }
+  existingWatchEvents?: Array<Record<string, unknown>>
   libraryItem?: Record<string, unknown>
   rewatchCountRef?: { value: number }
 }) {
@@ -45,6 +46,7 @@ function createHookArgs(options: {
   const req = {
     context: {},
     payload: {
+      find: vi.fn(async () => ({ docs: options.existingWatchEvents ?? [], hasNextPage: false })),
       findByID: vi.fn(async () => ({
         progress: {
           episodesWatched: episodesWatchedRef.value,
@@ -53,20 +55,22 @@ function createHookArgs(options: {
         rewatchCount: rewatchCountRef.value,
         ...options.libraryItem,
       })),
-      update: vi.fn(async ({ collection, data }: { collection: string; data: Record<string, unknown> }) => {
-        updates.push({ collection, data })
+      update: vi.fn(
+        async ({ collection, data }: { collection: string; data: Record<string, unknown> }) => {
+          updates.push({ collection, data })
 
-        if (collection === 'library-items' && data.progress != null) {
-          const progress = data.progress as { episodesWatched?: number }
-          if (progress.episodesWatched != null) {
-            episodesWatchedRef.value = progress.episodesWatched
+          if (collection === 'library-items' && data.progress != null) {
+            const progress = data.progress as { episodesWatched?: number }
+            if (progress.episodesWatched != null) {
+              episodesWatchedRef.value = progress.episodesWatched
+            }
           }
-        }
 
-        if (collection === 'library-items' && typeof data.rewatchCount === 'number') {
-          rewatchCountRef.value = data.rewatchCount
-        }
-      }),
+          if (collection === 'library-items' && typeof data.rewatchCount === 'number') {
+            rewatchCountRef.value = data.rewatchCount
+          }
+        },
+      ),
     },
   } as unknown as PayloadRequest
 
@@ -75,8 +79,10 @@ function createHookArgs(options: {
       context: options.context ?? {},
       doc: {
         eventType: 'progress',
+        id: 99,
         isRewatch: false,
         libraryItem: 11,
+        media: 5,
         profile: 22,
         tvContext: { episode: 2, season: 1 },
         watchedAt: '2026-08-17T12:00:00.000Z',
@@ -95,7 +101,7 @@ describe('syncLibraryItemFromWatchEvent', () => {
     vi.clearAllMocks()
   })
 
-  it('still updates lastWatchedAt and clears statsCache when progress sync is skipped', async () => {
+  it('does nothing when log-watch already owns the library-item and stats writes', async () => {
     const { args, req, updates } = createHookArgs({
       context: { [SKIP_PROGRESS_SYNC_FROM_WATCH_EVENT]: true },
       episodesWatchedRef: { value: 4 },
@@ -104,16 +110,26 @@ describe('syncLibraryItemFromWatchEvent', () => {
     await syncLibraryItemFromWatchEvent(args)
 
     expect(req.payload.findByID).not.toHaveBeenCalled()
-    expect(updates).toEqual([
-      {
-        collection: 'library-items',
-        data: { lastWatchedAt: '2026-08-17T12:00:00.000Z' },
-      },
-      {
-        collection: 'profiles',
-        data: { statsCache: null },
-      },
-    ])
+    expect(updates).toEqual([])
+  })
+
+  it('does not increment episodesWatched when the episode was already logged', async () => {
+    const episodesWatchedRef = { value: 3 }
+    const { args, req } = createHookArgs({
+      episodesWatchedRef,
+      existingWatchEvents: [{ tvContext: { episode: 2, season: 1 } }],
+    })
+
+    await syncLibraryItemFromWatchEvent(args)
+
+    expect(episodesWatchedRef.value).toBe(3)
+    expect(req.payload.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          and: expect.arrayContaining([{ id: { not_equals: 99 } }]),
+        }),
+      }),
+    )
   })
 
   it('serializes concurrent progress creates so episodesWatched is incremented once per event', async () => {
@@ -130,7 +146,8 @@ describe('syncLibraryItemFromWatchEvent', () => {
       (update) => update.collection === 'library-items',
     )
     const watchedCounts = libraryItemUpdates.map(
-      (update) => (update.data.progress as { episodesWatched?: number } | undefined)?.episodesWatched,
+      (update) =>
+        (update.data.progress as { episodesWatched?: number } | undefined)?.episodesWatched,
     )
 
     expect(watchedCounts.sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([6, 7])

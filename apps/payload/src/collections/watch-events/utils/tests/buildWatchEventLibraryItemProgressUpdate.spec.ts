@@ -178,4 +178,13 @@ describe('buildWatchEventLibraryItemProgressUpdate', () => {
       rewatchCount: 2,
     })
   })
+
+  it('ignores a stray tvContext on a movie item instead of writing TV progress', () => {
+    expect(
+      buildWatchEventLibraryItemProgressUpdate(
+        { eventType: 'completed', isRewatch: false, tvContext: { episode: 1, season: 1 } },
+        { progress: { type: 'movie', watched: false }, rewatchCount: 0 },
+      ),
+    ).toEqual({ progress: { type: 'movie', watched: true } })
+  })
 })

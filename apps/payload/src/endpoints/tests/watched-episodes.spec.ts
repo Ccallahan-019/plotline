@@ -154,10 +154,7 @@ describe('watchedEpisodesEndpoint', () => {
           { tvContext: { episode: 1.5, season: 1 } },
           { tvContext: { episode: 2, season: 1 } },
         ],
-        [
-          { tvContext: { episode: 2, season: 1 } },
-          { tvContext: { episode: 1, season: 0 } },
-        ],
+        [{ tvContext: { episode: 2, season: 1 } }, { tvContext: { episode: 1, season: 0 } }],
       ],
     })
 
@@ -175,7 +172,14 @@ describe('watchedEpisodesEndpoint', () => {
         collection: 'watch-events',
         overrideAccess: true,
         page: 1,
-        where: { libraryItem: { equals: 11 } },
+        select: { tvContext: true },
+        where: {
+          and: [
+            { libraryItem: { equals: 11 } },
+            { 'tvContext.season': { exists: true } },
+            { 'tvContext.episode': { exists: true } },
+          ],
+        },
       }),
     )
     expect(req.payload.find).toHaveBeenNthCalledWith(

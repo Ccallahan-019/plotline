@@ -1,28 +1,45 @@
 import type { WatchedEpisodePair, WatchEventTvContext } from '@plotline/shared/log-watch'
-import type { PayloadRequest } from 'payload'
+import type { PayloadRequest, Where } from 'payload'
 
 import { toWatchedEpisodeKey, toWatchedEpisodeKeyFromTvContext } from '@plotline/shared/log-watch'
 
-const WATCHED_EPISODE_PAGE_SIZE = 100
+const WATCHED_EPISODE_PAGE_SIZE = 500
+
+export type LoadWatchedEpisodePairsOptions = {
+  /** Watch event to leave out, e.g. the row a create hook is currently syncing. */
+  excludeEventId?: number | string
+}
 
 /**
  * Pages watch events for a library item and returns unique season/episode pairs.
  *
- * Events without integer `tvContext` coordinates are ignored, including series-level
- * completed rows. Callers must already have authorized the library item: this query
- * uses `overrideAccess` so it can run inside the log-watch transaction and from the
- * watched-episodes endpoint after the owner check.
+ * Only rows with both `tvContext` coordinates are queried, and only `tvContext` is
+ * selected, so series-level completed rows never leave the database. Callers must already
+ * have authorized the library item: this query uses `overrideAccess` so it can run inside
+ * the log-watch transaction and from the watched-episodes endpoint after the owner check.
  *
  * @param req - Payload request (uses the open transaction when present)
  * @param libraryItemId - Library item whose watch events to scan
+ * @param options.excludeEventId - Event id to ignore
  * @returns Unique pairs sorted by season, then episode
  */
 export async function loadWatchedEpisodePairs(
   req: PayloadRequest,
   libraryItemId: number,
+  options?: LoadWatchedEpisodePairsOptions,
 ): Promise<WatchedEpisodePair[]> {
   const seen = new Set<string>()
   const pairs: WatchedEpisodePair[] = []
+  const conditions: Where[] = [
+    { libraryItem: { equals: libraryItemId } },
+    { 'tvContext.season': { exists: true } },
+    { 'tvContext.episode': { exists: true } },
+  ]
+
+  if (options?.excludeEventId != null) {
+    conditions.push({ id: { not_equals: options.excludeEventId } })
+  }
+
   let page = 1
 
   while (true) {
@@ -33,9 +50,8 @@ export async function loadWatchedEpisodePairs(
       overrideAccess: true,
       page,
       req,
-      where: {
-        libraryItem: { equals: libraryItemId },
-      },
+      select: { tvContext: true },
+      where: { and: conditions },
     })
 
     for (const event of result.docs) {
@@ -67,7 +83,7 @@ export async function loadWatchedEpisodePairs(
   return pairs
 }
 
-// Drops series-level rows and non-integer coordinates; season 0 (specials) stays.
+// Drops non-integer coordinates; season 0 (specials) stays.
 function toWatchedEpisodePair(
   tvContext: null | undefined | WatchEventTvContext,
 ): null | WatchedEpisodePair {
