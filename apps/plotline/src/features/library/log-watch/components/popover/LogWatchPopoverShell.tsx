@@ -1,6 +1,6 @@
 import { LibraryItem, Media } from '@plotline/payload-types'
 
-import { ShowIf } from '@/components/utils/ShowIf'
+import { useWatchedEpisodes } from '@/features/library/watch-events/hooks/use-watched-episodes'
 
 import { useLogWatchForm } from '../../hooks/use-log-watch-form'
 import { syncQuickLogEpisode } from '../../services/episode-field'
@@ -32,6 +32,12 @@ export function LogWatchPopoverShell({
       onPopoverOpenChange(false)
       onDialogOpenChange(false)
     },
+  })
+
+  // The popover stays mounted on every library card. Fetch episode coverage only while
+  // TV log-watch is open so the dialog reads one shared query cache.
+  useWatchedEpisodes(libraryItem.id, {
+    enabled: (popoverOpen || dialogOpen) && media.mediaType === 'tv',
   })
 
   const handlePopoverOpenChange = (nextOpen: boolean) => {
@@ -69,14 +75,12 @@ export function LogWatchPopoverShell({
         onPopoverOpenChange={handlePopoverOpenChange}
         popoverOpen={popoverOpen}
       >
-        <ShowIf condition={popoverOpen}>
-          <LogWatchQuickForm
-            form={form}
-            isSubmitting={isSubmitting}
-            media={media}
-            onMoreOptions={handleMoreOptions}
-          />
-        </ShowIf>
+        <LogWatchQuickForm
+          form={form}
+          isSubmitting={isSubmitting}
+          media={media}
+          onMoreOptions={handleMoreOptions}
+        />
       </LogWatchPopoverChrome>
 
       <LogWatchDialog

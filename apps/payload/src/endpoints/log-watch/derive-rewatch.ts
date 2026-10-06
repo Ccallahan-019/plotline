@@ -3,17 +3,17 @@ import type { DeriveRewatchResult, WatchEventTvContext } from '@plotline/shared/
 import type { PayloadRequest } from 'payload'
 
 import {
-  collectWatchedEpisodeKeys,
   deriveRewatch,
   toWatchedEpisodeKeyFromTvContext,
+  toWatchedEpisodeKeySet,
 } from '@plotline/shared/log-watch'
+
+import { loadWatchedEpisodePairs } from '../../collections/watch-events/utils/loadWatchedEpisodePairs'
 
 export type LogWatchRewatchContext = {
   libraryItem: LibraryItem
   watchedEpisodeKeys: Set<string>
 }
-
-const WATCHED_EPISODE_PAGE_SIZE = 100
 
 /**
  * Classifies a log-watch from the locked snapshot and records first-watch TV keys.
@@ -88,50 +88,9 @@ export async function loadLogWatchRewatchContext(
 
   const watchedEpisodeKeys =
     libraryItem.progress.type === 'tv'
-      ? await loadWatchedEpisodeKeys(req, libraryItemId)
+      ? toWatchedEpisodeKeySet(await loadWatchedEpisodePairs(req, libraryItemId))
       : new Set<string>()
 
   return { libraryItem, watchedEpisodeKeys }
 }
 
-/**
- * Pages through watch events for a library item until exhausted and collects unique
- * `season:episode` keys from events that include TV context.
- *
- * @param req - Payload request (uses the open transaction when present)
- * @param libraryItemId - Library item whose watch events to scan
- * @returns Mutable set of identity keys for {@link deriveLogWatchRewatch}
- */
-async function loadWatchedEpisodeKeys(
-  req: PayloadRequest,
-  libraryItemId: number,
-): Promise<Set<string>> {
-  const keys = new Set<string>()
-  let page = 1
-
-  while (true) {
-    const result = await req.payload.find({
-      collection: 'watch-events',
-      depth: 0,
-      limit: WATCHED_EPISODE_PAGE_SIZE,
-      overrideAccess: true,
-      page,
-      req,
-      where: {
-        libraryItem: { equals: libraryItemId },
-      },
-    })
-
-    for (const key of collectWatchedEpisodeKeys(result.docs)) {
-      keys.add(key)
-    }
-
-    if (!result.hasNextPage || result.docs.length === 0) {
-      break
-    }
-
-    page += 1
-  }
-
-  return keys
-}

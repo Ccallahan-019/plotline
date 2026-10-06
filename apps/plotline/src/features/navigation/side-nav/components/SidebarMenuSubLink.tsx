@@ -21,7 +21,7 @@ export function SidebarMenuSubLink({
     <SidebarMenuSubButton
       isActive={isActive}
       render={
-        <Link className="w-full" href={href}>
+        <Link className="w-full text-sidebar-foreground/80!" href={href}>
           {children}
         </Link>
       }
