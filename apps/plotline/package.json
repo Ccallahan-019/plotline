@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "eslint .",
+    "test": "vitest run --config ./vitest.config.mts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -47,7 +48,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "4.0.18"
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0",
