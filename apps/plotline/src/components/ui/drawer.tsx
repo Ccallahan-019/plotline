@@ -27,6 +27,7 @@ function DrawerContent({
 }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
   const modal = React.useContext(DrawerModalContext)
   useDrawerScrollLock(!modal)
+  useDrawerPortaledFocus(!modal)
 
   return (
     <DrawerPortal data-slot="drawer-portal">
@@ -133,6 +134,8 @@ function DrawerTrigger({ ...props }: React.ComponentProps<typeof DrawerPrimitive
 }
 
 const PORTED_LAYER_SELECTOR = [
+  '[data-slot="alert-dialog-content"]',
+  '[data-slot="alert-dialog-overlay"]',
   '[data-slot="combobox-content"]',
   '[data-slot="dialog-content"]',
   '[data-slot="dialog-overlay"]',
@@ -142,9 +145,46 @@ const PORTED_LAYER_SELECTOR = [
   '[data-slot="select-content"]',
 ].join(', ')
 
-// True when the outside press landed on a popup portaled outside the drawer.
+// True when the event target is inside a popup portaled outside the drawer.
 function isPortaledLayerTarget(target: EventTarget | null) {
   return target instanceof Element && target.closest(PORTED_LAYER_SELECTOR) != null
+}
+
+/**
+ * Lets portaled popups keep focus while a non-modal drawer is open.
+ *
+ * Vaul still mounts a modal Radix dialog, which traps focus inside the drawer.
+ * Select items are portaled outside that trap and highlight on hover by focusing
+ * themselves. The trap pulls focus back before those focus styles can paint, so
+ * an option can be clicked without ever showing a hover state.
+ *
+ * @param enabled - When false, focus events are left unchanged
+ */
+function useDrawerPortaledFocus(enabled: boolean) {
+  React.useEffect(() => {
+    if (!enabled) {
+      return
+    }
+
+    const keepPortaledFocus = (event: FocusEvent) => {
+      const nextTarget = event.type === 'focusout' ? event.relatedTarget : event.target
+
+      if (!isPortaledLayerTarget(nextTarget)) {
+        return
+      }
+
+      event.stopPropagation()
+    }
+
+    const { body } = document
+    body.addEventListener('focusin', keepPortaledFocus)
+    body.addEventListener('focusout', keepPortaledFocus)
+
+    return () => {
+      body.removeEventListener('focusin', keepPortaledFocus)
+      body.removeEventListener('focusout', keepPortaledFocus)
+    }
+  }, [enabled])
 }
 
 /**
