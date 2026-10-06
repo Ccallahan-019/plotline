@@ -17,6 +17,7 @@ import { logWatchEndpoint } from './endpoints/log-watch/log-watch'
 import { logWatchBatchEndpoint } from './endpoints/log-watch/log-watch-batch'
 import { recalculateWatchlistStatsEndpoint } from './endpoints/recalculate-watchlist-stats'
 import { tmdbUpsertEndpoint } from './endpoints/tmdb-upsert'
+import { updateLibraryItemEndpoint } from './endpoints/update-library-item'
 import { watchedEpisodesEndpoint } from './endpoints/watched-episodes'
 
 const filename = fileURLToPath(import.meta.url)
@@ -54,6 +55,7 @@ export default buildConfig({
   endpoints: [
     tmdbUpsertEndpoint,
     addToListEndpoint,
+    updateLibraryItemEndpoint,
     logWatchEndpoint,
     logWatchBatchEndpoint,
     watchedEpisodesEndpoint,
