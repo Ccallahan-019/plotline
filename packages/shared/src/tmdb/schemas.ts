@@ -82,6 +82,14 @@ const tvDetailsSchema = z.object({
   overview: z.string().nullable().optional(),
   popularity: z.number().optional(),
   poster_path: z.string().nullable().optional(),
+  seasons: z
+    .array(
+      z.object({
+        episode_count: z.number().nullable().optional(),
+        season_number: z.number().nullable().optional(),
+      }),
+    )
+    .optional(),
   status: z.string().optional(),
   vote_average: z.number().optional(),
 })

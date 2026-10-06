@@ -2,15 +2,35 @@ import type { LibraryItem } from '@plotline/payload-types'
 
 import type { TvProgressUpdate } from './buildTvProgressUpdate'
 
+import {
+  resolveSeasonsCompleted,
+  type ResolveSeasonsCompletedInput,
+} from './resolveSeasonsCompleted'
+
 export type BatchLoggedEpisode = {
   episode: number
   isRewatch?: boolean
   season: number
 }
 
+/**
+ * Rebuilds TV progress after a batch of episode logs.
+ *
+ * Last season/episode come from the latest pair in season/episode order.
+ * `episodesWatched` grows by the number of distinct first-watch pairs. When watched keys
+ * and stored season lengths are both provided, appends seasons whose episodes
+ * `1..length` are covered; otherwise `seasonsCompleted` is copied through.
+ *
+ * @param loggedEpisodes - Episodes in this batch, flagged when derive classified a rewatch
+ * @param currentProgress - Library-item progress before this batch
+ * @param options.seasonEpisodeCounts - Lengths from `media.tvMeta`; omit to leave seasons unchanged
+ * @param options.watchedEpisodeKeys - First-watch keys after derive, including this batch
+ * @returns The TV progress patch to store on the library item
+ */
 export function buildBatchTvProgressUpdate(
   loggedEpisodes: BatchLoggedEpisode[],
   currentProgress: LibraryItem['progress'] | null | undefined,
+  options?: ResolveSeasonsCompletedInput,
 ): TvProgressUpdate {
   const sortedEpisodes = [...loggedEpisodes].sort((a, b) => {
     if (a.season !== b.season) {
@@ -31,12 +51,11 @@ export function buildBatchTvProgressUpdate(
   }
 
   const newEpisodeCount = uniqueNewEpisodes.size
+  const seasonsCompleted = resolveSeasonsCompleted(currentProgress?.seasonsCompleted, options)
 
   return {
     type: 'tv',
-    ...(currentProgress?.seasonsCompleted != null
-      ? { seasonsCompleted: currentProgress.seasonsCompleted }
-      : {}),
+    ...(seasonsCompleted != null ? { seasonsCompleted } : {}),
     ...(latestEpisode
       ? { lastEpisode: latestEpisode.episode, lastSeason: latestEpisode.season }
       : {}),

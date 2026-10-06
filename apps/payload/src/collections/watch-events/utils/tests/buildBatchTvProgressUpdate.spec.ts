@@ -1,6 +1,11 @@
+import { toWatchedEpisodeKey } from '@plotline/shared/log-watch'
 import { describe, expect, it } from 'vitest'
 
 import { buildBatchTvProgressUpdate } from '../buildBatchTvProgressUpdate'
+
+function watchedKeys(pairs: ReadonlyArray<readonly [number, number]>): Set<string> {
+  return new Set(pairs.map(([season, episode]) => toWatchedEpisodeKey(season, episode)))
+}
 
 describe('buildBatchTvProgressUpdate', () => {
   it('increments only non-rewatch episodes and keeps last position from the latest log, including rewatches', () => {
@@ -95,5 +100,62 @@ describe('buildBatchTvProgressUpdate', () => {
     )
 
     expect(progress.episodesWatched).toBe(6)
+  })
+
+  it('appends a season when first-watch keys cover episodes 1 through its stored length', () => {
+    const progress = buildBatchTvProgressUpdate(
+      [{ episode: 2, season: 1 }],
+      { episodesWatched: 1, seasonsCompleted: [3], type: 'tv' },
+      {
+        seasonEpisodeCounts: [{ episodeCount: 2, season: 1 }],
+        watchedEpisodeKeys: watchedKeys([
+          [1, 1],
+          [1, 2],
+        ]),
+      },
+    )
+
+    expect(progress).toEqual({
+      episodesWatched: 2,
+      lastEpisode: 2,
+      lastSeason: 1,
+      seasonsCompleted: [3, 1],
+      type: 'tv',
+    })
+  })
+
+  it('leaves seasonsCompleted unchanged when the watched season has no stored length', () => {
+    const progress = buildBatchTvProgressUpdate(
+      [{ episode: 2, season: 2 }],
+      { episodesWatched: 4, seasonsCompleted: [1], type: 'tv' },
+      {
+        seasonEpisodeCounts: [{ episodeCount: 0, season: 2 }],
+        watchedEpisodeKeys: watchedKeys([
+          [2, 1],
+          [2, 2],
+        ]),
+      },
+    )
+
+    expect(progress.seasonsCompleted).toEqual([1])
+  })
+
+  it('does not drop a completed season when a rewatch leaves that season uncovered', () => {
+    const progress = buildBatchTvProgressUpdate(
+      [{ episode: 1, isRewatch: true, season: 1 }],
+      { episodesWatched: 8, seasonsCompleted: [1, 2], type: 'tv' },
+      {
+        seasonEpisodeCounts: [{ episodeCount: 10, season: 1 }],
+        watchedEpisodeKeys: watchedKeys([[1, 1]]),
+      },
+    )
+
+    expect(progress).toEqual({
+      episodesWatched: 8,
+      lastEpisode: 1,
+      lastSeason: 1,
+      seasonsCompleted: [1, 2],
+      type: 'tv',
+    })
   })
 })

@@ -109,6 +109,22 @@ export const Media: CollectionConfig = {
           type: 'number',
         },
         {
+          fields: [
+            {
+              name: 'season',
+              required: true,
+              type: 'number',
+            },
+            {
+              name: 'episodeCount',
+              required: true,
+              type: 'number',
+            },
+          ],
+          name: 'seasonEpisodeCounts',
+          type: 'array',
+        },
+        {
           name: 'inProduction',
           type: 'checkbox',
         },

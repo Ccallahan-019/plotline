@@ -215,6 +215,13 @@ export interface Media {
   tvMeta?: {
     seasonCount?: number | null;
     episodeCount?: number | null;
+    seasonEpisodeCounts?:
+      | {
+          season: number;
+          episodeCount: number;
+          id?: string | null;
+        }[]
+      | null;
     inProduction?: boolean | null;
     nextEpisodeDate?: string | null;
     nextEpisodeSeason?: number | null;
@@ -550,6 +557,13 @@ export interface MediaSelect<T extends boolean = true> {
     | {
         seasonCount?: T;
         episodeCount?: T;
+        seasonEpisodeCounts?:
+          | T
+          | {
+              season?: T;
+              episodeCount?: T;
+              id?: T;
+            };
         inProduction?: T;
         nextEpisodeDate?: T;
         nextEpisodeSeason?: T;

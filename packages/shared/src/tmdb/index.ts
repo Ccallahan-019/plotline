@@ -23,5 +23,6 @@ export {
   mapTmdbGenresToUpsertInput,
   mapTmdbReleaseStatus,
   mapTvDetailsToUpsertInput,
+  type TmdbSeasonEpisodeCount,
   type TmdbUpsertMediaInput,
 } from './to-upsert-media-input'

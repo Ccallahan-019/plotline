@@ -1,3 +1,4 @@
+import type { Media } from '@plotline/payload-types'
 import type { Endpoint, PayloadRequest } from 'payload'
 
 import type { LogWatchBody } from './types'
@@ -54,6 +55,13 @@ export const logWatchEndpoint: Endpoint = {
       return withLibraryItemRowLock(req, libraryItemResult.id, async () => {
         const context = await loadLogWatchRewatchContext(req, libraryItemResult.id)
         const derived = deriveLogWatchRewatch(context, body.tvContext)
+        const seasonProgress =
+          context.libraryItem.progress.type === 'tv'
+            ? {
+                seasonEpisodeCounts: await loadSeasonEpisodeCounts(req, mediaId),
+                watchedEpisodeKeys: context.watchedEpisodeKeys,
+              }
+            : undefined
 
         const watchEvent = await createWatchEvent(req, {
           eventType: derived.eventType,
@@ -84,6 +92,7 @@ export const logWatchEndpoint: Endpoint = {
                 tvContext: body.tvContext,
               },
               context.libraryItem,
+              seasonProgress,
             ),
             ...(body.libraryItemStatus ? { status: body.libraryItemStatus } : {}),
           },
@@ -108,4 +117,29 @@ export const logWatchEndpoint: Endpoint = {
   },
   method: 'post',
   path: '/library/log-watch',
+}
+
+/**
+ * Stored per-season lengths for the locked TV progress update.
+ *
+ * This is a local media read. Log-watch must not call TMDB under the row lock, and a
+ * missing `tvMeta` leaves `seasonsCompleted` to be copied through rather than guessed.
+ *
+ * @param req - Payload request (uses the open transaction when present)
+ * @param mediaId - Media row whose `tvMeta.seasonEpisodeCounts` to read
+ * @returns Season lengths, or `undefined` when the media row has no TV metadata
+ */
+async function loadSeasonEpisodeCounts(
+  req: PayloadRequest,
+  mediaId: number,
+): Promise<NonNullable<Media['tvMeta']>['seasonEpisodeCounts'] | undefined> {
+  const media = await req.payload.findByID({
+    collection: 'media',
+    depth: 0,
+    id: mediaId,
+    overrideAccess: true,
+    req,
+  })
+
+  return media?.tvMeta?.seasonEpisodeCounts
 }

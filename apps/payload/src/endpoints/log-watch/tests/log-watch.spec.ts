@@ -1,4 +1,4 @@
-import type { LibraryItem, WatchEvent } from '@plotline/payload-types'
+import type { LibraryItem, Media, WatchEvent } from '@plotline/payload-types'
 import type { MediaStatus } from '@plotline/shared/constants'
 import type { PayloadRequest } from 'payload'
 
@@ -30,6 +30,7 @@ vi.mock('../../../collections/watch-events/utils/withLibraryItemRowLock', () => 
 type LogWatchDb = {
   existingWatchEvents: Array<{ tvContext?: null | WatchEvent['tvContext'] }>
   libraryItem: Pick<LibraryItem, 'id' | 'progress' | 'rewatchCount' | 'status'>
+  tvMeta?: Media['tvMeta']
 }
 
 function cloneDb(db: LogWatchDb): LogWatchDb {
@@ -122,7 +123,11 @@ describe('logWatchEndpoint', () => {
         }),
         findByID: vi.fn(async ({ collection }: { collection: string }) => {
           if (collection === 'media') {
-            return { id: 5, mediaType: db.libraryItem.progress.type }
+            return {
+              id: 5,
+              mediaType: db.libraryItem.progress.type,
+              tvMeta: db.tvMeta,
+            }
           }
 
           return db.libraryItem
@@ -324,6 +329,83 @@ describe('logWatchEndpoint', () => {
       episodesWatched: 3,
       lastEpisode: 1,
       lastSeason: 1,
+      type: 'tv',
+    })
+  })
+
+  it('appends seasonsCompleted when first-watch keys cover a stored season length', async () => {
+    db.libraryItem = {
+      id: 11,
+      progress: {
+        episodesWatched: 2,
+        seasonsCompleted: [2],
+        type: 'tv',
+      },
+      rewatchCount: 0,
+      status: 'watching',
+    }
+    db.existingWatchEvents = [
+      { tvContext: { episode: 1, season: 1 } },
+      { tvContext: { episode: 1, season: 3 } },
+      { tvContext: { episode: 2, season: 3 } },
+    ]
+    db.tvMeta = {
+      seasonEpisodeCounts: [
+        { episodeCount: 2, season: 1 },
+        { episodeCount: 0, season: 4 },
+      ],
+    }
+    mockCreateWatchEvent()
+
+    const { req } = createReq({
+      mediaId: 5,
+      tvContext: { episode: 2, season: 1 },
+    })
+
+    const response = await logWatchEndpoint.handler(req)
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response).toHaveProperty('status', 200)
+    expect(db.libraryItem.progress).toEqual({
+      episodesWatched: 3,
+      lastEpisode: 2,
+      lastSeason: 1,
+      seasonsCompleted: [2, 1],
+      type: 'tv',
+    })
+  })
+
+  it('keeps seasonsCompleted when a rewatch does not cover the stored season length', async () => {
+    db.libraryItem = {
+      id: 11,
+      progress: {
+        episodesWatched: 3,
+        seasonsCompleted: [1],
+        type: 'tv',
+      },
+      rewatchCount: 0,
+      status: 'watching',
+    }
+    db.existingWatchEvents = [{ tvContext: { episode: 1, season: 1 } }]
+    db.tvMeta = {
+      seasonEpisodeCounts: [{ episodeCount: 8, season: 1 }],
+    }
+    mockCreateWatchEvent()
+
+    const { req } = createReq({
+      mediaId: 5,
+      tvContext: { episode: 1, season: 1 },
+    })
+
+    const response = await logWatchEndpoint.handler(req)
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response).toHaveProperty('status', 200)
+    expect(db.libraryItem.progress).toEqual({
+      episodesWatched: 3,
+      lastEpisode: 1,
+      lastSeason: 1,
+      seasonsCompleted: [1],
       type: 'tv',
     })
   })

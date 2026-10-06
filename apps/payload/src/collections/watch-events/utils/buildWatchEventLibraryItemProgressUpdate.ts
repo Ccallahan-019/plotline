@@ -1,5 +1,7 @@
 import type { LibraryItem } from '@plotline/payload-types'
 
+import type { ResolveSeasonsCompletedInput } from './resolveSeasonsCompleted'
+
 import { buildTvProgressUpdate } from './buildTvProgressUpdate'
 
 export type WatchEventLibraryItemProgressUpdate = {
@@ -20,23 +22,29 @@ type WatchEventProgressSource = {
  * Progress and rewatch fields to merge onto a library item after a watch-event create.
  *
  * Any event with season/episode `tvContext` rebuilds last season/episode, including
- * `rewatched`. First-watch TV events also increment `episodesWatched`. Movie `completed`
- * and rewatch events set `progress.watched`. Rewatches increment `rewatchCount` for movies
- * only.
+ * `rewatched`. First-watch TV events also increment `episodesWatched`. When watched keys
+ * and stored season lengths are provided, completed seasons are appended; omitting them
+ * copies `seasonsCompleted` through. Movie `completed` and rewatch events set
+ * `progress.watched`. Rewatches increment `rewatchCount` for movies only.
  *
  * @param doc - Created watch event (event type, rewatch flag, optional TV context)
  * @param libraryItem - Current library item used for media type and the existing rewatch count
+ * @param options - Watched keys and season lengths; omit so admin creates keep the stored seasons
  * @returns Fields to patch onto the library item; empty when this event should not change progress
  */
 export function buildWatchEventLibraryItemProgressUpdate(
   doc: WatchEventProgressSource,
   libraryItem: null | Pick<LibraryItem, 'progress' | 'rewatchCount'> | undefined,
+  options?: ResolveSeasonsCompletedInput,
 ): WatchEventLibraryItemProgressUpdate {
   const update: WatchEventLibraryItemProgressUpdate = {}
   const isRewatch = isRewatchWatchEvent(doc)
 
   if (hasTvEpisodeContext(doc.tvContext)) {
-    update.progress = buildTvProgressUpdate(doc.tvContext, libraryItem?.progress, { isRewatch })
+    update.progress = buildTvProgressUpdate(doc.tvContext, libraryItem?.progress, {
+      ...options,
+      isRewatch,
+    })
   } else if (isMovieWatchedEvent(doc, libraryItem, isRewatch)) {
     update.progress = {
       type: 'movie',

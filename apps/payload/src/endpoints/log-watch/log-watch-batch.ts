@@ -125,7 +125,14 @@ export const logWatchBatchEndpoint: Endpoint = {
           },
           data: {
             lastWatchedAt: watchedAt,
-            progress: buildBatchTvProgressUpdate(classifiedEpisodes, context.libraryItem.progress),
+            progress: buildBatchTvProgressUpdate(
+              classifiedEpisodes,
+              context.libraryItem.progress,
+              {
+                seasonEpisodeCounts: media.tvMeta?.seasonEpisodeCounts,
+                watchedEpisodeKeys: context.watchedEpisodeKeys,
+              },
+            ),
             ...(body.libraryItemStatus ? { status: body.libraryItemStatus } : {}),
           },
           depth: 0,

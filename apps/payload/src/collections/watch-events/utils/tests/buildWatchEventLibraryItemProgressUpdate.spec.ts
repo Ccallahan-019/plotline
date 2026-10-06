@@ -1,3 +1,4 @@
+import { toWatchedEpisodeKey } from '@plotline/shared/log-watch'
 import { describe, expect, it } from 'vitest'
 
 import { buildWatchEventLibraryItemProgressUpdate } from '../buildWatchEventLibraryItemProgressUpdate'
@@ -101,6 +102,62 @@ describe('buildWatchEventLibraryItemProgressUpdate', () => {
         episodesWatched: 12,
         lastEpisode: 5,
         lastSeason: 1,
+        type: 'tv',
+      },
+    })
+  })
+
+  it('appends a completed season when watched keys cover the stored length', () => {
+    expect(
+      buildWatchEventLibraryItemProgressUpdate(
+        {
+          eventType: 'progress',
+          isRewatch: false,
+          tvContext: { episode: 1, season: 2 },
+        },
+        {
+          progress: { episodesWatched: 4, seasonsCompleted: [1], type: 'tv' },
+          rewatchCount: 0,
+        },
+        {
+          seasonEpisodeCounts: [{ episodeCount: 1, season: 2 }],
+          watchedEpisodeKeys: new Set([toWatchedEpisodeKey(2, 1)]),
+        },
+      ),
+    ).toEqual({
+      progress: {
+        episodesWatched: 5,
+        lastEpisode: 1,
+        lastSeason: 2,
+        seasonsCompleted: [1, 2],
+        type: 'tv',
+      },
+    })
+  })
+
+  it('keeps seasonsCompleted on a TV rewatch when the season is not fully covered', () => {
+    expect(
+      buildWatchEventLibraryItemProgressUpdate(
+        {
+          eventType: 'rewatched',
+          isRewatch: true,
+          tvContext: { episode: 2, season: 1 },
+        },
+        {
+          progress: { episodesWatched: 8, seasonsCompleted: [1], type: 'tv' },
+          rewatchCount: 0,
+        },
+        {
+          seasonEpisodeCounts: [{ episodeCount: 10, season: 1 }],
+          watchedEpisodeKeys: new Set([toWatchedEpisodeKey(1, 2)]),
+        },
+      ),
+    ).toEqual({
+      progress: {
+        episodesWatched: 8,
+        lastEpisode: 2,
+        lastSeason: 1,
+        seasonsCompleted: [1],
         type: 'tv',
       },
     })

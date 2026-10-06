@@ -1,6 +1,11 @@
 import type { MediaReleaseStatus, MediaType } from '../constants/media'
 import type { TmdbMovieDetails, TmdbTvDetails } from './schemas'
 
+export type TmdbSeasonEpisodeCount = {
+  episodeCount: number
+  season: number
+}
+
 export type TmdbUpsertMediaInput = {
   backdropPath?: null | string
   externalIds?: {
@@ -27,6 +32,7 @@ export type TmdbUpsertMediaInput = {
     nextEpisodeNumber?: null | number
     nextEpisodeSeason?: null | number
     seasonCount?: null | number
+    seasonEpisodeCounts?: null | TmdbSeasonEpisodeCount[]
   }
   voteAverage?: null | number
 }
@@ -144,7 +150,42 @@ export function mapTvDetailsToUpsertInput(details: TmdbTvDetails): TmdbUpsertMed
       nextEpisodeNumber: nextEpisode?.episode_number ?? null,
       nextEpisodeSeason: nextEpisode?.season_number ?? null,
       seasonCount: details.number_of_seasons ?? null,
+      seasonEpisodeCounts: mapSeasonEpisodeCounts(details.seasons),
     },
     voteAverage: details.vote_average ?? null,
   }
+}
+
+/**
+ * Keeps each TMDB season length, including season 0 (specials).
+ *
+ * Seasons without a numeric `episode_count` are omitted so a missing length is
+ * not stored as zero.
+ */
+function mapSeasonEpisodeCounts(
+  seasons: TmdbTvDetails['seasons'],
+): null | TmdbSeasonEpisodeCount[] {
+  if (seasons == null) {
+    return null
+  }
+
+  const counts: TmdbSeasonEpisodeCount[] = []
+
+  for (const season of seasons) {
+    if (
+      season.season_number == null ||
+      season.episode_count == null ||
+      !Number.isFinite(season.season_number) ||
+      !Number.isFinite(season.episode_count)
+    ) {
+      continue
+    }
+
+    counts.push({
+      episodeCount: season.episode_count,
+      season: season.season_number,
+    })
+  }
+
+  return counts
 }
