@@ -2,11 +2,15 @@
 
 import type { WatchlistMembership } from '@plotline/payload-types'
 
-import { DragDropProvider } from '@dnd-kit/react'
+import { DragDropProvider, DragEndEvent } from '@dnd-kit/react'
+import { useMemo } from 'react'
 
 import { ItemGroup } from '@/components/ui/item'
 
+import type { WatchlistMembershipSort } from '../types'
+
 import { useWatchlistMembershipList } from '../hooks/use-watchlist-membership-list'
+import { sortWatchlistMemberships } from '../services/sort-watchlist-memberships'
 import { WatchlistLogWatchDialog } from './WatchlistLogWatchDialog'
 import { WatchlistMembershipGrid } from './WatchlistMembershipGrid'
 import { WatchlistMembershipRow } from './WatchlistMembershipRow'
@@ -15,16 +19,38 @@ import { WatchlistMembershipsEmpty } from './WatchlistMembershipsEmpty'
 type WatchlistMembershipListProps = {
   memberships: WatchlistMembership[]
   slug: string
+  sort: WatchlistMembershipSort
 }
 
-export function WatchlistMembershipList({ memberships, slug }: WatchlistMembershipListProps) {
+export function WatchlistMembershipList({ memberships, slug, sort }: WatchlistMembershipListProps) {
   const { handleDragEnd, handleRemove, logTarget, reorder, rows, setLogTarget } =
     useWatchlistMembershipList({
       memberships,
       slug,
     })
+  // Manual order is the hook's row order, including an in-progress drag. Re-sorting
+  // that array would make drag indexes point at the wrong rows.
+  const rowsToRender = useMemo(
+    () => (sort === 'manual' ? rows : sortWatchlistMemberships(rows, sort)),
+    [rows, sort],
+  )
+  const manualOrder = sort === 'manual'
 
-  if (rows.length === 0) {
+  const handleDragEndWrapper = (event: DragEndEvent) => {
+    if (!manualOrder) {
+      return
+    }
+
+    handleDragEnd(event)
+  }
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setLogTarget(null)
+    }
+  }
+
+  if (rowsToRender.length === 0) {
     return <WatchlistMembershipsEmpty />
   }
 
@@ -32,7 +58,7 @@ export function WatchlistMembershipList({ memberships, slug }: WatchlistMembersh
     <>
       <div className="md:hidden">
         <WatchlistMembershipGrid
-          memberships={rows}
+          memberships={rowsToRender}
           onLogWatch={setLogTarget}
           onRemove={handleRemove}
           slug={slug}
@@ -40,9 +66,9 @@ export function WatchlistMembershipList({ memberships, slug }: WatchlistMembersh
       </div>
 
       <div className="hidden md:block">
-        <DragDropProvider onDragEnd={handleDragEnd}>
+        <DragDropProvider onDragEnd={handleDragEndWrapper}>
           <ItemGroup className="gap-1.5">
-            {rows.map((membership, index) => (
+            {rowsToRender.map((membership, index) => (
               <WatchlistMembershipRow
                 index={index}
                 key={membership.id}
@@ -50,6 +76,7 @@ export function WatchlistMembershipList({ memberships, slug }: WatchlistMembersh
                 onLogWatch={setLogTarget}
                 onRemove={handleRemove}
                 reorderDisabled={reorder.isPending}
+                showDragHandle={manualOrder}
                 slug={slug}
               />
             ))}
@@ -60,11 +87,7 @@ export function WatchlistMembershipList({ memberships, slug }: WatchlistMembersh
       <WatchlistLogWatchDialog
         key={logTarget?.id}
         membership={logTarget}
-        onOpenChange={(open) => {
-          if (!open) {
-            setLogTarget(null)
-          }
-        }}
+        onOpenChange={handleOpenChange}
         open
       />
     </>

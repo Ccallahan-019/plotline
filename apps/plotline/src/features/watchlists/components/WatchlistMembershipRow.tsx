@@ -42,6 +42,7 @@ type WatchlistMembershipRowProps = {
   onLogWatch: (membership: WatchlistMembership) => void
   onRemove: (membership: WatchlistMembership) => void
   reorderDisabled: boolean
+  showDragHandle: boolean
   slug: string
 }
 
@@ -51,6 +52,7 @@ export function WatchlistMembershipRow({
   onLogWatch,
   onRemove,
   reorderDisabled,
+  showDragHandle,
   slug,
 }: WatchlistMembershipRowProps) {
   const media = getMembershipMedia(membership)
@@ -60,7 +62,7 @@ export function WatchlistMembershipRow({
   const addedLabel = formatAddedToListLabel(membership.addedAt)
   // `handleRef` is the only drag source, so the title link and menu stay clickable.
   const { handleRef, isDragging, ref } = useSortable({
-    disabled: reorderDisabled,
+    disabled: reorderDisabled || !showDragHandle,
     id: membership.id,
     index,
   })
@@ -73,11 +75,13 @@ export function WatchlistMembershipRow({
       role="listitem"
     >
       <Item className="flex-nowrap gap-3" variant="outline">
-        <WatchlistMembershipDragButton
-          disabled={reorderDisabled}
-          handleRef={handleRef}
-          title={title}
-        />
+        <ShowIf condition={showDragHandle}>
+          <WatchlistMembershipDragButton
+            disabled={reorderDisabled}
+            handleRef={handleRef}
+            title={title}
+          />
+        </ShowIf>
 
         <ItemMedia>
           <MembershipPoster media={media} />
