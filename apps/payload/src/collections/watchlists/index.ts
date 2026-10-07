@@ -8,6 +8,8 @@ import {
 } from '@plotline/shared/constants'
 import { JSONSchema4 } from 'json-schema'
 
+import { removeWatchlistMembershipEndpoint } from '../../endpoints/remove-watchlist-membership'
+import { reorderWatchlistMembershipsEndpoint } from '../../endpoints/reorder-watchlist-memberships'
 import { watchlistsAccess } from './access'
 import { preventSystemWatchlistDelete } from './hooks/preventSystemWatchlistDelete'
 import { recalculateStatsAfterWatchlistChange } from './hooks/recalculateStatsOnChange'
@@ -20,6 +22,8 @@ export const Watchlists: CollectionConfig = {
     defaultColumns: ['name', 'owner', 'visibility', 'isSystem'],
     useAsTitle: 'name',
   },
+  // Paths are relative to this collection. Root `/watchlists/...` endpoints are not matched.
+  endpoints: [reorderWatchlistMembershipsEndpoint, removeWatchlistMembershipEndpoint],
   fields: [
     {
       index: true,

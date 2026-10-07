@@ -4,18 +4,14 @@ import Link from 'next/link'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import { ItemDescription } from '@/components/ui/item'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { getPosterUrl } from '@/features/media-grid/grid/services/media-display-helpers'
 import { cn } from '@/lib/utils'
 
 import type { WatchlistCard as WatchlistCardData, WatchlistCardPreview } from '../types'
 
-const VISIBILITY_LABELS: Record<WatchlistCardData['visibility'], string> = {
-  friends: 'Friends',
-  private: 'Private',
-  public: 'Public',
-  unlisted: 'Unlisted',
-}
+import { WatchlistVisibilityBadge } from './WatchlistVisibilityBadge'
 
 type WatchlistGridCardProps = {
   card: WatchlistCardData
@@ -36,11 +32,12 @@ export function WatchlistGridCard({ card }: WatchlistGridCardProps) {
           <CardDescription className="line-clamp-3">{card.description}</CardDescription>
         </ShowIf>
 
-        <CardDescription>
-          {VISIBILITY_LABELS[card.visibility]}
-          <span aria-hidden="true"> · </span>
-          {formatTitleCount(card.titleCount)}
-        </CardDescription>
+        <div className="flex items-center gap-2">
+          <WatchlistVisibilityBadge variant="outline" visibility={card.visibility} />
+          <ItemDescription className="leading-none">
+            {formatTitleCount(card.titleCount)}
+          </ItemDescription>
+        </div>
       </CardHeader>
     </Card>
   )
@@ -79,7 +76,7 @@ function WatchlistPosterFrame({
         ratio={2 / 3}
       >
         {posterUrl ? (
-          <Image alt="" className="object-cover" fill sizes="80px" src={posterUrl} />
+          <Image alt="" className="object-cover" fill sizes="128px" src={posterUrl} />
         ) : (
           <Empty className="h-full w-full">
             <EmptyHeader>

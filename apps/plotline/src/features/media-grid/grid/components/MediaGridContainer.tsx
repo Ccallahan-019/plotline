@@ -10,7 +10,7 @@ export function MediaGridContainer({ children, className }: MediaGridContainerPr
   return (
     <div
       className={cn(
-        'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
+        'grid grid-cols-1 xs:grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
         className,
       )}
     >

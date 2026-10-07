@@ -1,24 +1,33 @@
-import type { LibraryItem, WatchlistMembership } from '@plotline/payload-types'
+import type { LibraryItem, Watchlist, WatchlistMembership } from '@plotline/payload-types'
 
+import { appendInFilter } from '@/lib/payload/append-in-filter'
+import { fetchAllPages } from '@/lib/payload/fetch-all-pages'
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
 
 import type { WatchlistCard } from '../types'
 
-import { buildWatchlistCards, collectPreviewLibraryItemIds } from './build-watchlist-cards'
+import {
+  buildWatchlistCards,
+  collectPreviewLibraryItemIds,
+  WATCHLIST_CARD_PREVIEW_LIMIT,
+} from './build-watchlist-cards'
 import { getWatchlists } from './get-watchlists'
 
-const MAX_PAYLOAD_PAGES = 100
 const PAYLOAD_PAGE_SIZE = 100
 
-/** List order for "first three titles": manual order, then when the title was added. */
-const WATCHLIST_CARD_MEMBERSHIP_SORT = 'sortOrder,addedAt'
+// Keeps each library-item request URL short. Must stay under PAYLOAD_PAGE_SIZE.
+const LIBRARY_ITEM_CHUNK_SIZE = 50
+
+/** List order for "first three titles": manual order, then when added, then id so ties are stable. */
+const WATCHLIST_CARD_MEMBERSHIP_SORT = 'sortOrder,addedAt,id'
 
 /**
  * Loads watchlist cards for the signed-in profile.
  *
- * Uses the same watchlist set as `getWatchlists`. Memberships are paged in list
- * order, then only the first three library items per list are loaded for posters.
- * Title counts include every membership. The result is not name-sorted; callers
+ * Uses the same watchlist set as `getWatchlists`. Each list asks Payload for
+ * only its first three memberships, in parallel, and reads the list's full
+ * title count from `totalDocs`. Posters for those memberships then load in a
+ * few chunked library-item requests. The result is not name-sorted; callers
  * apply `sortWatchlistCards`.
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
@@ -32,74 +41,67 @@ export async function getWatchlistCards(clerkUserId: string): Promise<WatchlistC
     return []
   }
 
-  const watchlistIds = watchlists.map((watchlist) => watchlist.id)
-  const memberships = await fetchAllPayloadDocs<WatchlistMembership>(
-    clerkUserId,
-    '/api/watchlist-memberships',
-    (page) => membershipSearchParams(watchlistIds, page),
-  )
+  const { memberships, titleCounts } = await fetchPreviewMemberships(clerkUserId, watchlists)
   const previewIds = collectPreviewLibraryItemIds(watchlists, memberships)
-  const libraryItems =
-    previewIds.length === 0
-      ? []
-      : await fetchAllPayloadDocs<LibraryItem>(clerkUserId, '/api/library-items', (page) =>
-          libraryItemSearchParams(previewIds, page),
-        )
+  const libraryItems = await fetchPreviewLibraryItems(clerkUserId, previewIds)
 
-  return buildWatchlistCards({ libraryItems, memberships, watchlists })
+  return buildWatchlistCards({ libraryItems, memberships, titleCounts, watchlists })
 }
 
-// Writes `where[field][in][index]` params in the shape Payload's REST API expects.
-function appendInFilter(
-  searchParams: Record<string, number | string>,
-  field: string,
-  values: readonly number[],
-) {
-  values.forEach((value, index) => {
-    searchParams[`where[${field}][in][${index}]`] = value
-  })
-}
+// Splits ids into groups of at most `size`, keeping order.
+function chunk<T>(values: readonly T[], size: number): T[][] {
+  const chunks: T[][] = []
 
-/**
- * Follows Payload `hasNextPage` until every matching doc is loaded.
- *
- * @param clerkUserId - Clerk user id forwarded to Payload
- * @param path - Payload REST collection path
- * @param createSearchParams - Page-specific query. Called once per page
- * @returns Docs from every page, in page order
- * @throws When the next page does not advance or the page cap is hit
- */
-async function fetchAllPayloadDocs<T>(
-  clerkUserId: string,
-  path: string,
-  createSearchParams: (page: number) => Record<string, number | string>,
-): Promise<T[]> {
-  const docs: T[] = []
-  let page = 1
-
-  while (page <= MAX_PAYLOAD_PAGES) {
-    const result = await payloadFetch<PayloadPaginatedDocs<T>>(path, {
-      clerkUserId,
-      method: 'GET',
-      searchParams: createSearchParams(page),
-    })
-
-    docs.push(...result.docs)
-
-    if (!result.hasNextPage) {
-      return docs
-    }
-
-    const nextPage = result.nextPage ?? page + 1
-
-    if (nextPage <= page) {
-      throw new Error(`Payload page did not advance for ${path}`)
-    }
-
-    page = nextPage
+  for (let start = 0; start < values.length; start += size) {
+    chunks.push(values.slice(start, start + size))
   }
 
-  throw new Error(`Payload page limit exceeded for ${path}`)
+  return chunks
+}
+
+// Loads the preview library items in parallel chunks so no request carries hundreds of ids.
+async function fetchPreviewLibraryItems(
+  clerkUserId: string,
+  libraryItemIds: readonly number[],
+): Promise<LibraryItem[]> {
+  const chunks = await Promise.all(
+    chunk(libraryItemIds, LIBRARY_ITEM_CHUNK_SIZE).map((ids) =>
+      fetchAllPages<LibraryItem>(
+        (page) =>
+          payloadFetch<PayloadPaginatedDocs<LibraryItem>>('/api/library-items', {
+            clerkUserId,
+            method: 'GET',
+            searchParams: libraryItemSearchParams(ids, page),
+          }),
+        '/api/library-items',
+      ),
+    ),
+  )
+
+  return chunks.flat()
+}
+
+// One small request per list, run in parallel, instead of paging every membership.
+async function fetchPreviewMemberships(
+  clerkUserId: string,
+  watchlists: readonly Watchlist[],
+): Promise<{ memberships: WatchlistMembership[]; titleCounts: Map<number, number> }> {
+  const results = await Promise.all(
+    watchlists.map((watchlist) =>
+      payloadFetch<PayloadPaginatedDocs<WatchlistMembership>>('/api/watchlist-memberships', {
+        clerkUserId,
+        method: 'GET',
+        searchParams: membershipPreviewSearchParams(watchlist.id),
+      }),
+    ),
+  )
+
+  return {
+    memberships: results.flatMap((result) => result.docs),
+    titleCounts: new Map(
+      watchlists.map((watchlist, index) => [watchlist.id, results[index]!.totalDocs]),
+    ),
+  }
 }
 
 // Depth 1 so `media.posterPath` and `media.title` are populated. Sort by id so pages cannot skip a row.
@@ -119,19 +121,12 @@ function libraryItemSearchParams(
   return searchParams
 }
 
-// Depth 0 memberships are enough to count titles and pick the first three ids.
-function membershipSearchParams(
-  watchlistIds: readonly number[],
-  page: number,
-): Record<string, number | string> {
-  const searchParams: Record<string, number | string> = {
+// Depth 0 memberships are enough to pick the first three ids. `totalDocs` is the full count.
+function membershipPreviewSearchParams(watchlistId: number): Record<string, number | string> {
+  return {
     depth: 0,
-    limit: PAYLOAD_PAGE_SIZE,
-    page,
+    limit: WATCHLIST_CARD_PREVIEW_LIMIT,
     sort: WATCHLIST_CARD_MEMBERSHIP_SORT,
+    'where[watchlist][equals]': watchlistId,
   }
-
-  appendInFilter(searchParams, 'watchlist', watchlistIds)
-
-  return searchParams
 }

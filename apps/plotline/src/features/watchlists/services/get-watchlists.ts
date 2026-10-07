@@ -1,5 +1,6 @@
 import type { Watchlist } from '@plotline/payload-types'
 
+import { fetchAllPages } from '@/lib/payload/fetch-all-pages'
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
 
 export type WatchlistQueryFilters = {
@@ -27,25 +28,24 @@ export async function getWatchlists(
   clerkUserId: string,
   filters?: WatchlistQueryFilters,
 ): Promise<Watchlist[]> {
-  const searchParams: Record<string, number | string> = {
-    depth: 0,
-    limit: 100,
-    sort: 'sortOrder',
-  }
+  const filterParams: Record<string, number | string> = {}
 
   if (filters?.filter === 'system') {
-    searchParams['where[isSystem][equals]'] = 'true'
+    filterParams['where[isSystem][equals]'] = 'true'
   } else if (filters?.filter === 'custom') {
-    searchParams['where[isSystem][equals]'] = 'false'
+    filterParams['where[isSystem][equals]'] = 'false'
   } else if (filters?.filter === 'challenge') {
-    searchParams['where[challenge.enabled][equals]'] = 'true'
+    filterParams['where[challenge.enabled][equals]'] = 'true'
   }
 
-  const result = await payloadFetch<PayloadPaginatedDocs<Watchlist>>('/api/watchlists', {
-    clerkUserId,
-    method: 'GET',
-    searchParams,
-  })
-
-  return result.docs
+  // `id` breaks `sortOrder` ties so offset paging cannot skip or repeat a list.
+  return fetchAllPages<Watchlist>(
+    (page) =>
+      payloadFetch<PayloadPaginatedDocs<Watchlist>>('/api/watchlists', {
+        clerkUserId,
+        method: 'GET',
+        searchParams: { ...filterParams, depth: 0, limit: 100, page, sort: 'sortOrder,id' },
+      }),
+    '/api/watchlists',
+  )
 }

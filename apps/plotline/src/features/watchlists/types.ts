@@ -1,5 +1,13 @@
 import type { Watchlist } from '@plotline/payload-types'
 
+export type RemoveWatchlistMembershipResult = {
+  id: number
+}
+
+export type ReorderWatchlistMembershipsResult = {
+  membershipIds: number[]
+}
+
 /**
  * Watchlist row for the cards grid.
  *

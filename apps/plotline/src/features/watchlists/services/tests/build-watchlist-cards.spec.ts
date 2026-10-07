@@ -2,13 +2,13 @@ import type { LibraryItem, Media, Watchlist, WatchlistMembership } from '@plotli
 
 import { describe, expect, it } from 'vitest'
 
-import type { WatchlistCard } from '../types'
+import type { WatchlistCard } from '../../types'
 
 import {
   buildWatchlistCards,
   collectPreviewLibraryItemIds,
   sortWatchlistCards,
-} from './build-watchlist-cards'
+} from '../build-watchlist-cards'
 
 describe('buildWatchlistCards', () => {
   it('keeps watchlist order and normalizes blank descriptions', () => {
@@ -38,6 +38,24 @@ describe('buildWatchlistCards', () => {
     expect(cards[0]?.description).toBeNull()
     expect(cards[2]?.description).toBeNull()
     expect(cards[0]?.previews).toEqual([])
+  })
+
+  it('prefers supplied title counts when memberships are truncated to the preview slice', () => {
+    const cards = buildWatchlistCards({
+      libraryItems: [],
+      memberships: [
+        membership({ id: 1, libraryItem: 10, watchlist: 1 }),
+        membership({ id: 2, libraryItem: 11, watchlist: 1 }),
+      ],
+      titleCounts: new Map([[1, 42]]),
+      watchlists: [
+        watchlist({ id: 1, name: 'Big', slug: 'big' }),
+        watchlist({ id: 2, name: 'Empty', slug: 'empty' }),
+      ],
+    })
+
+    expect(cards[0]?.titleCount).toBe(42)
+    expect(cards[1]?.titleCount).toBe(0)
   })
 
   it('counts every membership and previews only the first three in list order', () => {

@@ -57,7 +57,7 @@ const FetchingOverlay = ({ isFetching }: { isFetching: boolean }) => {
   if (!isFetching) return null
 
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
+    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
       <Spinner className="size-7" />
     </div>
   )

@@ -18,16 +18,16 @@ todos:
     content: "Phase 1b: /dashboard/library (+ status/type filter routes) — useLibraryItems grid, shared LibraryList client island, thin wrapper pages"
     status: completed
   - id: phase-1-watchlist-detail
-    content: "Phase 1c: /dashboard/watchlists/[slug] — complete stub with useWatchlist, membership media grid, challenge progress, add/remove"
-    status: pending
+    content: "Phase 1c: /dashboard/watchlists/[slug] — watchlist detail only: sortable membership rows (dnd-kit), row actions, persist sortOrder (no challenge UI)"
+    status: completed
   - id: phase-1-title-detail
-    content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — log-watch flow, status change, optimistic updates"
+    content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — log-watch flow, status change, optimistic updates; share mutations/dialogs with watchlist row actions (Phase 1c)"
     status: pending
   - id: phase-2-dashboard
     content: "Phase 2: /dashboard overview widgets + /dashboard/continue-watching + /dashboard/recent-activity — parallel useQuery + invalidation"
     status: pending
   - id: phase-3-watchlists
-    content: "Phase 3: /dashboard/watchlists/new, /dashboard/challenges/*, BFF GET /api/watchlists/:slug/stats + useWatchlistStats"
+    content: "Phase 3: watchlist/challenge CRUD, challenge progress on watchlist detail, /dashboard/challenges/*, useWatchlistStats + stats BFF"
     status: pending
   - id: phase-4-reviews
     content: "Phase 4: /dashboard/reviews, /dashboard/reviews/rated, /dashboard/reviews/written + review forms on title detail"
@@ -531,18 +531,64 @@ type SearchFilters = {
 
 ---
 
-#### Phase 1c — `/dashboard/watchlists/[slug]` (`phase-1-watchlist-detail`)
+#### Phase 1c — Watchlist detail pages (`phase-1-watchlist-detail`)
 
-**Routes:** `/dashboard/watchlists/[slug]` (serves sidebar shortcuts `/dashboard/watchlists/watchlist`, `/dashboard/watchlists/currently-watching`, etc. via slug)
+**Scope:** **Watchlist pages only** — membership list UX on `/dashboard/watchlists/[slug]`. **Out of scope for Phase 1c:** challenge mode badges, progress bars, pacing, and `statsCache` summary (Phase 3).
 
-**Deliverables:**
+**Routes:** `/dashboard/watchlists/[slug]` (serves sidebar shortcuts `/dashboard/watchlists/watchlist`, `/dashboard/watchlists/currently-watching`, etc. via slug). The watchlists index (`/dashboard/watchlists`) is already implemented separately; Phase 1c does not expand challenge or create-list flows.
 
-- Replace stub in `src/app/dashboard/watchlists/[slug]/page.tsx`
-- `useWatchlist(slug)` via `GET /api/watchlists/[slug]` (memberships + populated media)
-- Membership media grid with poster, title, list-scoped status
-- Challenge progress bar when `challenge.enabled` (from existing `statsCache`)
-- Add/remove membership actions with cache invalidation
-- Keep existing stats summary; back link to `/dashboard/watchlists`
+**Page header (minimal):** Watchlist name, description, visibility badge, back link to `/dashboard/watchlists`. Do **not** show challenge-mode UI or stats cache cards in this phase (remove/replace the current stub stats card when building the row list).
+
+**Layout:** **Row list** — not a poster grid. Vertical stack of membership rows (optionally grouped inside a `Card` or plain list).
+
+**Membership row spec** (each row, left → right):
+
+| Zone | Content |
+| ---- | ------- |
+| Drag handle | **Left of poster** — grip icon (`GripVertical`); only the handle initiates drag (use `@dnd-kit` sensors so row body remains clickable) |
+| Poster | Small poster thumbnail (reuse poster URL helpers from [`media-display.ts`](apps/plotline/src/features/media/services/media-display.ts); similar scale to [`MediaListItem`](apps/plotline/src/features/media/components/MediaListItem.tsx) `ItemMedia`) |
+| Primary text | **Title** (link to `/dashboard/title/[mediaType]/[tmdbId]`) |
+| Metadata | **Release year**, **Film** / **Series** label, **Added to list** date — format `addedAt` from `watchlist-memberships` (e.g. localized short date) |
+| Trailing (far right) | [`StatusBadge`](apps/plotline/src/components/utils/StatusBadge.tsx) for **library item** `status` (planned / watching / completed / on hold / dropped) |
+| Trailing actions | **More actions** icon button (`MoreHorizontal` or `Ellipsis`) → shadcn **DropdownMenu** with: **Log a watch**, **Change status**, **Remove from watchlist** |
+
+**Row component:** New `WatchlistMembershipRow` in `src/features/watchlists/components/` — do not force-fit `MediaListItem` if drag handle + trailing actions break its layout; may share poster/title helpers from `getMediaItemDisplay`.
+
+**Drag-and-drop reorder:**
+
+- Install **`@dnd-kit/react`** (and typical peers: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`) in `@plotline/plotline`
+- Wrap membership list in `DndContext` + `SortableContext`; each row is a `useSortable` item keyed by membership id
+- On drag end: compute new order → call reorder mutation → optimistic update + rollback on error
+
+**Persist order in database:**
+
+- [`watchlist-memberships.sortOrder`](apps/payload/src/collections/watchlist-memberships/index.ts) already exists — use it as source of truth
+- BFF: `PATCH /api/watchlists/[slug]/memberships/reorder` (or `POST .../reorder`) accepting ordered membership ids; server updates `sortOrder` (0..n-1) in a transaction or batched Payload updates scoped to profile
+- `GET /api/watchlists/[slug]` (or memberships query) must return memberships **sorted by `sortOrder` asc**, then `addedAt` as tiebreaker
+- Initialize `sortOrder` on membership create if not already set (Payload hook or add-to-list path)
+
+**Dropdown actions (mutations):**
+
+| Menu item | Behavior |
+| --------- | -------- |
+| Log a watch | Opens log-watch UI (sheet/dialog) or navigates to title detail — reuse `useLogWatch` / existing library log-watch form components |
+| Change status | Submenu or dialog to set library item status — reuse library status mutation patterns |
+| Remove from watchlist | Delete membership — new `useRemoveFromWatchlist` mutation; invalidate `watchlist(slug)` + `watchlists` |
+
+**Other deliverables:**
+
+- Replace stub in [`watchlists/[slug]/page.tsx`](apps/plotline/src/app/dashboard/watchlists/[slug]/page.tsx) with client island `WatchlistDetail` focused on the **sortable membership list** (remove stub “Stats cache” card; challenge UI comes in Phase 3)
+- `useWatchlist(slug)` / memberships fetch with populated `libraryItem` + `media`, ordered by `sortOrder`
+
+**Explicitly deferred to Phase 3:** `challenge.enabled` badge, progress bar, goal pacing (days left, on-track / overdue), and any `statsCache`-driven summary on this page.
+
+**Files (additions):**
+
+- `WatchlistMembershipList.tsx` — dnd-kit context + sortable list
+- `WatchlistMembershipRow.tsx` — row layout, drag handle, dropdown
+- `hooks/use-reorder-watchlist-memberships.ts`
+- `hooks/use-remove-from-watchlist.ts`
+- `app/api/watchlists/[slug]/memberships/reorder/route.ts` (Payload updates)
 
 **Sidebar note:** `/dashboard/watchlists/watchlist`, `/dashboard/watchlists/currently-watching`, and `/dashboard/watchlists/custom` should **redirect or filter** to system slug pages or filtered `/dashboard/watchlists` — not separate page implementations.
 
@@ -550,19 +596,20 @@ type SearchFilters = {
 
 #### Phase 1d — Title detail + log-watch flow (`phase-1-title-detail`)
 
-**Route:** `/dashboard/title/[mediaType]/[tmdbId]` (not in sidebar; linked from search grid, library, watchlists)
+**Route:** `/dashboard/title/[mediaType]/[tmdbId]` (not in sidebar; linked from search grid, library, watchlist rows)
 
 **Deliverables:**
 
-- Title detail page opened from search grid items, library rows, watchlist memberships
+- Title detail page opened from search grid items, library rows, watchlist membership title links
 - Display TMDB metadata (from `media` cache or on-demand upsert)
 - Current library status for the signed-in user (if in library)
 - **Log watch** form — `useLogWatch` → `POST /api/library/log-watch` with optimistic update + rollback
 - **Status change** — planned / watching / completed / on hold / dropped via mutation
 - **Add to watchlist** — reuse `useAddToList` from search
 - Invalidate `libraryItems`, `watchEvents`, `watchlists`, `watchlist(slug)` on success
+- **Shared with Phase 1c:** Extract reusable **Log watch** and **Change status** flows (sheet/dialog + mutations) so watchlist row dropdown actions and title detail use the same modules — avoid duplicating forms in `WatchlistMembershipRow` and title page
 
-**Backend:** Fully ready (`library-items`, `watch-events`, `watchlist-memberships`). BFF POST routes already exist.
+**Backend:** Fully ready (`library-items`, `watch-events`, `watchlist-memberships`). BFF POST routes already exist for log-watch; membership delete + reorder require new BFF routes (specified in Phase 1c).
 
 ---
 
@@ -582,7 +629,7 @@ type SearchFilters = {
 
 ### Phase 3 — Watchlist & challenge management
 
-**Goal:** Full list CRUD and challenge-mode UX.
+**Goal:** Full list CRUD, challenge list routes, and **challenge-mode UX on watchlist pages** (including progress moved out of Phase 1c).
 
 | Order | Route(s)                                                 | Work                                                                                                                      |
 | ----- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
@@ -591,6 +638,15 @@ type SearchFilters = {
 | 3.3   | `/dashboard/challenges/active`, `/completed`, `/overdue` | Filter watchlists query by `challenge.enabled` + `statsCache.status`                                                      |
 | 3.4   | `/dashboard/challenges/new`                              | Create challenge watchlist mutation                                                                                       |
 | 3.5   | BFF                                                      | Add `GET /api/watchlists/:slug/stats` + `useWatchlistStats(slug)` hook per [`docs/architecture.md`](docs/architecture.md) |
+| 3.6   | `/dashboard/watchlists/[slug]` (challenge lists)         | **Challenge progress block** above membership rows when `challenge.enabled`: progress bar, completed/remaining from `statsCache`, pacing (days left, required/day, on-track / overdue). Replace generic stats stub; compose with Phase 1c row list (do not reimplement rows) |
+
+**Challenge detail UI spec (3.6):**
+
+- Show **Challenge mode** badge in page header when enabled
+- Progress bar from `statsCache.percentComplete` (or computed completed / total eligible)
+- Summary stats: completed, in progress, remaining (from existing watchlist `statsCache`)
+- Pacing fields from challenge cache: `daysRemaining`, `requiredPerDay`, `onTrack`, overdue state — per `@plotline/shared/watchlist-stats`
+- Membership **row list** remains Phase 1c; Phase 3 only adds the challenge header/progress **section** above it
 
 **Backend:** Challenge model is embedded in `watchlists` — no new collection. Stats recompute already exists in Payload hooks.
 
@@ -688,8 +744,8 @@ All routes **blocked** on new Payload collections per [`apps/plotline/README.md`
 | Data layer (cross-cutting) | —      | 0a                                 | Ready            | Setup + GET BFF routes           |
 | Dashboard                  | 3      | 2                                  | Ready            | Parallel queries                 |
 | Library (By Status / Type) | 8      | 1b                                 | Ready            | Filtered query keys              |
-| My Watchlists              | 5      | 1c + 3                             | Ready            | useWatchlist + mutations         |
-| Challenges                 | 4      | 3                                  | Ready            | Filtered watchlists query        |
+| My Watchlists              | 5      | 1c (detail rows) + 3 (challenge UI, CRUD) | Ready            | useWatchlist + mutations         |
+| Challenges                 | 4      | 3                                  | Ready            | Filtered watchlists query + stats |
 | Reviews & Ratings          | 3      | 4                                  | Ready            | useReviews + mutations           |
 | Stats & Insights           | 7      | 5                                  | Partial          | useInfiniteQuery for history     |
 | Discover                   | 6      | 1a (search + filters) + 6 (browse) | Partial / Future | useTmdbBrowse + genre list query |

@@ -28,19 +28,19 @@ const STATUS_ICONS: Record<Status, LucideIcon> = {
 const STATUS_BG_COLORS: Record<Status, string> = {
   completed: 'bg-green-100 dark:bg-emerald-900',
   dropped: 'bg-red-100 dark:bg-red-900',
-  on_hold: 'bg-yellow-100 dark:bg-purple-900',
-  planned: 'bg-blue-100 dark:bg-sky-900',
+  on_hold: 'bg-purple-100 dark:bg-purple-900',
+  planned: 'bg-sky-100 dark:bg-sky-900',
   untracked: 'bg-gray-100 dark:bg-gray-900',
-  watching: 'bg-purple-100 dark:bg-amber-900',
+  watching: 'bg-amber-100 dark:bg-amber-900',
 }
 
 const STATUS_TEXT_COLORS: Record<Status, string> = {
   completed: 'text-green-800 dark:text-emerald-100',
   dropped: 'text-red-800 dark:text-red-100',
-  on_hold: 'text-amber-800 dark:text-purple-100',
-  planned: 'text-blue-800 dark:text-sky-100',
+  on_hold: 'text-purple-800 dark:text-purple-100',
+  planned: 'text-sky-800 dark:text-sky-100',
   untracked: 'text-gray-800 dark:text-gray-100',
-  watching: 'text-purple-800 dark:text-amber-100',
+  watching: 'text-amber-800 dark:text-amber-100',
 }
 
 type StatusBadgeProps = {

@@ -1,14 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
-import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 
-import { Badge } from '@/components/ui/badge'
-import { buttonVariants } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { WatchlistDetail } from '@/features/watchlists/components/WatchlistDetail'
 import { getWatchlistBySlug } from '@/features/watchlists/services/get-watchlists'
-import { PayloadClientError } from '@/lib/payload/payload-fetch'
-import { cn } from '@/lib/utils'
+import { loadWatchlistDetail } from '@/features/watchlists/services/load-watchlist-detail'
 
 type WatchlistDetailPageProps = {
   params: Promise<{ slug: string }>
@@ -16,9 +11,18 @@ type WatchlistDetailPageProps = {
 
 export async function generateMetadata({ params }: WatchlistDetailPageProps) {
   const { slug } = await params
+  const { userId } = await auth()
 
-  return {
-    title: slug,
+  if (!userId) {
+    return { title: 'Watchlist' }
+  }
+
+  try {
+    const watchlist = await getWatchlistBySlug(userId, slug)
+
+    return { title: watchlist?.name ?? 'Watchlist' }
+  } catch {
+    return { title: 'Watchlist' }
   }
 }
 
@@ -30,65 +34,18 @@ export default async function WatchlistDetailPage({ params }: WatchlistDetailPag
     redirect('/sign-in')
   }
 
-  let watchlist = null
+  const detail = await loadWatchlistDetail(userId, slug)
 
-  try {
-    watchlist = await getWatchlistBySlug(userId, slug)
-  } catch (error) {
-    if (!(error instanceof PayloadClientError) || error.status !== 404) {
-      throw error
-    }
-  }
-
-  if (!watchlist) {
+  if (detail.kind === 'missing') {
     notFound()
   }
 
-  const stats = watchlist.statsCache
-
   return (
-    <>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <Badge className="w-fit" variant="secondary">
-            Watchlist
-          </Badge>
-          <h1 className="font-heading text-3xl font-semibold tracking-tight">{watchlist.name}</h1>
-          <p className="max-w-2xl text-muted-foreground">
-            {watchlist.description ?? 'Detail view stub — memberships and media grid coming next.'}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{watchlist.visibility}</Badge>
-            {watchlist.challenge?.enabled ? <Badge>Challenge mode</Badge> : null}
-          </div>
-        </div>
-        <Link className={cn(buttonVariants({ variant: 'outline' }))} href="/dashboard/watchlists">
-          Back to lists
-        </Link>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Stats cache</CardTitle>
-          <CardDescription>Derived from Payload watchlist membership hooks.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Completed" value={stats?.completed ?? 0} />
-          <Separator className="sm:hidden" />
-          <Stat label="In progress" value={stats?.inProgress ?? 0} />
-          <Separator className="sm:hidden" />
-          <Stat label="Remaining" value={stats?.remaining ?? 0} />
-        </CardContent>
-      </Card>
-    </>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="font-heading text-2xl font-semibold">{value}</span>
-    </div>
+    <WatchlistDetail
+      initialMemberships={detail.memberships}
+      initialMembershipsError={detail.membershipsError}
+      initialWatchlist={detail.watchlist}
+      slug={slug}
+    />
   )
 }

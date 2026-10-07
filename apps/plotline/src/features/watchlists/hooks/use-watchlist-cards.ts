@@ -12,8 +12,9 @@ type UseWatchlistCardsOptions = {
 /**
  * Loads watchlist cards for the watchlists page.
  *
- * The query key is `['watchlists', 'cards']`, so invalidating `['watchlists']`
- * still refreshes this grid. Pass server-prefetched cards as `initialData` to
+ * The query key is `['watchlists', { view: 'cards' }]`. The object segment
+ * cannot collide with a watchlist slug, and invalidating `['watchlists']` still
+ * refreshes this grid. Pass server-prefetched cards as `initialData` to
  * hydrate the first paint.
  *
  * @param options.initialData - Cards from the server prefetch

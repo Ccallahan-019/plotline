@@ -4,6 +4,7 @@ import { LIST_STATUSES } from '@plotline/shared/constants'
 
 import { watchlistMembershipsAccess } from './access'
 import { initializeMembershipChallengeFields } from './hooks/initializeMembershipChallengeFields'
+import { initializeMembershipSortOrder } from './hooks/initializeMembershipSortOrder'
 import { recalculateStatsAfterMembershipChange } from './hooks/recalculateWatchlistStats'
 import { validateWatchlistLibraryItemOwnership } from './hooks/validateWatchlistLibraryItemOwnership'
 
@@ -74,7 +75,11 @@ export const WatchlistMemberships: CollectionConfig = {
   ],
   hooks: {
     afterChange: [recalculateStatsAfterMembershipChange],
-    beforeValidate: [validateWatchlistLibraryItemOwnership, initializeMembershipChallengeFields],
+    beforeValidate: [
+      validateWatchlistLibraryItemOwnership,
+      initializeMembershipChallengeFields,
+      initializeMembershipSortOrder,
+    ],
   },
   indexes: [
     {

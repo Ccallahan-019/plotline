@@ -4,30 +4,35 @@ import type { WatchlistCard, WatchlistCardPreview, WatchlistCardSort } from '../
 
 import { DEFAULT_WATCHLIST_CARD_SORT } from '../types'
 
-const WATCHLIST_CARD_PREVIEW_LIMIT = 3
+export const WATCHLIST_CARD_PREVIEW_LIMIT = 3
 
 export type BuildWatchlistCardsInput = {
   libraryItems: readonly LibraryItem[]
   memberships: readonly WatchlistMembership[]
+  /** Full membership count per watchlist id. Falls back to the supplied memberships when absent. */
+  titleCounts?: ReadonlyMap<number, number>
   watchlists: readonly Watchlist[]
 }
 
 /**
  * Builds card rows from watchlists, ordered memberships, and preview library items.
  *
- * Memberships must already be ordered by `sortOrder`, then `addedAt`. Each card
- * keeps that watchlist's full membership count. `previews` is the first three
+ * Memberships must already be ordered by `sortOrder`, then `addedAt`, and may be
+ * only the first few per watchlist. `titleCount` comes from `titleCounts` when
+ * given, otherwise from the supplied memberships. `previews` is the first three
  * titles; a missing library item or poster stays in its slot with a null poster.
  * Card order follows `watchlists`, not name.
  *
  * @param input.libraryItems - Preview titles fetched at depth 1. Posters are read from these, not from membership relations
  * @param input.memberships - Memberships for the loaded watchlists, in list order
+ * @param input.titleCounts - Full membership count per watchlist id, when `memberships` is truncated
  * @param input.watchlists - Watchlists to emit, in the order the caller wants preserved
  * @returns One card per watchlist
  */
 export function buildWatchlistCards({
   libraryItems,
   memberships,
+  titleCounts,
   watchlists,
 }: BuildWatchlistCardsInput): WatchlistCard[] {
   const grouped = membershipsByWatchlistId(memberships)
@@ -48,7 +53,7 @@ export function buildWatchlistCards({
       name: watchlist.name,
       previews,
       slug: watchlist.slug,
-      titleCount: group.length,
+      titleCount: titleCounts?.get(watchlist.id) ?? group.length,
       updatedAt: watchlist.updatedAt,
       visibility: watchlist.visibility,
     }
