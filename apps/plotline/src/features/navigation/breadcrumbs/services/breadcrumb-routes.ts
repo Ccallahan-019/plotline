@@ -106,7 +106,7 @@ export const dynamicBreadcrumbRoutes: {
   {
     formatLabel: formatSlugLabel,
     parentHref: '/dashboard/watchlists',
-    parentLabel: 'Watchlists',
+    parentLabel: 'My Watchlists',
     pattern: /^\/dashboard\/watchlists\/([^/]+)$/,
   },
   {
