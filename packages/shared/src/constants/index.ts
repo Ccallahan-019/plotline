@@ -1,5 +1,6 @@
 export {
   isMediaStatus,
+  isVisibility,
   MEDIA_RELEASE_STATUSES,
   MEDIA_STATUSES,
   MEDIA_TYPES,
@@ -10,6 +11,8 @@ export {
   type Visibility,
   WATCH_EVENT_TYPES,
   type WatchEventType,
+  WATCHLIST_DESCRIPTION_MAX_LENGTH,
+  WATCHLIST_NAME_MAX_LENGTH,
 } from './media'
 export {
   getStreamingPlatformMeta,

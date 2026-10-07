@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 
 import type { WatchlistCard as WatchlistCardData, WatchlistCardPreview } from '../types'
 
+import { formatWatchlistTitleCount } from '../services/format-watchlist-title-count'
 import { WatchlistVisibilityBadge } from './WatchlistVisibilityBadge'
 
 type WatchlistGridCardProps = {
@@ -35,16 +36,12 @@ export function WatchlistGridCard({ card }: WatchlistGridCardProps) {
         <div className="flex items-center gap-2">
           <WatchlistVisibilityBadge variant="outline" visibility={card.visibility} />
           <ItemDescription className="leading-none">
-            {formatTitleCount(card.titleCount)}
+            {formatWatchlistTitleCount(card.titleCount)}
           </ItemDescription>
         </div>
       </CardHeader>
     </Card>
   )
-}
-
-function formatTitleCount(titleCount: number): string {
-  return titleCount === 1 ? '1 Title' : `${titleCount} Titles`
 }
 
 function WatchlistPosterFrame({

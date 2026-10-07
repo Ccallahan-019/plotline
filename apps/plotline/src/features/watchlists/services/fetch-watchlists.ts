@@ -6,6 +6,7 @@ import { fetchJson } from '@/lib/api/fetch-json'
 import type {
   RemoveWatchlistMembershipResult,
   ReorderWatchlistMembershipsResult,
+  UpdateWatchlistInput,
   WatchlistCard,
 } from '../types'
 
@@ -52,6 +53,15 @@ export function fetchWatchlists(filters?: WatchlistFilters): Promise<Watchlist[]
       filter: filters?.filter,
     })}`,
   )
+}
+
+/** Saves the name, description, and visibility of one watchlist. The slug stays the same. */
+export function patchWatchlist(slug: string, input: UpdateWatchlistInput): Promise<Watchlist> {
+  return fetchJson<Watchlist>(`/api/watchlists/${encodeURIComponent(slug)}`, {
+    body: JSON.stringify(input),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'PATCH',
+  })
 }
 
 /** Saves a full membership id list as `sortOrder` 0..n-1. */

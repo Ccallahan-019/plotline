@@ -2,18 +2,16 @@
 
 import type { Watchlist, WatchlistMembership } from '@plotline/payload-types'
 
-import Link from 'next/link'
-
-import { buttonVariants } from '@/components/ui/button'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
 import { ErrorEmpty } from '@/components/utils/ErrorEmpty'
 import { ShowIf } from '@/components/utils/ShowIf'
-import { cn } from '@/lib/utils'
 import { getErrorMessage } from '@/utils/get-error-message'
 
 import { useWatchlist } from '../hooks/use-watchlist'
 import { useWatchlistMemberships } from '../hooks/use-watchlist-memberships'
+import { formatWatchlistTitleCount } from '../services/format-watchlist-title-count'
+import { EditWatchlistDialog } from './EditWatchlistDialog'
 import { WatchlistMembershipList } from './WatchlistMembershipList'
 import { WatchlistMembershipsEmpty } from './WatchlistMembershipsEmpty'
 import { WatchlistVisibilityBadge } from './WatchlistVisibilityBadge'
@@ -45,6 +43,8 @@ export function WatchlistDetail({
   const errorMessage =
     getErrorMessage(membershipsQuery.error) ?? (memberships ? null : initialMembershipsError)
   const description = watchlist.description?.trim()
+  const titleCountLabel =
+    memberships == null ? null : formatWatchlistTitleCount(memberships.length)
 
   return (
     <div className="flex flex-col gap-4">
@@ -59,12 +59,13 @@ export function WatchlistDetail({
               {description}
             </ItemDescription>
           </ShowIf>
+          <ShowIf condition={titleCountLabel != null}>
+            <ItemDescription>{titleCountLabel}</ItemDescription>
+          </ShowIf>
         </ItemContent>
 
         <ItemActions>
-          <Link className={cn(buttonVariants({ variant: 'outline' }))} href="/dashboard/watchlists">
-            Back to lists
-          </Link>
+          <EditWatchlistDialog slug={slug} watchlist={watchlist} />
         </ItemActions>
       </Item>
 

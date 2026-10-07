@@ -31,6 +31,15 @@ export const VISIBILITIES = ['private', 'friends', 'public', 'unlisted'] as cons
 
 export type Visibility = (typeof VISIBILITIES)[number]
 
+export const WATCHLIST_DESCRIPTION_MAX_LENGTH = 500
+
+export const WATCHLIST_NAME_MAX_LENGTH = 120
+
+/** Narrows an unknown value to one of `VISIBILITIES`. */
+export function isVisibility(value: unknown): value is Visibility {
+  return VISIBILITIES.some((visibility) => visibility === value)
+}
+
 export const MEDIA_RELEASE_STATUSES = [
   'released',
   'upcoming',

@@ -8,6 +8,12 @@ export type ReorderWatchlistMembershipsResult = {
   membershipIds: number[]
 }
 
+export type UpdateWatchlistInput = {
+  description: null | string
+  name: string
+  visibility: Watchlist['visibility']
+}
+
 /**
  * Watchlist row for the cards grid.
  *
