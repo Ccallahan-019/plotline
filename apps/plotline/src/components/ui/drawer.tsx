@@ -25,10 +25,6 @@ function DrawerContent({
   onPointerDownOutside,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
-  const modal = React.useContext(DrawerModalContext)
-  useDrawerScrollLock(!modal)
-  useDrawerPortaledFocus(!modal)
-
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />
@@ -47,6 +43,7 @@ function DrawerContent({
           }
         }}
       >
+        <DrawerNonModalEffects />
         <div className="mx-auto mt-4 hidden h-1 w-25 shrink-0 rounded-full bg-muted group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
         {children}
       </DrawerPrimitive.Content>
@@ -88,6 +85,22 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
       {...props}
     />
   )
+}
+
+/**
+ * Applies the non-modal drawer's scroll lock and portaled-focus handling.
+ *
+ * Rendered inside `DrawerPrimitive.Content`, which only mounts its children while the
+ * drawer is open. The effects therefore run for the open drawer alone; a grid with many
+ * closed drawers would otherwise lock page scroll and intercept focus events on load.
+ */
+function DrawerNonModalEffects() {
+  const modal = React.useContext(DrawerModalContext)
+
+  useDrawerScrollLock(!modal)
+  useDrawerPortaledFocus(!modal)
+
+  return null
 }
 
 function DrawerOverlay({

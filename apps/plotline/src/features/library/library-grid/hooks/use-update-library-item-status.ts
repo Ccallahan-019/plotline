@@ -10,6 +10,22 @@ type UseUpdateLibraryItemStatusProps = {
   status: MediaStatus
 }
 
+/**
+ * State and save handler for the drawer's "Update Status" popover.
+ *
+ * Holds the popover's open flag and the status picked in the select. Opening the popover
+ * resets the pick to the item's current `status`, so a pick abandoned earlier never
+ * carries over. `handleSave` runs only when the pick differs from `status`, ignores a
+ * second click while a save is in flight, and closes the popover once the update succeeds.
+ * On failure the popover stays open; `useUpdateLibraryItem` toasts the error and reverts
+ * the optimistic status.
+ *
+ * @param props.libraryItem - Row being edited, used as the cache fallback and for the toast title
+ * @param props.status - The item's current status, as shown by the badge
+ * @returns `open` / `handleOpenChange` for the popover, `selectedStatus` / `handleStatusChange`
+ * for the select, `statusChanged` to enable Save, `isSaving` while the mutation is pending, and
+ * `handleSave` to submit the pick
+ */
 export function useUpdateLibraryItemStatus({
   libraryItem,
   status,

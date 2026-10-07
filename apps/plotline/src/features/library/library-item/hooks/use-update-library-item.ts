@@ -8,19 +8,21 @@ import { useRef } from 'react'
 import { toast } from 'sonner'
 
 import { MEDIA_STATUS_LABELS } from '@/features/library/constants/media-status-options'
-import { getMediaFromLibraryItem } from '@/features/library/services/get-media-from-library-item'
+import { getLibraryItemTitle } from '@/features/library/services/get-library-item-title'
 
 import type { UpdateLibraryItemInput, UpdateLibraryItemResult } from '../../types/mutations'
 
 import { invalidateAfterLibraryMutation } from '../../services/invalidate-library-queries'
+import {
+  type LibraryItemQuerySnapshot,
+  snapshotLibraryItemQueries,
+} from '../../services/library-query-snapshot'
 import { patchLibraryItem } from '../services/fetch-library-item'
 import {
   applyOptimisticLibraryItemUpdate,
   findCachedLibraryItem,
-  type LibraryItemQuerySnapshot,
   resolveLibraryItemUpdate,
-  restoreLibraryItemQuerySnapshot,
-  snapshotLibraryItemQueries,
+  revertOptimisticLibraryItemUpdate,
 } from '../services/optimistic-library-item'
 
 export type UpdateLibraryItemVariables = {
@@ -29,6 +31,12 @@ export type UpdateLibraryItemVariables = {
   libraryItemId: number | string
   personalNotes?: null | string
   status?: MediaStatus
+}
+
+type LibraryItemUpdateContext = {
+  /** Body the optimistic write applied; `null` when nothing was written or sent. */
+  request: null | UpdateLibraryItemInput
+  snapshot: LibraryItemQuerySnapshot
 }
 
 type PendingLibraryItemUpdate = {
@@ -42,12 +50,13 @@ type PendingLibraryItemUpdate = {
  *
  * Optimistically patches matching grid and lookup rows. Status changes stamp
  * `startedAt` / `completedAt` the same way as the server, and a movie that newly
- * becomes completed is marked `progress.watched`. A status-filtered grid drops the
- * row when the new status is outside that filter. An unchanged status is omitted
+ * becomes completed is marked `progress.watched`. An unchanged status is omitted
  * so saving the current status cannot create another completed watch event; when
  * that leaves nothing to send, the mutation resolves without a request or a toast.
- * Rolls the cache back on error, invalidates library queries when the mutation
- * settles, and toasts the network update.
+ * On error it reverts only the fields this update changed, so an overlapping
+ * notes or status save keeps its optimistic value. Invalidates library queries when
+ * the mutation settles, and toasts the network update. A status-filtered grid keeps
+ * the row until that refetch, so an open drawer is not unmounted mid-request.
  *
  * @returns A React Query mutation for `UpdateLibraryItemVariables` → `UpdateLibraryItemResult`
  */
@@ -63,7 +72,7 @@ export function useUpdateLibraryItem() {
     UpdateLibraryItemResult,
     Error,
     UpdateLibraryItemVariables,
-    LibraryItemQuerySnapshot
+    LibraryItemUpdateContext
   >({
     mutationFn: (variables) => {
       const pending = pendingUpdatesRef.current.get(variables)
@@ -73,7 +82,7 @@ export function useUpdateLibraryItem() {
       const request = pending
         ? pending.request
         : resolveLibraryItemUpdate(current, toUpdateLibraryItemInput(variables))
-      const title = pending?.title ?? libraryItemTitle(current)
+      const title = pending?.title ?? getLibraryItemTitle(current)
 
       if (!request) {
         if (!current) {
@@ -85,8 +94,15 @@ export function useUpdateLibraryItem() {
 
       return submitLibraryItemUpdate(variables.libraryItemId, request, title)
     },
-    onError: (_error, _variables, context) => {
-      restoreLibraryItemQuerySnapshot(queryClient, context)
+    onError: (_error, variables, context) => {
+      if (context?.request) {
+        revertOptimisticLibraryItemUpdate(
+          queryClient,
+          context.snapshot,
+          variables.libraryItemId,
+          context.request,
+        )
+      }
     },
     onMutate: async (variables) => {
       const snapshot = await snapshotLibraryItemQueries(queryClient)
@@ -97,29 +113,20 @@ export function useUpdateLibraryItem() {
       pendingUpdatesRef.current.set(variables, {
         current,
         request,
-        title: libraryItemTitle(current),
+        title: getLibraryItemTitle(current),
       })
 
       if (request) {
         applyOptimisticLibraryItemUpdate(queryClient, variables.libraryItemId, request)
       }
 
-      return snapshot
+      return { request, snapshot }
     },
     onSettled: (_data, _error, variables) => {
       pendingUpdatesRef.current.delete(variables)
       invalidateAfterLibraryMutation(queryClient)
     },
   })
-}
-
-// Populated media title for toasts. An id-only relation has no title.
-function libraryItemTitle(item: LibraryItem | undefined): string | undefined {
-  if (!item) {
-    return undefined
-  }
-
-  return getMediaFromLibraryItem(item)?.title
 }
 
 // Toast copy for a status change, a notes change, or both.

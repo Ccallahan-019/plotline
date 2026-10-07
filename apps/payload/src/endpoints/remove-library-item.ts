@@ -1,9 +1,10 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 
+import { withLibraryItemRowLock } from '../collections/watch-events/utils/withLibraryItemRowLock'
 import { recalculateWatchlistStatsById } from '../utilities/recalculateWatchlistStatsById'
 import { getRelationId } from '../utilities/relations'
 import { runInPayloadTransaction } from '../utilities/runInPayloadTransaction'
-import { parseId, requireProfileContext, requireServiceAuth } from './helpers'
+import { readLibraryItemRouteId, requireProfileContext, requireServiceAuth } from './helpers'
 
 type LibraryItemChildCollection = 'watch-events' | 'watchlist-memberships'
 
@@ -15,7 +16,8 @@ type LibraryItemChildCollection = 'watch-events' | 'watchlist-memberships'
  * events before the library row so the foreign key cannot block removal, then
  * deletes the library item and clears the profile stats cache. Reviews stay; they
  * are keyed by profile and media. Missing and unowned items are both not found.
- * The writes commit together so a failure does not leave history half-deleted.
+ * The writes commit together so a failure does not leave history half-deleted, and
+ * they run under the library item's row lock so log-watch cannot interleave.
  */
 export const removeLibraryItemEndpoint: Endpoint = {
   handler: async (req: PayloadRequest) => {
@@ -31,7 +33,7 @@ export const removeLibraryItemEndpoint: Endpoint = {
       return profileResult
     }
 
-    const libraryItemId = readLibraryItemId(req)
+    const libraryItemId = readLibraryItemRouteId(req)
 
     if (libraryItemId === null) {
       return Response.json({ error: 'Library item id is required' }, { status: 400 })
@@ -52,37 +54,41 @@ export const removeLibraryItemEndpoint: Endpoint = {
       return Response.json({ error: 'Library item not found' }, { status: 404 })
     }
 
-    await runInPayloadTransaction(req, async () => {
-      // Ids are read first. Membership afterChange does not run on delete, so each
-      // watchlist is recalculated only after its row is gone and no longer counted.
-      const watchlistIds = await loadAffectedWatchlistIds(req, libraryItemId)
+    await runInPayloadTransaction(req, () =>
+      // Same row lock as log-watch, so a concurrent log cannot insert a watch event
+      // between the event delete and the library row delete.
+      withLibraryItemRowLock(req, libraryItemId, async () => {
+        // Ids are read first. Membership afterChange does not run on delete, so each
+        // watchlist is recalculated only after its row is gone and no longer counted.
+        const watchlistIds = await loadAffectedWatchlistIds(req, libraryItemId)
 
-      await deleteByLibraryItem(req, 'watchlist-memberships', libraryItemId)
+        await deleteByLibraryItem(req, 'watchlist-memberships', libraryItemId)
 
-      for (const watchlistId of watchlistIds) {
-        await recalculateWatchlistStatsById(req.payload, watchlistId, req)
-      }
+        for (const watchlistId of watchlistIds) {
+          await recalculateWatchlistStatsById(req.payload, watchlistId, req)
+        }
 
-      // Watch events go before the library row so the foreign key cannot block removal.
-      await deleteByLibraryItem(req, 'watch-events', libraryItemId)
+        // Watch events go before the library row so the foreign key cannot block removal.
+        await deleteByLibraryItem(req, 'watch-events', libraryItemId)
 
-      await req.payload.delete({
-        collection: 'library-items',
-        id: libraryItemId,
-        overrideAccess: true,
-        req,
-      })
+        await req.payload.delete({
+          collection: 'library-items',
+          id: libraryItemId,
+          overrideAccess: true,
+          req,
+        })
 
-      await req.payload.update({
-        collection: 'profiles',
-        data: {
-          statsCache: null,
-        },
-        id: profileResult.profileId,
-        overrideAccess: true,
-        req,
-      })
-    })
+        await req.payload.update({
+          collection: 'profiles',
+          data: {
+            statsCache: null,
+          },
+          id: profileResult.profileId,
+          overrideAccess: true,
+          req,
+        })
+      }),
+    )
 
     return Response.json({ id: libraryItemId })
   },
@@ -166,13 +172,3 @@ async function loadAffectedWatchlistIds(
   return [...watchlistIds]
 }
 
-// Positive library-item ids only. `0` and non-integers never reach the owner lookup.
-function readLibraryItemId(req: PayloadRequest): null | number {
-  const parsed = parseId(req.routeParams?.id as number | string | undefined)
-
-  if (parsed == null || !Number.isInteger(parsed) || parsed < 1) {
-    return null
-  }
-
-  return parsed
-}

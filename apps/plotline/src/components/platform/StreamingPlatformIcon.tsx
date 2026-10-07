@@ -17,46 +17,34 @@ const LUCIDE_ICONS = {
   'more-horizontal': MoreHorizontal,
 } as const satisfies Record<StreamingPlatformLucideIcon, LucideIcon>
 
-const SIZE_PX = {
-  md: 28,
-  sm: 20,
-} as const
-
 export type StreamingPlatformIconProps = {
   className?: string
   logoPath?: null | string
   platform: StreamingPlatform
-  showLabel?: boolean
-  size?: 'md' | 'sm'
 }
 
 export function StreamingPlatformIcon({
   className,
   logoPath,
   platform,
-  showLabel = false,
-  size = 'sm',
 }: StreamingPlatformIconProps) {
   const meta = getStreamingPlatformMeta(platform)
-  const glyph = <PlatformGlyph logoPath={logoPath} lucideIcon={meta.lucideIcon} size={size} />
-
-  const content = (
-    <span
-      aria-label={showLabel ? undefined : meta.label}
-      className={cn('flex flex-col items-center gap-2', className)}
-    >
-      {glyph}
-      {showLabel ? <span className="text-sm">{meta.label}</span> : null}
-    </span>
-  )
-
-  if (showLabel) {
-    return content
-  }
+  const glyph = <PlatformGlyph logoPath={logoPath} lucideIcon={meta.lucideIcon} />
 
   return (
     <Tooltip>
-      <TooltipTrigger delay={200} render={content} />
+      <TooltipTrigger
+        delay={200}
+        render={
+          <span
+            aria-label={meta.label}
+            className={cn('flex flex-col items-center gap-2', className)}
+          >
+            {glyph}
+            <span className="text-sm">{meta.label}</span>
+          </span>
+        }
+      />
       <TooltipContent>{meta.label}</TooltipContent>
     </Tooltip>
   )
@@ -65,15 +53,12 @@ export function StreamingPlatformIcon({
 function PlatformGlyph({
   logoPath,
   lucideIcon,
-  size,
 }: {
   logoPath?: null | string
   lucideIcon?: StreamingPlatformLucideIcon
-  size: 'md' | 'sm'
 }) {
-  const pixelSize = SIZE_PX[size]
-  const sizeClass = size === 'sm' ? 'size-5' : 'size-9'
-  const iconSizeClass = size === 'sm' ? 'size-4' : 'size-6'
+  const sizeClass = 'size-9'
+  const iconSizeClass = 'size-6'
 
   if (logoPath) {
     return (
@@ -81,9 +66,9 @@ function PlatformGlyph({
         alt=""
         aria-hidden
         className={cn(sizeClass, 'rounded-sm object-contain')}
-        height={pixelSize}
+        height={28}
         src={tmdbLogoUrl(logoPath)}
-        width={pixelSize}
+        width={28}
       />
     )
   }

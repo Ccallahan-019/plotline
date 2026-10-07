@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import type { UpdateLibraryItemInput } from '@/features/library/types/mutations'
+
 import { removeLibraryItem } from '@/features/library/library-item/services/remove-library-item'
 import { updateLibraryItem } from '@/features/library/library-item/services/update-library-item'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
@@ -36,8 +38,15 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const { id } = await context.params
 
+  let body: UpdateLibraryItemInput
+
   try {
-    const body = await request.json()
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+
+  try {
     const result = await updateLibraryItem(authResult.clerkUserId, id, body)
 
     return NextResponse.json(result)

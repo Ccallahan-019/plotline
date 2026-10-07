@@ -6,12 +6,15 @@ import { describe, expect, it } from 'vitest'
 import type { LibraryItemsResponse } from '../../library-grid/types'
 
 import { libraryGridQueryKeys } from '../../library-grid/services/query-keys'
+import { snapshotLibraryItemQueries } from '../../services/library-query-snapshot'
 import {
   applyLibraryItemUpdateToGridPage,
   applyOptimisticLibraryItemRemoval,
   applyOptimisticLibraryItemUpdate,
   patchLibraryItemFromUpdate,
   resolveLibraryItemUpdate,
+  revertOptimisticLibraryItemRemoval,
+  revertOptimisticLibraryItemUpdate,
 } from './optimistic-library-item'
 
 const NOW = '2026-10-06T22:00:00.000Z'
@@ -159,7 +162,7 @@ describe('patchLibraryItemFromUpdate', () => {
 })
 
 describe('applyOptimisticLibraryItemUpdate', () => {
-  it('drops a row from a status-filtered grid and patches the lookup list', () => {
+  it('keeps a row in a status-filtered grid until the refetch and patches the lookup list', () => {
     const queryClient = new QueryClient()
     const movie = libraryItem({
       media: 7,
@@ -187,8 +190,9 @@ describe('applyOptimisticLibraryItemUpdate', () => {
       libraryGridQueryKeys.libraryItemsLookup(),
     )
 
-    expect(grid?.docs.map((doc) => doc.id)).toEqual([other.id])
-    expect(grid?.totalDocs).toBe(1)
+    expect(grid?.docs.map((doc) => doc.id)).toEqual([movie.id, other.id])
+    expect(grid?.docs[0]?.status).toBe('completed')
+    expect(grid?.totalDocs).toBe(2)
     expect(lookup?.map((item) => item.id)).toEqual([movie.id, other.id])
     expect(lookup?.[0]).toMatchObject({
       completedAt: NOW,
@@ -230,7 +234,7 @@ describe('applyOptimisticLibraryItemUpdate', () => {
       }),
     ])
 
-    const next = applyLibraryItemUpdateToGridPage(response, 10, { status: 'dropped' }, { now: NOW })
+    const next = applyLibraryItemUpdateToGridPage(response, 10, { status: 'dropped' }, NOW)
 
     expect(next.docs).toHaveLength(1)
     expect(next.docs[0]?.status).toBe('dropped')
@@ -274,6 +278,93 @@ describe('applyOptimisticLibraryItemRemoval', () => {
     expect(pageOne?.totalDocs).toBe(1)
     expect(pageTwo?.docs.map((doc) => doc.id)).toEqual([other.id])
     expect(lookup?.map((item) => item.id)).toEqual([other.id])
+  })
+})
+
+describe('revertOptimisticLibraryItemUpdate', () => {
+  it('reverts only the failed fields so an overlapping edit keeps its optimistic value', async () => {
+    const queryClient = new QueryClient()
+    const movie = libraryItem({
+      media: 7,
+      personalNotes: 'old note',
+      progress: { type: 'movie', watched: false },
+      status: 'watching',
+    })
+    const lookupKey = libraryGridQueryKeys.libraryItemsLookup()
+
+    queryClient.setQueryData(lookupKey, [movie])
+
+    // A status save and a notes save start from the same cache and both write optimistically.
+    const snapshot = await snapshotLibraryItemQueries(queryClient)
+
+    applyOptimisticLibraryItemUpdate(queryClient, movie.id, { status: 'completed' }, NOW)
+    applyOptimisticLibraryItemUpdate(queryClient, movie.id, { personalNotes: 'new note' }, NOW)
+
+    // The notes save fails: notes go back, the in-flight status change stays.
+    revertOptimisticLibraryItemUpdate(queryClient, snapshot, movie.id, {
+      personalNotes: 'new note',
+    })
+
+    expect(queryClient.getQueryData<LibraryItem[]>(lookupKey)?.[0]).toMatchObject({
+      personalNotes: 'old note',
+      status: 'completed',
+    })
+
+    // The status save fails too: status, its date and movie progress all go back.
+    revertOptimisticLibraryItemUpdate(queryClient, snapshot, movie.id, { status: 'completed' })
+
+    const reverted = queryClient.getQueryData<LibraryItem[]>(lookupKey)?.[0]
+
+    expect(reverted).toMatchObject({
+      progress: { type: 'movie', watched: false },
+      status: 'watching',
+    })
+    expect(reverted?.completedAt).toBeUndefined()
+  })
+})
+
+describe('revertOptimisticLibraryItemRemoval', () => {
+  it('re-inserts the row at its old index and keeps other rows as they are now', async () => {
+    const queryClient = new QueryClient()
+    const first = libraryItem({
+      id: 10,
+      media: 7,
+      progress: { type: 'movie', watched: false },
+      status: 'planned',
+    })
+    const second = libraryItem({
+      id: 11,
+      media: 8,
+      progress: { type: 'movie', watched: false },
+      status: 'planned',
+    })
+    const third = libraryItem({
+      id: 12,
+      media: 9,
+      progress: { type: 'movie', watched: false },
+      status: 'planned',
+    })
+    const gridKey = libraryGridQueryKeys.libraryItems({ page: 1 })
+    const lookupKey = libraryGridQueryKeys.libraryItemsLookup()
+
+    queryClient.setQueryData(gridKey, gridPage([first, second, third]))
+    queryClient.setQueryData(lookupKey, [first, second, third])
+
+    const snapshot = await snapshotLibraryItemQueries(queryClient)
+
+    applyOptimisticLibraryItemRemoval(queryClient, second.id)
+    // Another edit lands on a different row while the delete is in flight.
+    applyOptimisticLibraryItemUpdate(queryClient, third.id, { status: 'dropped' }, NOW)
+
+    revertOptimisticLibraryItemRemoval(queryClient, snapshot, second.id)
+
+    const grid = queryClient.getQueryData<LibraryItemsResponse>(gridKey)
+    const lookup = queryClient.getQueryData<LibraryItem[]>(lookupKey)
+
+    expect(grid?.docs.map((doc) => doc.id)).toEqual([10, 11, 12])
+    expect(grid?.docs[2]?.status).toBe('dropped')
+    expect(grid?.totalDocs).toBe(3)
+    expect(lookup?.map((item) => item.id)).toEqual([10, 11, 12])
   })
 })
 

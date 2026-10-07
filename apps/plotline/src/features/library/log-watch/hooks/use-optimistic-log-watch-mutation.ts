@@ -1,17 +1,16 @@
 import type { LibraryItem } from '@plotline/payload-types'
-import type { QueryKey } from '@tanstack/react-query'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import type { LibraryItemsResponse } from '../../library-grid/types'
 
 import { invalidateAfterLibraryMutation } from '../../services/invalidate-library-queries'
+import {
+  type LibraryItemQuerySnapshot,
+  restoreLibraryItemQuerySnapshot,
+  snapshotLibraryItemQueries,
+} from '../../services/library-query-snapshot'
 import { cachedWatchedEpisodeKeys } from '../services/optimistic-library-item'
-
-type OptimisticLogWatchContext = {
-  previousGridItems: ReadonlyArray<readonly [QueryKey, LibraryItemsResponse | undefined]>
-  previousLookupItems: ReadonlyArray<readonly [QueryKey, LibraryItem[] | undefined]>
-}
 
 type UseOptimisticLogWatchMutationOptions<TInput, TResult> = {
   mutationFn: (input: TInput) => Promise<TResult>
@@ -39,31 +38,13 @@ export function useOptimisticLogWatchMutation<TInput, TResult>({
 }: UseOptimisticLogWatchMutationOptions<TInput, TResult>) {
   const queryClient = useQueryClient()
 
-  return useMutation<TResult, Error, TInput, OptimisticLogWatchContext>({
+  return useMutation<TResult, Error, TInput, LibraryItemQuerySnapshot>({
     mutationFn,
     onError: (_error, _input, context) => {
-      for (const [queryKey, data] of context?.previousGridItems ?? []) {
-        queryClient.setQueryData(queryKey, data)
-      }
-
-      for (const [queryKey, data] of context?.previousLookupItems ?? []) {
-        queryClient.setQueryData(queryKey, data)
-      }
+      restoreLibraryItemQuerySnapshot(queryClient, context)
     },
-    onMutate: async (input): Promise<OptimisticLogWatchContext> => {
-      await queryClient.cancelQueries({ queryKey: ['library-items'] })
-
-      const previousGridItems = queryClient
-        .getQueriesData<LibraryItemsResponse>({
-          queryKey: ['library-items', 'grid'],
-        })
-        .map(([queryKey, data]) => [queryKey, data] as const)
-
-      const previousLookupItems = queryClient
-        .getQueriesData<LibraryItem[]>({
-          queryKey: ['library-items', 'lookup'],
-        })
-        .map(([queryKey, data]) => [queryKey, data] as const)
+    onMutate: async (input): Promise<LibraryItemQuerySnapshot> => {
+      const snapshot = await snapshotLibraryItemQueries(queryClient)
 
       const patch = (item: LibraryItem) =>
         patchItem(item, input, cachedWatchedEpisodeKeys(queryClient, item.id))
@@ -78,7 +59,7 @@ export function useOptimisticLogWatchMutation<TInput, TResult>({
         (items) => items?.map(patch),
       )
 
-      return { previousGridItems, previousLookupItems }
+      return snapshot
     },
     onSettled: () => {
       invalidateAfterLibraryMutation(queryClient)

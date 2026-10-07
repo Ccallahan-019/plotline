@@ -9,6 +9,20 @@ type UseLibraryItemPersonalNotesProps = {
   personalNotes: null | string
 }
 
+/**
+ * Draft state and save handler for the drawer's personal notes textarea.
+ *
+ * Keeps a local `draft` so typing does not touch the cache. When the stored notes change
+ * (a save, a refetch, or a rollback) the draft adopts them only if it was not an unsaved
+ * edit, via `syncPersonalNotesDraft`. While a save is pending the optimistic cache value is
+ * ignored, so a failed save cannot wipe the text the user typed. `handleSave` does nothing
+ * when the draft matches the stored notes, and ignores a second click while a save runs.
+ *
+ * @param props.libraryItem - Row being edited, used as the cache fallback and for the toast title
+ * @param props.personalNotes - Stored notes from the row, `null` when empty
+ * @returns `syncedNotes.draft` for the textarea value and `setDraft` for edits, `notesChanged`
+ * to enable Save, `isSaving` while the mutation is pending, and `handleSave` to submit the draft
+ */
 export function useLibraryItemPersonalNotes({
   libraryItem,
   personalNotes,

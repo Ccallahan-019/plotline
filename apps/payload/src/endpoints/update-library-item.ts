@@ -1,8 +1,15 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 
-import { MEDIA_STATUSES, type MediaStatus } from '@plotline/shared/constants'
+import { isMediaStatus, type MediaStatus } from '@plotline/shared/constants'
 
-import { parseId, parseJsonBody, requireProfileContext, requireServiceAuth } from './helpers'
+import { withLibraryItemRowLock } from '../collections/watch-events/utils/withLibraryItemRowLock'
+import { runInPayloadTransaction } from '../utilities/runInPayloadTransaction'
+import {
+  parseJsonBody,
+  readLibraryItemRouteId,
+  requireProfileContext,
+  requireServiceAuth,
+} from './helpers'
 
 const PATCH_FIELDS = new Set<string>(['personalNotes', 'status'])
 
@@ -17,7 +24,9 @@ type LibraryItemPatchData = {
  * `PATCH /api/library/library-items/:id` accepts only `{ status?, personalNotes? }`
  * and requires at least one. Missing and unowned items are both not found.
  * The write is a `library-items` update, so status dates, the completed watch
- * event, and watchlist membership sync still run.
+ * event, and watchlist membership sync still run. It holds the same row lock as
+ * log-watch so a status change cannot interleave with a concurrent progress write,
+ * and it re-reads the row afterwards because those hooks update it again.
  */
 export const updateLibraryItemEndpoint: Endpoint = {
   handler: async (req: PayloadRequest) => {
@@ -33,7 +42,7 @@ export const updateLibraryItemEndpoint: Endpoint = {
       return profileResult
     }
 
-    const libraryItemId = readLibraryItemId(req)
+    const libraryItemId = readLibraryItemRouteId(req)
 
     if (libraryItemId === null) {
       return Response.json({ error: 'Library item id is required' }, { status: 400 })
@@ -66,23 +75,33 @@ export const updateLibraryItemEndpoint: Endpoint = {
       return Response.json({ error: 'Library item not found' }, { status: 404 })
     }
 
-    const libraryItem = await req.payload.update({
-      collection: 'library-items',
-      data: patch,
-      depth: 0,
-      id: libraryItemId,
-      overrideAccess: true,
-      req,
-    })
+    const libraryItem = await runInPayloadTransaction(req, () =>
+      withLibraryItemRowLock(req, libraryItemId, async () => {
+        await req.payload.update({
+          collection: 'library-items',
+          data: patch,
+          depth: 0,
+          id: libraryItemId,
+          overrideAccess: true,
+          req,
+        })
+
+        // The update's afterChange hooks write progress and `lastWatchedAt` through
+        // nested updates, which the outer update's return value does not include.
+        return req.payload.findByID({
+          collection: 'library-items',
+          depth: 0,
+          id: libraryItemId,
+          overrideAccess: true,
+          req,
+        })
+      }),
+    )
 
     return Response.json({ libraryItem })
   },
   method: 'patch',
   path: '/library/library-items/:id',
-}
-
-function isMediaStatus(value: unknown): value is MediaStatus {
-  return MEDIA_STATUSES.some((status) => status === value)
 }
 
 /**
@@ -141,13 +160,3 @@ function parseLibraryItemPatch(body: unknown): LibraryItemPatchData | Response {
   return data
 }
 
-// Positive library-item ids only. `0` and non-integers never reach the owner lookup.
-function readLibraryItemId(req: PayloadRequest): null | number {
-  const parsed = parseId(req.routeParams?.id as number | string | undefined)
-
-  if (parsed == null || !Number.isInteger(parsed) || parsed < 1) {
-    return null
-  }
-
-  return parsed
-}

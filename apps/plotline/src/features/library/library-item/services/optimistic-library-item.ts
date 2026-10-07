@@ -1,39 +1,31 @@
 import type { LibraryItem } from '@plotline/payload-types'
 import type { MediaStatus } from '@plotline/shared/constants'
-import type { QueryClient, QueryKey } from '@tanstack/react-query'
-
-import { MEDIA_STATUSES } from '@plotline/shared/constants'
+import type { QueryClient } from '@tanstack/react-query'
 
 import type { LibraryItemsResponse } from '../../library-grid/types'
+import type { LibraryItemQuerySnapshot } from '../../services/library-query-snapshot'
 import type { UpdateLibraryItemInput } from '../../types/mutations'
 
-export type LibraryItemQuerySnapshot = {
-  previousGridItems: Array<[QueryKey, LibraryItemsResponse | undefined]>
-  previousLookupItems: Array<[QueryKey, LibraryItem[] | undefined]>
-}
-
-type GridPageUpdateOptions = {
-  now?: string
-  statuses?: readonly MediaStatus[]
-}
+type LibraryItemField = keyof LibraryItem
 
 /**
- * Patches one library item on a grid page, or drops it when a status filter excludes it.
+ * Patches one library item on a grid page.
  *
- * `totalDocs` decreases only when this page actually contained the row.
+ * The row stays on the page even when a status filter no longer matches it. Dropping
+ * it here would unmount an open drawer before the request resolves; the refetch after
+ * the mutation settles removes it instead.
  *
  * @param response - Cached grid page
  * @param libraryItemId - Library item the edit applies to
  * @param input - Status and/or personal notes
- * @param options.now - Clock value for newly stamped status dates
- * @param options.statuses - Status filter for this grid query; omit when the grid is unfiltered
+ * @param now - Clock value for newly stamped status dates
  * @returns The patched page, or `response` when this page has nothing to change
  */
 export function applyLibraryItemUpdateToGridPage(
   response: LibraryItemsResponse,
   libraryItemId: number | string,
   input: UpdateLibraryItemInput,
-  options?: GridPageUpdateOptions,
+  now = new Date().toISOString(),
 ): LibraryItemsResponse {
   const match = response.docs.find((doc) => libraryItemIdsMatch(doc.id, libraryItemId))
 
@@ -41,16 +33,7 @@ export function applyLibraryItemUpdateToGridPage(
     return response
   }
 
-  const patched = patchLibraryItemFromUpdate(
-    match,
-    libraryItemId,
-    input,
-    options?.now ?? new Date().toISOString(),
-  )
-
-  if (shouldDropFromStatusFilter(patched.status, options?.statuses)) {
-    return removeLibraryItemFromGridPage(response, libraryItemId)
-  }
+  const patched = patchLibraryItemFromUpdate(match, libraryItemId, input, now)
 
   if (patched === match) {
     return response
@@ -115,9 +98,7 @@ export function applyOptimisticLibraryItemRemoval(
 /**
  * Patches status and notes for one library item in every grid and lookup cache.
  *
- * Grid pages whose status filter excludes the resulting status drop the row and
- * decrement `totalDocs`. Lookup lists only patch the row. `now` is shared so
- * every cache stamps the same `startedAt` / `completedAt`.
+ * `now` is shared so every cache stamps the same `startedAt` / `completedAt`.
  *
  * @param queryClient - Client holding library grid and lookup queries
  * @param libraryItemId - Library item to patch
@@ -130,11 +111,8 @@ export function applyOptimisticLibraryItemUpdate(
   input: UpdateLibraryItemInput,
   now = new Date().toISOString(),
 ): void {
-  writeLibraryGridPages(queryClient, (response, queryKey) =>
-    applyLibraryItemUpdateToGridPage(response, libraryItemId, input, {
-      now,
-      statuses: statusesFromLibraryGridQueryKey(queryKey),
-    }),
+  writeLibraryGridPages(queryClient, (response) =>
+    applyLibraryItemUpdateToGridPage(response, libraryItemId, input, now),
   )
   writeLibraryLookupLists(queryClient, (items) =>
     applyLibraryItemUpdateToLookup(items, libraryItemId, input, now),
@@ -297,49 +275,131 @@ export function resolveLibraryItemUpdate(
 }
 
 /**
- * Puts grid and lookup caches back to a pre-mutation snapshot.
+ * Puts a removed library item back where it was after a failed delete.
+ *
+ * Re-inserts the row at its snapshot index on each grid page and lookup list that held
+ * it and no longer does, and adds it back to `totalDocs`. Other rows keep whatever
+ * optimistic edits they have received since the snapshot.
  *
  * @param queryClient - Client holding library grid and lookup queries
- * @param snapshot - Snapshot from `snapshotLibraryItemQueries`; ignored when missing
+ * @param snapshot - Snapshot taken before the optimistic removal; ignored when missing
+ * @param libraryItemId - Library item the failed delete applied to
  */
-export function restoreLibraryItemQuerySnapshot(
+export function revertOptimisticLibraryItemRemoval(
   queryClient: QueryClient,
   snapshot: LibraryItemQuerySnapshot | undefined,
+  libraryItemId: number | string,
 ): void {
   if (!snapshot) {
     return
   }
 
-  for (const [queryKey, data] of snapshot.previousGridItems) {
-    queryClient.setQueryData(queryKey, data)
+  for (const [queryKey, previous] of snapshot.previousGridItems) {
+    const index = previous?.docs.findIndex((doc) => libraryItemIdsMatch(doc.id, libraryItemId))
+    const previousItem = index != null && index >= 0 ? previous?.docs[index] : undefined
+
+    if (!previousItem || index == null) {
+      continue
+    }
+
+    queryClient.setQueryData<LibraryItemsResponse>(queryKey, (current) => {
+      if (!current || current.docs.some((doc) => libraryItemIdsMatch(doc.id, libraryItemId))) {
+        return current
+      }
+
+      const docs = [...current.docs]
+      docs.splice(Math.min(index, docs.length), 0, previousItem)
+
+      return { ...current, docs, totalDocs: current.totalDocs + 1 }
+    })
   }
 
-  for (const [queryKey, data] of snapshot.previousLookupItems) {
-    queryClient.setQueryData(queryKey, data)
+  for (const [queryKey, previous] of snapshot.previousLookupItems) {
+    const index = previous?.findIndex((item) => libraryItemIdsMatch(item.id, libraryItemId))
+    const previousItem = index != null && index >= 0 ? previous?.[index] : undefined
+
+    if (!previousItem || index == null) {
+      continue
+    }
+
+    queryClient.setQueryData<LibraryItem[]>(queryKey, (current) => {
+      if (!current || current.some((item) => libraryItemIdsMatch(item.id, libraryItemId))) {
+        return current
+      }
+
+      const items = [...current]
+      items.splice(Math.min(index, items.length), 0, previousItem)
+
+      return items
+    })
   }
 }
 
 /**
- * Cancels in-flight library queries and copies the grid and lookup caches.
+ * Reverts only the fields a failed update changed on one library item.
  *
- * The `library-items` prefix includes watched-episode queries, so those requests
- * are cancelled too and cannot overwrite the optimistic library row.
+ * Restoring a whole-cache snapshot would also undo another edit to the same row that
+ * is still in flight (a notes save while a status save runs, or the reverse). Only the
+ * fields in `input` are copied back from the snapshot, in every grid page and lookup
+ * list that holds the row. Status takes its stamped dates and movie progress with it.
  *
- * @param queryClient - Client holding library queries
- * @returns Grid and lookup snapshots to restore if the mutation fails
+ * @param queryClient - Client holding library grid and lookup queries
+ * @param snapshot - Snapshot taken before the optimistic write; ignored when missing
+ * @param libraryItemId - Library item the failed update applied to
+ * @param input - The update that failed
  */
-export async function snapshotLibraryItemQueries(
+export function revertOptimisticLibraryItemUpdate(
   queryClient: QueryClient,
-): Promise<LibraryItemQuerySnapshot> {
-  await queryClient.cancelQueries({ queryKey: ['library-items'] })
+  snapshot: LibraryItemQuerySnapshot | undefined,
+  libraryItemId: number | string,
+  input: UpdateLibraryItemInput,
+): void {
+  if (!snapshot) {
+    return
+  }
 
-  return {
-    previousGridItems: queryClient.getQueriesData<LibraryItemsResponse>({
-      queryKey: ['library-items', 'grid'],
-    }),
-    previousLookupItems: queryClient.getQueriesData<LibraryItem[]>({
-      queryKey: ['library-items', 'lookup'],
-    }),
+  const fields: LibraryItemField[] = [
+    ...(input.status !== undefined
+      ? (['completedAt', 'progress', 'startedAt', 'status'] as const)
+      : []),
+    ...(input.personalNotes !== undefined ? (['personalNotes'] as const) : []),
+  ]
+
+  for (const [queryKey, previous] of snapshot.previousGridItems) {
+    const previousItem = previous?.docs.find((doc) => libraryItemIdsMatch(doc.id, libraryItemId))
+
+    if (!previousItem) {
+      continue
+    }
+
+    queryClient.setQueryData<LibraryItemsResponse>(queryKey, (current) =>
+      current
+        ? {
+            ...current,
+            docs: current.docs.map((doc) =>
+              libraryItemIdsMatch(doc.id, libraryItemId)
+                ? revertLibraryItemFields(doc, previousItem, fields)
+                : doc,
+            ),
+          }
+        : current,
+    )
+  }
+
+  for (const [queryKey, previous] of snapshot.previousLookupItems) {
+    const previousItem = previous?.find((item) => libraryItemIdsMatch(item.id, libraryItemId))
+
+    if (!previousItem) {
+      continue
+    }
+
+    queryClient.setQueryData<LibraryItem[]>(queryKey, (current) =>
+      current?.map((item) =>
+        libraryItemIdsMatch(item.id, libraryItemId)
+          ? revertLibraryItemFields(item, previousItem, fields)
+          : item,
+      ),
+    )
   }
 }
 
@@ -372,11 +432,6 @@ function applyStatusTransition(item: LibraryItem, status: MediaStatus, now: stri
   }
 }
 
-// True when a grid query-key entry is one of the library statuses.
-function isMediaStatus(value: unknown): value is MediaStatus {
-  return typeof value === 'string' && MEDIA_STATUSES.some((status) => status === value)
-}
-
 // Library item ids arrive as numbers from Payload and strings from route params.
 function libraryItemIdsMatch(left: number | string, right: number | string): boolean {
   return String(left) === String(right)
@@ -389,38 +444,25 @@ function normalizePersonalNotes(value: null | string): null | string {
   return trimmed.length > 0 ? trimmed : null
 }
 
-// A status-filtered grid loses the row when the resulting status is outside that filter.
-function shouldDropFromStatusFilter(
-  status: MediaStatus,
-  statuses: readonly MediaStatus[] | undefined,
-): boolean {
-  return statuses != null && statuses.length > 0 && !statuses.includes(status)
-}
+// Copies `fields` from `previous` onto `current`; a field absent from `previous` is removed.
+function revertLibraryItemFields(
+  current: LibraryItem,
+  previous: LibraryItem,
+  fields: readonly LibraryItemField[],
+): LibraryItem {
+  const next = { ...current }
+  // Fields are copied or deleted by name, which the item's per-field types cannot express.
+  const target = next as unknown as Record<string, unknown>
 
-/**
- * Status filter stored on a library grid query key.
- *
- * Grid keys are `['library-items', 'grid', filters, page, pageSize, sort]`,
- * matching `libraryGridQueryKeys.libraryItems`. Missing or empty statuses mean
- * the grid is not status-filtered.
- *
- * @param queryKey - React Query key for one grid page
- * @returns The status allowlist, or `undefined` when this grid shows every status
- */
-function statusesFromLibraryGridQueryKey(queryKey: QueryKey): MediaStatus[] | undefined {
-  const filters: unknown = queryKey[2]
-
-  if (filters == null || typeof filters !== 'object' || Array.isArray(filters)) {
-    return undefined
+  for (const field of fields) {
+    if (previous[field] === undefined) {
+      delete target[field]
+    } else {
+      target[field] = previous[field]
+    }
   }
 
-  if (!('statuses' in filters) || !Array.isArray(filters.statuses)) {
-    return undefined
-  }
-
-  const statuses = filters.statuses.filter(isMediaStatus)
-
-  return statuses.length > 0 ? statuses : undefined
+  return next
 }
 
 // Null and missing notes compare equal to a cleared textarea.
@@ -435,7 +477,7 @@ function storedPersonalNotes(value: null | string | undefined): null | string {
 // Writes each cached library grid page. Pages with no data yet are skipped.
 function writeLibraryGridPages(
   queryClient: QueryClient,
-  update: (response: LibraryItemsResponse, queryKey: QueryKey) => LibraryItemsResponse,
+  update: (response: LibraryItemsResponse) => LibraryItemsResponse,
 ): void {
   for (const [queryKey, response] of queryClient.getQueriesData<LibraryItemsResponse>({
     queryKey: ['library-items', 'grid'],
@@ -444,7 +486,7 @@ function writeLibraryGridPages(
       continue
     }
 
-    queryClient.setQueryData(queryKey, update(response, queryKey))
+    queryClient.setQueryData(queryKey, update(response))
   }
 }
 

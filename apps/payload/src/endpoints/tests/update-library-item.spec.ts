@@ -2,6 +2,8 @@ import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { withLibraryItemRowLock } from '../../collections/watch-events/utils/withLibraryItemRowLock'
+import { runInPayloadTransaction } from '../../utilities/runInPayloadTransaction'
 import { requireProfileContext, requireServiceAuth } from '../helpers'
 import { updateLibraryItemEndpoint } from '../update-library-item'
 
@@ -15,6 +17,16 @@ vi.mock('../helpers', async (importOriginal) => {
   }
 })
 
+vi.mock('../../collections/watch-events/utils/withLibraryItemRowLock', () => ({
+  withLibraryItemRowLock: vi.fn(
+    async (_req: unknown, _libraryItemId: unknown, fn: () => Promise<unknown>) => fn(),
+  ),
+}))
+
+vi.mock('../../utilities/runInPayloadTransaction', () => ({
+  runInPayloadTransaction: vi.fn(async (_req: unknown, fn: () => Promise<unknown>) => fn()),
+}))
+
 function createReq(id: number | string | undefined, body: unknown, owned = true) {
   const find = vi.fn(async () => ({
     docs: owned ? [{ id: 11 }] : [],
@@ -23,17 +35,30 @@ function createReq(id: number | string | undefined, body: unknown, owned = true)
     id: 11,
     ...data,
   }))
+  // Stands in for the row after hooks ran: it carries a field the update's own return lacks.
+  const findByID = vi.fn(async () => ({
+    hookWritten: true,
+    id: 11,
+    ...(lastUpdateData ?? {}),
+  }))
+  let lastUpdateData: null | Record<string, unknown> = null
+  update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => {
+    lastUpdateData = data
+
+    return { id: 11, ...data }
+  })
 
   const req = {
     json: async () => body,
     payload: {
       find,
+      findByID,
       update,
     },
     routeParams: id === undefined ? {} : { id },
   } as unknown as PayloadRequest
 
-  return { find, req, update }
+  return { find, findByID, req, update }
 }
 
 async function readResponse(req: PayloadRequest): Promise<Response> {
@@ -50,6 +75,8 @@ describe('updateLibraryItemEndpoint', () => {
   beforeEach(() => {
     vi.mocked(requireServiceAuth).mockResolvedValue(null)
     vi.mocked(requireProfileContext).mockResolvedValue({ profileId: 22 })
+    vi.mocked(withLibraryItemRowLock).mockClear()
+    vi.mocked(runInPayloadTransaction).mockClear()
   })
 
   it('rejects an empty body', async () => {
@@ -110,6 +137,7 @@ describe('updateLibraryItemEndpoint', () => {
     )
     expect(await response.json()).toEqual({
       libraryItem: {
+        hookWritten: true,
         id: 11,
         personalNotes: null,
       },
@@ -144,8 +172,14 @@ describe('updateLibraryItemEndpoint', () => {
       }),
     )
     expect(owned.update.mock.calls[0]?.[0]).not.toHaveProperty('context')
+    expect(runInPayloadTransaction).toHaveBeenCalledOnce()
+    expect(withLibraryItemRowLock).toHaveBeenCalledWith(owned.req, 11, expect.any(Function))
+    expect(owned.findByID).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'library-items', id: 11, overrideAccess: true }),
+    )
     expect(await response.json()).toEqual({
       libraryItem: {
+        hookWritten: true,
         id: 11,
         personalNotes: 'a note',
         status: 'completed',
@@ -158,6 +192,7 @@ describe('updateLibraryItemEndpoint', () => {
     expect(missing.status).toBe(404)
     expect(await missing.json()).toEqual({ error: 'Library item not found' })
     expect(unowned.update).not.toHaveBeenCalled()
+    expect(withLibraryItemRowLock).toHaveBeenCalledTimes(1)
     expect(unowned.find).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {

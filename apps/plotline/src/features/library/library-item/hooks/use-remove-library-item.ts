@@ -6,18 +6,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRef } from 'react'
 import { toast } from 'sonner'
 
-import { getMediaFromLibraryItem } from '@/features/library/services/get-media-from-library-item'
+import { getLibraryItemTitle } from '@/features/library/services/get-library-item-title'
 
 import type { RemoveLibraryItemResult } from '../../types/mutations'
 
 import { invalidateAfterLibraryMutation } from '../../services/invalidate-library-queries'
+import {
+  type LibraryItemQuerySnapshot,
+  snapshotLibraryItemQueries,
+} from '../../services/library-query-snapshot'
 import { deleteLibraryItem } from '../services/fetch-library-item'
 import {
   applyOptimisticLibraryItemRemoval,
   findCachedLibraryItem,
-  type LibraryItemQuerySnapshot,
-  restoreLibraryItemQuerySnapshot,
-  snapshotLibraryItemQueries,
+  revertOptimisticLibraryItemRemoval,
 } from '../services/optimistic-library-item'
 
 export type RemoveLibraryItemVariables = {
@@ -34,8 +36,9 @@ type PendingLibraryItemRemoval = {
  * Removes a library item from the library grid and lookup caches, then deletes it.
  *
  * The server also deletes that item's watch events and watchlist memberships.
- * Those lists refresh when the mutation settles. Rolls the library cache back on
- * error and toasts the request.
+ * Those lists refresh when the mutation settles. On error it re-inserts just this
+ * row at its old position, leaving other rows' optimistic edits alone, and toasts
+ * the request.
  *
  * @returns A React Query mutation for `RemoveLibraryItemVariables` → `RemoveLibraryItemResult`
  */
@@ -55,7 +58,7 @@ export function useRemoveLibraryItem() {
     mutationFn: (variables) => {
       const pending = pendingRemovalsRef.current.get(variables)
       pendingRemovalsRef.current.delete(variables)
-      const title = pending?.title ?? libraryItemTitle(variables.libraryItem)
+      const title = pending?.title ?? getLibraryItemTitle(variables.libraryItem)
 
       return toast
         .promise(deleteLibraryItem(variables.libraryItemId), {
@@ -73,8 +76,8 @@ export function useRemoveLibraryItem() {
         })
         .unwrap()
     },
-    onError: (_error, _variables, context) => {
-      restoreLibraryItemQuerySnapshot(queryClient, context)
+    onError: (_error, variables, context) => {
+      revertOptimisticLibraryItemRemoval(queryClient, context, variables.libraryItemId)
     },
     onMutate: async (variables) => {
       const snapshot = await snapshotLibraryItemQueries(queryClient)
@@ -82,7 +85,7 @@ export function useRemoveLibraryItem() {
         findCachedLibraryItem(queryClient, variables.libraryItemId) ?? variables.libraryItem
 
       pendingRemovalsRef.current.set(variables, {
-        title: libraryItemTitle(current),
+        title: getLibraryItemTitle(current),
       })
       applyOptimisticLibraryItemRemoval(queryClient, variables.libraryItemId)
 
@@ -95,11 +98,3 @@ export function useRemoveLibraryItem() {
   })
 }
 
-// Populated media title for toasts. An id-only relation has no title.
-function libraryItemTitle(item: LibraryItem | undefined): string | undefined {
-  if (!item) {
-    return undefined
-  }
-
-  return getMediaFromLibraryItem(item)?.title
-}

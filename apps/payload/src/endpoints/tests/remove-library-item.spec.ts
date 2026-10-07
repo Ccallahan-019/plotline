@@ -2,6 +2,7 @@ import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { withLibraryItemRowLock } from '../../collections/watch-events/utils/withLibraryItemRowLock'
 import { recalculateWatchlistStatsById } from '../../utilities/recalculateWatchlistStatsById'
 import { requireProfileContext, requireServiceAuth } from '../helpers'
 import { removeLibraryItemEndpoint } from '../remove-library-item'
@@ -15,6 +16,12 @@ vi.mock('../helpers', async (importOriginal) => {
     requireServiceAuth: vi.fn(async () => null),
   }
 })
+
+vi.mock('../../collections/watch-events/utils/withLibraryItemRowLock', () => ({
+  withLibraryItemRowLock: vi.fn(
+    async (_req: unknown, _libraryItemId: unknown, fn: () => Promise<unknown>) => fn(),
+  ),
+}))
 
 vi.mock('../../utilities/recalculateWatchlistStatsById', () => ({
   recalculateWatchlistStatsById: vi.fn(async () => undefined),
@@ -201,6 +208,7 @@ describe('removeLibraryItemEndpoint', () => {
   beforeEach(() => {
     vi.mocked(requireServiceAuth).mockResolvedValue(null)
     vi.mocked(requireProfileContext).mockResolvedValue({ profileId: 22 })
+    vi.mocked(withLibraryItemRowLock).mockClear()
     vi.mocked(recalculateWatchlistStatsById).mockReset()
     vi.mocked(recalculateWatchlistStatsById).mockResolvedValue(undefined)
   })
@@ -225,6 +233,7 @@ describe('removeLibraryItemEndpoint', () => {
     expect(response.status).toBe(404)
     expect(await response.json()).toEqual({ error: 'Library item not found' })
     expect(beginTransaction).not.toHaveBeenCalled()
+    expect(withLibraryItemRowLock).not.toHaveBeenCalled()
     expect(remove).not.toHaveBeenCalled()
     expect(update).not.toHaveBeenCalled()
     expect(recalculateWatchlistStatsById).not.toHaveBeenCalled()
@@ -243,10 +252,17 @@ describe('removeLibraryItemEndpoint', () => {
       callOrder.push(`recalculate:${String(watchlistId)}`)
     })
 
+    vi.mocked(withLibraryItemRowLock).mockImplementationOnce(async (_req, _id, fn) => {
+      callOrder.push('lock')
+
+      return fn()
+    })
+
     const response = await readResponse(req)
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ id: 11 })
+    expect(withLibraryItemRowLock).toHaveBeenCalledWith(req, 11, expect.any(Function))
     expect(find).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'library-items',
@@ -314,6 +330,7 @@ describe('removeLibraryItemEndpoint', () => {
     )
     expect(callOrder).toEqual([
       'begin',
+      'lock',
       'delete:watchlist-memberships',
       'recalculate:3',
       'recalculate:4',

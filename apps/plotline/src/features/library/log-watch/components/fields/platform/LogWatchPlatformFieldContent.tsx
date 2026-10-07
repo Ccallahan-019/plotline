@@ -28,18 +28,18 @@ export function LogWatchPlatformFieldContent({
     }))
   }, [])
 
+  if (isCompact) {
+    return <LogWatchPlatformPopoverField disabled={disabled} placeholder="Select a platform..." />
+  }
+
   if (isPending) {
     return (
       <div className="flex w-full flex-wrap gap-2">
         {STREAMING_PLATFORM_REGISTRY.map((entry) => (
-          <Skeleton className={isCompact ? 'size-8' : 'h-9 w-24'} key={entry.value} />
+          <Skeleton className="size-8 rounded-sm" key={entry.value} />
         ))}
       </div>
     )
-  }
-
-  if (isCompact) {
-    return <LogWatchPlatformPopoverField disabled={disabled} placeholder="Select a platform..." />
   }
 
   return (
@@ -49,12 +49,7 @@ export function LogWatchPlatformFieldContent({
       itemClassName="data-[state=on]:ring-1 data-[state=on]:ring-ring h-auto px-2 py-1.5"
       items={items}
       renderItem={(item) => (
-        <StreamingPlatformIcon
-          logoPath={getPlatformLogoPath(item.value)}
-          platform={item.value}
-          showLabel={!isCompact}
-          size={isCompact ? 'sm' : 'md'}
-        />
+        <StreamingPlatformIcon logoPath={getPlatformLogoPath(item.value)} platform={item.value} />
       )}
     />
   )
