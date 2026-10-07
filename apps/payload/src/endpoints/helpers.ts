@@ -25,6 +25,22 @@ export async function parseJsonBody<T>(req: PayloadRequest): Promise<Response | 
   }
 }
 
+/**
+ * Reads the `:id` route param of a `/library/library-items/:id` route.
+ *
+ * @param req - Payload request carrying `routeParams`
+ * @returns A positive integer id, or `null` when `0`, negative, fractional or non-numeric
+ */
+export function readLibraryItemRouteId(req: PayloadRequest): null | number {
+  const parsed = parseId(req.routeParams?.id as number | string | undefined)
+
+  if (parsed == null || !Number.isInteger(parsed) || parsed < 1) {
+    return null
+  }
+
+  return parsed
+}
+
 export async function requireProfileContext(
   req: PayloadRequest,
 ): Promise<{ profileId: number } | Response> {

@@ -31,7 +31,7 @@ export function LibraryItemDrawer({ item }: LibraryItemDrawerProps) {
 
   const title = typeof item.media === 'object' ? item.media.title : 'Library item'
 
-  // Non-modal so the log-watch popover, portaled outside this drawer, can be clicked and focused.
+  // Non-modal so portaled popovers, selects, and the remove alert can be clicked and focused.
   return (
     <Drawer modal={false}>
       <DrawerTrigger asChild>
@@ -55,7 +55,7 @@ export function LibraryItemDrawer({ item }: LibraryItemDrawerProps) {
 
         <LibraryItemDrawerContent item={item} />
 
-        <LibraryItemDrawerFooter />
+        <LibraryItemDrawerFooter libraryItem={item} title={title} />
       </DrawerContent>
     </Drawer>
   )

@@ -1,4 +1,5 @@
 export {
+  isMediaStatus,
   MEDIA_RELEASE_STATUSES,
   MEDIA_STATUSES,
   MEDIA_TYPES,

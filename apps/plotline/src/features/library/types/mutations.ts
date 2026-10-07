@@ -71,6 +71,20 @@ export type LogWatchResult = {
   watchEvent: WatchEvent
 }
 
+export type RemoveLibraryItemResult = {
+  id: number
+}
+
+/** Status and notes the library-item update route is allowed to forward. */
+export type UpdateLibraryItemInput = {
+  personalNotes?: null | string
+  status?: MediaStatus
+}
+
+export type UpdateLibraryItemResult = {
+  libraryItem: LibraryItem
+}
+
 type AddToListMediaFields = {
   /** Media release lifecycle status — distinct from library item `status`. */
   releaseStatus?: MediaReleaseStatus | null

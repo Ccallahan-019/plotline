@@ -7,6 +7,11 @@ export const MEDIA_STATUSES = ['planned', 'watching', 'completed', 'dropped', 'o
 
 export type MediaStatus = (typeof MEDIA_STATUSES)[number]
 
+/** Narrows an unknown value to one of the library `MEDIA_STATUSES`. */
+export function isMediaStatus(value: unknown): value is MediaStatus {
+  return MEDIA_STATUSES.some((status) => status === value)
+}
+
 export const MEDIA_TYPES = ['movie', 'tv'] as const
 
 export type MediaType = (typeof MEDIA_TYPES)[number]
