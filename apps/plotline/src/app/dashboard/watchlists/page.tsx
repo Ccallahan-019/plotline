@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
-import { Badge } from '@/components/ui/badge'
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
+import { NewWatchlistButton } from '@/features/watchlists/components/NewWatchlistButton'
 import { WatchlistsGrid } from '@/features/watchlists/components/WatchlistsGrid'
-import { getInitialWatchlists } from '@/features/watchlists/services/get-initial-watchlists'
+import { getInitialWatchlistCards } from '@/features/watchlists/services/get-initial-watchlist-cards'
 
 export const metadata = {
   title: 'Watchlists',
@@ -16,21 +17,24 @@ export default async function WatchlistsPage() {
     redirect('/sign-in')
   }
 
-  const { initialError, initialWatchlists } = await getInitialWatchlists(userId)
+  const { initialError, initialWatchlistCards } = await getInitialWatchlistCards(userId)
 
   return (
-    <>
-      <div className="flex flex-col gap-2">
-        <Badge className="w-fit" variant="secondary">
-          Library
-        </Badge>
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">Watchlists</h1>
-        <p className="text-muted-foreground">
-          Server-prefetched data hydrated into TanStack Query for live updates after mutations.
-        </p>
-      </div>
+    <div className="flex flex-col">
+      <Item className="px-0">
+        <ItemContent>
+          <ItemTitle className="text-2xl">Watchlists</ItemTitle>
+          <ItemDescription>
+            Organize movies and shows into lists you want to watch, revisit, or finish.
+          </ItemDescription>
+        </ItemContent>
 
-      <WatchlistsGrid initialData={initialWatchlists} initialError={initialError} />
-    </>
+        <ItemActions>
+          <NewWatchlistButton />
+        </ItemActions>
+      </Item>
+
+      <WatchlistsGrid initialData={initialWatchlistCards} initialError={initialError} />
+    </div>
   )
 }

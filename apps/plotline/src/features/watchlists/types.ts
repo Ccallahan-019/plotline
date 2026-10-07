@@ -26,9 +26,9 @@ export type WatchlistCardPreview = {
 export const WATCHLIST_CARD_SORT_OPTIONS = [
   { label: 'Name (A–Z)', value: 'name-asc' },
   { label: 'Name (Z–A)', value: 'name-desc' },
-  { label: 'Recently updated', value: 'recently-updated' },
+  { label: 'Recently Updated', value: 'recently-updated' },
   { label: 'Newest', value: 'newest' },
-  { label: 'Most titles', value: 'most-titles' },
+  { label: 'Most Titles', value: 'most-titles' },
 ] as const
 
 export type WatchlistCardSort = (typeof WATCHLIST_CARD_SORT_OPTIONS)[number]['value']

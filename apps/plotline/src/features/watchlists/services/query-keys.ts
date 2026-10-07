@@ -3,6 +3,7 @@ export type WatchlistFilters = {
 }
 
 export const watchlistQueryKeys = {
+  cards: () => ['watchlists', 'cards'] as const,
   watchlist: (slug: string) => ['watchlists', slug] as const,
   watchlistMemberships: (libraryItemId: number) =>
     ['watchlist-memberships', libraryItemId] as const,
