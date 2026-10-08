@@ -7,12 +7,15 @@ import { Check, Ellipsis } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { StatusDot } from '@/components/utils/StatusDot'
 import { MEDIA_STATUS_OPTIONS } from '@/features/library/constants/media-status-options'
 import { useUpdateLibraryItem } from '@/features/library/library-item/hooks/use-update-library-item'
 
@@ -84,32 +87,42 @@ export function WatchlistMembershipMenu({
         <Ellipsis />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-48">
-        <DropdownMenuItem disabled={!canEditLibraryItem} onClick={() => onLogWatch(membership)}>
-          Log a watch
-        </DropdownMenuItem>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger disabled={!canEditLibraryItem}>
-            Change status
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent sideOffset={8}>
-            {MEDIA_STATUS_OPTIONS.map((option) => (
-              <DropdownMenuItem
-                className="flex items-center justify-between gap-3"
-                key={option.value}
-                onClick={() => handleStatusChange(option.value)}
-              >
-                {option.label}
-                <Check
-                  aria-hidden
-                  className={cn(option.value === libraryItem?.status ? 'opacity-100' : 'opacity-0')}
-                />
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuItem onClick={() => onRemove(membership)} variant="destructive">
-          Remove from watchlist
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem disabled={!canEditLibraryItem} onClick={() => onLogWatch(membership)}>
+            Log a watch
+          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger disabled={!canEditLibraryItem}>
+              Change status
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent sideOffset={8}>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Move to...</DropdownMenuLabel>
+                {MEDIA_STATUS_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    className="flex items-center justify-between gap-2 min-w-36"
+                    key={option.value}
+                    onClick={() => handleStatusChange(option.value)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <StatusDot status={option.value} />
+                      {option.label}
+                    </div>
+                    <Check
+                      aria-hidden
+                      className={cn(
+                        option.value === libraryItem?.status ? 'opacity-100' : 'opacity-0',
+                      )}
+                    />
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuItem onClick={() => onRemove(membership)} variant="destructive">
+            Remove from watchlist
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )
