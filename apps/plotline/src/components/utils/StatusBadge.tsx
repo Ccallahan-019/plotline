@@ -55,7 +55,7 @@ export function StatusBadge({ className, status }: StatusBadgeProps) {
 
   return (
     <Badge
-      className={cn(className, STATUS_BG_COLORS[status], STATUS_TEXT_COLORS[status])}
+      className={cn(className, STATUS_BG_COLORS[status], STATUS_TEXT_COLORS[status], 'h-7')}
       variant="default"
     >
       <Icon />
