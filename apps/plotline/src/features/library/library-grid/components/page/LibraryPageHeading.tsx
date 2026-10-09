@@ -1,5 +1,6 @@
 'use client'
 
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { useFilters } from '@/features/media-grid/filters/providers/FiltersProvider'
 
 import { useLibraryBrowse } from '../../providers/LibraryBrowseProvider'
@@ -15,12 +16,12 @@ export function LibraryPageHeading() {
     : `${totalResults} titles in your library`
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-col">
-        <h1 className="text-2xl font-bold">{headingText}</h1>
+    <Item className="px-0">
+      <ItemContent>
+        <ItemTitle className="text-2xl">{headingText}</ItemTitle>
 
-        <p className="text-sm text-muted-foreground">{subtitleText}</p>
-      </div>
-    </div>
+        <ItemDescription>{subtitleText}</ItemDescription>
+      </ItemContent>
+    </Item>
   )
 }
