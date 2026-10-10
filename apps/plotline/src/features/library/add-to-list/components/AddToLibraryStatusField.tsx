@@ -3,13 +3,9 @@
 import type { MediaStatus } from '@plotline/shared/constants'
 
 import { Field, FieldContent, FieldLabel } from '@/components/ui/field'
-import { MEDIA_STATUS_OPTIONS } from '@/features/library/constants/media-status-options'
+import { MEDIA_STATUS_OPTIONS_FOR_ADD } from '@/features/library/constants/media-status-options'
 
 import type { AddToLibraryFormApi } from '../hooks/use-add-to-library-form'
-
-const ADD_TO_LIBRARY_STATUS_ITEMS = MEDIA_STATUS_OPTIONS.filter(
-  (option) => option.value !== 'dropped',
-)
 
 type AddToLibraryStatusFieldProps = {
   disabled?: boolean
@@ -28,7 +24,7 @@ export function AddToLibraryStatusField({
           <FieldContent>
             <field.SelectField<MediaStatus>
               disabled={disabled}
-              items={ADD_TO_LIBRARY_STATUS_ITEMS}
+              items={MEDIA_STATUS_OPTIONS_FOR_ADD}
               placeholder="Select status"
             />
           </FieldContent>

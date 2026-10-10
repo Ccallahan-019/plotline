@@ -1,7 +1,7 @@
 import { TmdbSearchResultItem } from '@plotline/shared/tmdb'
 import { useMemo, useState } from 'react'
 
-import { useTmdbSearch } from '@/features/library/title-search/hooks/use-tmdb-search'
+import { useTmdbSearch } from '@/features/search/hooks/use-tmdb-search'
 
 import { toSearchItems } from '../services/to-search-items'
 import { TitleSearchItem } from '../types'
