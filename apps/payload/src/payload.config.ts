@@ -13,6 +13,7 @@ import { WatchEvents } from './collections/watch-events'
 import { WatchlistMemberships } from './collections/watchlist-memberships'
 import { Watchlists } from './collections/watchlists'
 import { addToListEndpoint } from './endpoints/add-to-list'
+import { createLibraryItemEndpoint } from './endpoints/create-library-item'
 import { logWatchEndpoint } from './endpoints/log-watch/log-watch'
 import { logWatchBatchEndpoint } from './endpoints/log-watch/log-watch-batch'
 import { recalculateWatchlistStatsEndpoint } from './endpoints/recalculate-watchlist-stats'
@@ -56,6 +57,7 @@ export default buildConfig({
   endpoints: [
     tmdbUpsertEndpoint,
     addToListEndpoint,
+    createLibraryItemEndpoint,
     updateLibraryItemEndpoint,
     removeLibraryItemEndpoint,
     logWatchEndpoint,
