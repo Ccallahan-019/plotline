@@ -32,6 +32,12 @@ type TitleSearchDialogProps = {
   onAdd: (input: TitleSearchAddInput) => Promise<unknown>
   /** `movie:550` style keys already on the current watchlist. */
   onListKeys?: ReadonlySet<string>
+  /**
+   * When set with `open`, the parent owns visibility. Use this when a trigger
+   * can unmount while the dialog should stay open.
+   */
+  onOpenChange?: (open: boolean) => void
+  open?: boolean
   title: string
   triggerLabel?: string
 }
@@ -42,10 +48,13 @@ export function TitleSearchDialog({
   destination,
   onAdd,
   onListKeys,
+  onOpenChange,
+  open: openProp,
   title,
-  triggerLabel = 'Add title',
+  triggerLabel = 'Add Title',
 }: TitleSearchDialogProps) {
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const open = openProp ?? uncontrolledOpen
   const search = useTitleSearchDialog({
     destination,
     onAdd,
@@ -68,7 +77,11 @@ export function TitleSearchDialog({
       search.reset()
     }
 
-    setOpen(nextOpen)
+    if (openProp === undefined) {
+      setUncontrolledOpen(nextOpen)
+    }
+
+    onOpenChange?.(nextOpen)
   }
 
   const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {

@@ -65,7 +65,7 @@ export function TitleSearchQueryField({
 
       <ShowIf condition={showClear && !isBusy}>
         <InputGroupAddon align="inline-end">
-          <InputGroupButton aria-label="Clear search" onClick={handleClear} size="icon-sm">
+          <InputGroupButton aria-label="Clear search" onClick={handleClear} size="icon-xs">
             <X />
           </InputGroupButton>
         </InputGroupAddon>
