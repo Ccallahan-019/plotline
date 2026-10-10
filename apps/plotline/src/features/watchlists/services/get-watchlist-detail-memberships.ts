@@ -1,8 +1,8 @@
 import type { WatchlistMembership } from '@plotline/payload-types'
 
+import { fetchAllPages } from '@/lib/payload/fetch-all-pages'
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
 
-const MAX_PAYLOAD_PAGES = 100
 const MEMBERSHIP_SORT = 'sortOrder,addedAt,id'
 const PAYLOAD_PAGE_SIZE = 100
 
@@ -18,17 +18,13 @@ const PAYLOAD_PAGE_SIZE = 100
  * @returns Memberships in list order
  * @throws When a Payload request fails, or paging does not finish
  */
-export async function getWatchlistDetailMemberships(
+export function getWatchlistDetailMemberships(
   clerkUserId: string,
   watchlistId: number,
 ): Promise<WatchlistMembership[]> {
-  const memberships: WatchlistMembership[] = []
-  let page = 1
-
-  while (page <= MAX_PAYLOAD_PAGES) {
-    const result = await payloadFetch<PayloadPaginatedDocs<WatchlistMembership>>(
-      '/api/watchlist-memberships',
-      {
+  return fetchAllPages<WatchlistMembership>(
+    (page) =>
+      payloadFetch<PayloadPaginatedDocs<WatchlistMembership>>('/api/watchlist-memberships', {
         clerkUserId,
         method: 'GET',
         searchParams: {
@@ -38,23 +34,7 @@ export async function getWatchlistDetailMemberships(
           sort: MEMBERSHIP_SORT,
           'where[watchlist][equals]': watchlistId,
         },
-      },
-    )
-
-    memberships.push(...result.docs)
-
-    if (!result.hasNextPage) {
-      return memberships
-    }
-
-    const nextPage = result.nextPage ?? page + 1
-
-    if (nextPage <= page) {
-      throw new Error('Payload page did not advance for watchlist memberships')
-    }
-
-    page = nextPage
-  }
-
-  throw new Error('Payload page limit exceeded for watchlist memberships')
+      }),
+    '/api/watchlist-memberships',
+  )
 }

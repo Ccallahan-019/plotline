@@ -1,10 +1,8 @@
 import type { CollectionBeforeValidateHook, PayloadRequest } from 'payload'
 
+import { lockWatchlistMemberships } from '../../../utilities/lockWatchlistMemberships'
 import { getRelationId } from '../../../utilities/relations'
-import { SKIP_WATCHLIST_STATS_RECALC } from '../../watchlists/context'
-
-const MAX_MEMBERSHIP_PAGES = 100
-const MEMBERSHIP_PAGE_SIZE = 100
+import { setWatchlistMembershipOrder } from '../../../utilities/setWatchlistMembershipOrder'
 
 /**
  * Assigns the next `sortOrder` when a membership is created without one.
@@ -15,6 +13,11 @@ const MEMBERSHIP_PAGE_SIZE = 100
  * then `id`), continuing after the highest existing value, and the new row
  * takes the following value. An explicit `sortOrder`, including `0`, is left
  * alone.
+ *
+ * The read-then-insert runs under the watchlist's membership lock, which is
+ * held until the surrounding transaction commits. A concurrent add to the same
+ * watchlist waits for it and then sees the new row, so two adds cannot take
+ * the same value.
  */
 export const initializeMembershipSortOrder: CollectionBeforeValidateHook = async ({
   data,
@@ -35,13 +38,15 @@ export const initializeMembershipSortOrder: CollectionBeforeValidateHook = async
     return data
   }
 
+  await lockWatchlistMemberships(req, watchlistId)
+
   const [highestSortOrder, unorderedIds] = await Promise.all([
     findHighestSortOrder(req, watchlistId),
     findUnorderedMembershipIds(req, watchlistId),
   ])
   const start = highestSortOrder == null ? 0 : highestSortOrder + 1
 
-  await numberUnorderedMemberships(req, unorderedIds, start)
+  await setWatchlistMembershipOrder(req, watchlistId, unorderedIds, start)
 
   return {
     ...data,
@@ -75,79 +80,18 @@ async function findUnorderedMembershipIds(
   req: PayloadRequest,
   watchlistId: number | string,
 ): Promise<number[]> {
-  const ids: number[] = []
-  let page = 1
+  const result = await req.payload.find({
+    collection: 'watchlist-memberships',
+    depth: 0,
+    limit: 0,
+    overrideAccess: true,
+    pagination: false,
+    req,
+    sort: 'addedAt,id',
+    where: {
+      and: [{ watchlist: { equals: watchlistId } }, { sortOrder: { exists: false } }],
+    },
+  })
 
-  while (page <= MAX_MEMBERSHIP_PAGES) {
-    const result = await req.payload.find({
-      collection: 'watchlist-memberships',
-      depth: 0,
-      limit: MEMBERSHIP_PAGE_SIZE,
-      overrideAccess: true,
-      page,
-      req,
-      sort: 'addedAt,id',
-      where: {
-        and: [{ watchlist: { equals: watchlistId } }, { sortOrder: { exists: false } }],
-      },
-    })
-
-    ids.push(...result.docs.map((membership) => membership.id))
-
-    if (!result.hasNextPage) {
-      return ids
-    }
-
-    const nextPage = result.nextPage ?? page + 1
-
-    if (nextPage <= page) {
-      throw new Error('Unordered membership page did not advance')
-    }
-
-    page = nextPage
-  }
-
-  throw new Error('Unordered membership page limit exceeded')
-}
-
-/**
- * Writes `sortOrder` onto legacy null rows.
- *
- * Stats stay unchanged because order is not challenge progress. The skip flag
- * is removed afterward unless the caller already set it: Payload copies update
- * context onto `req.context`, which would also skip stats for the membership
- * being created.
- */
-async function numberUnorderedMemberships(
-  req: PayloadRequest,
-  membershipIds: readonly number[],
-  start: number,
-): Promise<void> {
-  if (membershipIds.length === 0) {
-    return
-  }
-
-  const skipWasSet = req.context?.[SKIP_WATCHLIST_STATS_RECALC] === true
-
-  try {
-    for (const [index, membershipId] of membershipIds.entries()) {
-      await req.payload.update({
-        collection: 'watchlist-memberships',
-        context: {
-          [SKIP_WATCHLIST_STATS_RECALC]: true,
-        },
-        data: {
-          sortOrder: start + index,
-        },
-        depth: 0,
-        id: membershipId,
-        overrideAccess: true,
-        req,
-      })
-    }
-  } finally {
-    if (!skipWasSet && req.context) {
-      delete req.context[SKIP_WATCHLIST_STATS_RECALC]
-    }
-  }
+  return result.docs.map((membership) => membership.id)
 }

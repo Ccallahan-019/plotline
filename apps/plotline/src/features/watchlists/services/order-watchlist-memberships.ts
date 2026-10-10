@@ -4,6 +4,45 @@ import type { MediaStatus } from '@plotline/shared/constants'
 import { getMembershipLibraryItem } from './membership-media'
 
 /**
+ * Lays out `memberships` in the order of `orderedIds`.
+ *
+ * Ids in `orderedIds` that are not in `memberships` are skipped, so a title
+ * removed while a reorder was saving stays gone. Rows not in `orderedIds`
+ * (added or put back by a failed delete since the order was captured) follow in
+ * their current order. Rows come from `memberships`, so field updates from a
+ * refetch are kept while the dragged order holds.
+ *
+ * @param memberships - Latest rows from the query cache
+ * @param orderedIds - Membership ids in the order the user is looking at
+ * @returns Rows in that order, with `sortOrder` set to the index
+ */
+export function arrangeMembershipsByIds(
+  memberships: readonly WatchlistMembership[],
+  orderedIds: readonly number[],
+): WatchlistMembership[] {
+  const byId = new Map(memberships.map((membership) => [membership.id, membership]))
+  const placed = new Set<number>()
+  const arranged: WatchlistMembership[] = []
+
+  for (const id of orderedIds) {
+    const membership = byId.get(id)
+
+    if (membership && !placed.has(id)) {
+      arranged.push(membership)
+      placed.add(id)
+    }
+  }
+
+  for (const membership of memberships) {
+    if (!placed.has(membership.id)) {
+      arranged.push(membership)
+    }
+  }
+
+  return withMembershipSortOrder(arranged)
+}
+
+/**
  * Reorders memberships to match `orderedIds` and rewrites `sortOrder` to the index.
  *
  * Returns `null` when an id is missing or the lists differ in length, so a
@@ -72,45 +111,6 @@ export function patchMembershipLibraryStatus(
       },
     }
   })
-}
-
-/**
- * Applies newer row data without disturbing an in-progress drag order.
- *
- * Incoming rows replace the current object for the same id, and ids missing
- * from `incoming` are dropped. Other ids that exist only on `incoming` stay
- * out, so a stale refetch cannot put a locally removed title back while a
- * reorder is still saving. Ids in `restoreIds` are the exception: a failed
- * delete already put that row back in the cache, and it is inserted at that
- * cache position.
- *
- * @param current - Rows in the order the user is looking at
- * @param incoming - Latest memberships from the query cache
- * @param restoreIds - Membership ids to put back from `incoming` after a failed delete
- * @returns `current` when nothing changed, otherwise the merged rows
- */
-export function reconcilePendingMembershipRows(
-  current: readonly WatchlistMembership[],
-  incoming: readonly WatchlistMembership[],
-  restoreIds?: ReadonlySet<number>,
-): WatchlistMembership[] {
-  const incomingById = new Map(incoming.map((membership) => [membership.id, membership]))
-  const kept = current.flatMap((membership) => {
-    const row = incomingById.get(membership.id)
-
-    return row ? [row] : []
-  })
-  const next = restoreFailedRemovals(kept, incoming, restoreIds)
-  const reconciled = withMembershipSortOrder(next)
-
-  if (
-    reconciled.length === current.length &&
-    reconciled.every((membership, index) => membership === current[index])
-  ) {
-    return current as WatchlistMembership[]
-  }
-
-  return reconciled
 }
 
 /**
@@ -192,16 +192,10 @@ export function restoreMembershipOrderAfterReorder(
   current: readonly WatchlistMembership[],
   previous: readonly WatchlistMembership[],
 ): WatchlistMembership[] {
-  const currentById = new Map(current.map((membership) => [membership.id, membership]))
-  const previousIds = new Set(previous.map((membership) => membership.id))
-  const restored = previous.flatMap((membership) => {
-    const row = currentById.get(membership.id)
-
-    return row ? [row] : []
-  })
-  const addedSince = current.filter((membership) => !previousIds.has(membership.id))
-
-  return withMembershipSortOrder([...restored, ...addedSince])
+  return arrangeMembershipsByIds(
+    current,
+    previous.map((membership) => membership.id),
+  )
 }
 
 /**
@@ -256,38 +250,4 @@ export function withMembershipSortOrder(
   return memberships.map((membership, index) =>
     membership.sortOrder === index ? membership : { ...membership, sortOrder: index },
   )
-}
-
-/**
- * Inserts failed-delete rows at the position the cache already chose.
- *
- * Rows already in `current` stay put. Each id in `restoreIds` is taken from
- * `incoming` and placed with {@link restoreMembershipAfterFailedRemove}, so
- * the list matches the restored cache without adopting a stale refetch.
- *
- * @param current - Rows kept from the in-progress drag order
- * @param incoming - Cache order, including rows a failed delete put back
- * @param restoreIds - Membership ids a failed delete should show again
- * @returns `current` when there is nothing to restore
- */
-function restoreFailedRemovals(
-  current: WatchlistMembership[],
-  incoming: readonly WatchlistMembership[],
-  restoreIds: ReadonlySet<number> | undefined,
-): WatchlistMembership[] {
-  if (!restoreIds || restoreIds.size === 0) {
-    return current
-  }
-
-  let next = current
-
-  for (const membership of incoming) {
-    if (!restoreIds.has(membership.id) || next.some((row) => row.id === membership.id)) {
-      continue
-    }
-
-    next = restoreMembershipAfterFailedRemove(next, incoming, membership.id)
-  }
-
-  return next
 }

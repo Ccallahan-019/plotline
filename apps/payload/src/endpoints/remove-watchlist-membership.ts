@@ -1,5 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 
+import { lockWatchlistMemberships } from '../utilities/lockWatchlistMemberships'
 import { recalculateWatchlistStatsById } from '../utilities/recalculateWatchlistStatsById'
 import { runInPayloadTransaction } from '../utilities/runInPayloadTransaction'
 import { findOwnedWatchlistBySlug } from './find-owned-watchlist-by-slug'
@@ -65,6 +66,9 @@ export const removeWatchlistMembershipEndpoint: Endpoint = {
     }
 
     await runInPayloadTransaction(req, async () => {
+      // Waits for an in-flight reorder, which has already validated the id list it is writing.
+      await lockWatchlistMemberships(req, watchlist.id)
+
       await req.payload.delete({
         collection: 'watchlist-memberships',
         id: membershipId,

@@ -22,6 +22,10 @@ vi.mock('../../utilities/runInPayloadTransaction', () => ({
   runInPayloadTransaction: vi.fn(async (_req: unknown, fn: () => Promise<unknown>) => fn()),
 }))
 
+vi.mock('../../utilities/lockWatchlistMemberships', () => ({
+  lockWatchlistMemberships: vi.fn(async () => undefined),
+}))
+
 vi.mock('../../utilities/recalculateWatchlistStatsById', () => ({
   recalculateWatchlistStatsById: vi.fn(async () => undefined),
 }))

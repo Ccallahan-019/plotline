@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest'
 
 import { formatAddedToListLabel, formatMembershipMediaLabel } from '../format-membership-metadata'
 import {
+  arrangeMembershipsByIds,
   orderWatchlistMemberships,
   patchMembershipLibraryStatus,
-  reconcilePendingMembershipRows,
   restoreMembershipAfterFailedRemove,
   restoreMembershipOrderAfterReorder,
   sameMembershipIdOrder,
@@ -117,45 +117,41 @@ describe('restoreMembershipAfterFailedRemove', () => {
   })
 })
 
-describe('reconcilePendingMembershipRows', () => {
-  it('keeps the dragged order when a refetch still has the old order', () => {
-    const current = [membership(3, 0), membership(1, 1), membership(2, 2)]
-    const incoming = [membership(1, 0, 'completed'), membership(2, 1), membership(3, 2)]
+describe('arrangeMembershipsByIds', () => {
+  it('keeps the dragged order while taking row updates from a refetch with the old order', () => {
+    const refetched = [membership(1, 0, 'completed'), membership(2, 1), membership(3, 2)]
 
-    const reconciled = reconcilePendingMembershipRows(current, incoming)
+    const arranged = arrangeMembershipsByIds(refetched, [3, 1, 2])
 
-    expect(reconciled.map((row) => row.id)).toEqual([3, 1, 2])
-    expect(libraryStatus(reconciled[1])).toBe('completed')
+    expect(arranged.map((row) => [row.id, row.sortOrder])).toEqual([
+      [3, 0],
+      [1, 1],
+      [2, 2],
+    ])
+    expect(libraryStatus(arranged[1])).toBe('completed')
   })
 
-  it('drops a row the incoming list no longer has and does not re-add stale rows', () => {
-    const current = [membership(3, 0), membership(1, 1)]
-    const incoming = [membership(1, 0), membership(2, 1), membership(3, 2)]
+  it('skips ids the cache no longer has, so a removed title stays gone', () => {
+    const arranged = arrangeMembershipsByIds([membership(1, 0), membership(3, 1)], [3, 2, 1])
 
-    expect(reconcilePendingMembershipRows(current, incoming).map((row) => row.id)).toEqual([3, 1])
+    expect(arranged.map((row) => row.id)).toEqual([3, 1])
   })
 
-  it('puts a failed delete back at the cache position while a reorder is pending', () => {
-    const dragged = [membership(3, 0), membership(2, 1), membership(1, 2)]
-    const afterRemove = [membership(3, 0), membership(1, 1)]
-    const restoredCache = restoreMembershipAfterFailedRemove(afterRemove, dragged, 2).map((row) =>
-      row.id === 2 ? membership(2, row.sortOrder ?? null, 'watching') : row,
+  it('puts rows missing from the order after the ordered ones', () => {
+    const arranged = arrangeMembershipsByIds(
+      [membership(1, 0), membership(2, 1), membership(4, 2)],
+      [2, 1],
     )
 
-    const reconciled = reconcilePendingMembershipRows(
-      afterRemove,
-      [...restoredCache, membership(4, 3)],
-      new Set([2]),
-    )
-
-    expect(reconciled.map((row) => row.id)).toEqual([3, 2, 1])
-    expect(libraryStatus(reconciled[1])).toBe('watching')
+    expect(arranged.map((row) => row.id)).toEqual([2, 1, 4])
   })
 
-  it('returns the same array when the rows are unchanged', () => {
-    const current = [membership(1, 0), membership(2, 1)]
+  it('keeps row identity when sortOrder already matches', () => {
+    const rows = [membership(1, 0), membership(2, 1)]
+    const arranged = arrangeMembershipsByIds(rows, [1, 2])
 
-    expect(reconcilePendingMembershipRows(current, current)).toBe(current)
+    expect(arranged[0]).toBe(rows[0])
+    expect(arranged[1]).toBe(rows[1])
   })
 })
 

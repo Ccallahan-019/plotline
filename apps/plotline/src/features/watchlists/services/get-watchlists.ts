@@ -7,6 +7,17 @@ export type WatchlistQueryFilters = {
   filter?: 'challenge' | 'custom' | 'system'
 }
 
+/**
+ * Loads one watchlist by slug for the signed-in profile.
+ *
+ * Payload's read access limits the lookup to the profile's own lists, so a
+ * slug another profile also uses cannot match.
+ *
+ * @param clerkUserId - Clerk user id forwarded to Payload
+ * @param slug - Watchlist slug from the route
+ * @returns The watchlist, or `null` when this profile has no list with that slug
+ * @throws {PayloadClientError} When the Payload request fails
+ */
 export async function getWatchlistBySlug(
   clerkUserId: string,
   slug: string,
@@ -24,6 +35,18 @@ export async function getWatchlistBySlug(
   return result.docs[0] ?? null
 }
 
+/**
+ * Loads every watchlist the signed-in profile owns, in manual order.
+ *
+ * Follows Payload paging until all lists are loaded, so a profile with more
+ * than one page of lists is not truncated. The optional filter narrows to
+ * system, custom or challenge lists.
+ *
+ * @param clerkUserId - Clerk user id forwarded to Payload
+ * @param filters - Optional list-kind filter
+ * @returns Watchlists ordered by `sortOrder`, then `id`
+ * @throws When a Payload request fails, or paging does not finish
+ */
 export async function getWatchlists(
   clerkUserId: string,
   filters?: WatchlistQueryFilters,

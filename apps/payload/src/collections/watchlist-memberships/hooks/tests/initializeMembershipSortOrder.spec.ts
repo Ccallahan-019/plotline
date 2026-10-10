@@ -1,9 +1,18 @@
 import type { PayloadRequest } from 'payload'
 
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { SKIP_WATCHLIST_STATS_RECALC } from '../../../watchlists/context'
+import { lockWatchlistMemberships } from '../../../../utilities/lockWatchlistMemberships'
+import { setWatchlistMembershipOrder } from '../../../../utilities/setWatchlistMembershipOrder'
 import { initializeMembershipSortOrder } from '../initializeMembershipSortOrder'
+
+vi.mock('../../../../utilities/lockWatchlistMemberships', () => ({
+  lockWatchlistMemberships: vi.fn(async () => undefined),
+}))
+
+vi.mock('../../../../utilities/setWatchlistMembershipOrder', () => ({
+  setWatchlistMembershipOrder: vi.fn(async () => undefined),
+}))
 
 type FindArgs = {
   sort?: string
@@ -12,19 +21,11 @@ type FindArgs = {
   }
 }
 
-type UpdateCall = {
-  context?: Record<string, unknown>
-  data: { sortOrder?: number }
-  id: number
-}
-
 function createReq(options?: {
   highestSortOrder?: null | number
   unorderedIds?: readonly number[]
 }) {
-  const context: Record<string, unknown> = {}
   const unorderedIds = options?.unorderedIds ?? []
-  const updates: UpdateCall[] = []
   const find = vi.fn(async (args: FindArgs) => {
     const unordered = args.where?.and?.some((clause) => clause.sortOrder?.exists === false) ?? false
 
@@ -41,126 +42,95 @@ function createReq(options?: {
       hasNextPage: false,
     }
   })
-  const update = vi.fn(async (args: UpdateCall) => {
-    updates.push(args)
-    Object.assign(context, args.context)
-
-    return { id: args.id, sortOrder: args.data.sortOrder }
-  })
   const req = {
-    context,
+    context: {},
     payload: {
       find,
-      update,
     },
   } as unknown as PayloadRequest
 
-  return { context, find, req, updates }
+  return { find, req }
+}
+
+function runHook(req: PayloadRequest, data: Record<string, unknown>, operation = 'create') {
+  return initializeMembershipSortOrder({
+    data,
+    operation,
+    req,
+  } as unknown as Parameters<typeof initializeMembershipSortOrder>[0])
 }
 
 describe('initializeMembershipSortOrder', () => {
-  it('appends after the highest existing sortOrder', async () => {
-    const { find, req, updates } = createReq({ highestSortOrder: 4 })
+  beforeEach(() => {
+    vi.mocked(lockWatchlistMemberships).mockClear()
+    vi.mocked(setWatchlistMembershipOrder).mockClear()
+  })
 
-    const result = await initializeMembershipSortOrder({
-      data: { libraryItem: 9, watchlist: 3 },
-      operation: 'create',
-      req,
-    } as unknown as Parameters<typeof initializeMembershipSortOrder>[0])
+  it('appends after the highest existing sortOrder', async () => {
+    const { find, req } = createReq({ highestSortOrder: 4 })
+
+    const result = await runHook(req, { libraryItem: 9, watchlist: 3 })
 
     expect(result).toMatchObject({ sortOrder: 5 })
     expect(find).toHaveBeenCalled()
-    expect(updates).toEqual([])
   })
 
-  it('starts at 0 when the watchlist is empty', async () => {
-    const { req, updates } = createReq()
+  it('locks the watchlist before reading the highest sortOrder', async () => {
+    const { find, req } = createReq({ highestSortOrder: 4 })
 
-    const result = await initializeMembershipSortOrder({
-      data: { libraryItem: 9, watchlist: 3 },
-      operation: 'create',
-      req,
-    } as unknown as Parameters<typeof initializeMembershipSortOrder>[0])
+    await runHook(req, { libraryItem: 9, watchlist: 3 })
 
-    expect(result).toMatchObject({ sortOrder: 0 })
-    expect(updates).toEqual([])
-  })
-
-  it('numbers null sortOrder rows in list order before appending', async () => {
-    const { find, req, updates } = createReq({ unorderedIds: [10, 11] })
-
-    const result = await initializeMembershipSortOrder({
-      data: { libraryItem: 9, watchlist: 3 },
-      operation: 'create',
-      req,
-    } as unknown as Parameters<typeof initializeMembershipSortOrder>[0])
-
-    expect(result).toMatchObject({ sortOrder: 2 })
-    expect(updates.map((call) => [call.id, call.data.sortOrder])).toEqual([
-      [10, 0],
-      [11, 1],
-    ])
-    expect(updates.every((call) => call.context?.[SKIP_WATCHLIST_STATS_RECALC] === true)).toBe(true)
-    expect(req.context[SKIP_WATCHLIST_STATS_RECALC]).toBeUndefined()
-    expect(find).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sort: 'addedAt,id',
-      }),
+    expect(lockWatchlistMemberships).toHaveBeenCalledWith(req, 3)
+    expect(vi.mocked(lockWatchlistMemberships).mock.invocationCallOrder[0]).toBeLessThan(
+      find.mock.invocationCallOrder[0]!,
     )
   })
 
-  it('appends after numbered rows and legacy null rows', async () => {
-    const { req, updates } = createReq({ highestSortOrder: 2, unorderedIds: [8, 3] })
+  it('starts at 0 when the watchlist is empty', async () => {
+    const { req } = createReq()
 
-    const result = await initializeMembershipSortOrder({
-      data: { libraryItem: 9, watchlist: 3 },
-      operation: 'create',
-      req,
-    } as unknown as Parameters<typeof initializeMembershipSortOrder>[0])
+    const result = await runHook(req, { libraryItem: 9, watchlist: 3 })
 
-    expect(result).toMatchObject({ sortOrder: 5 })
-    expect(updates.map((call) => [call.id, call.data.sortOrder])).toEqual([
-      [8, 3],
-      [3, 4],
-    ])
+    expect(result).toMatchObject({ sortOrder: 0 })
+    expect(setWatchlistMembershipOrder).toHaveBeenCalledWith(req, 3, [], 0)
   })
 
-  it('keeps a pre-set stats skip flag after numbering null rows', async () => {
-    const { context, req } = createReq({ unorderedIds: [10] })
-    context[SKIP_WATCHLIST_STATS_RECALC] = true
+  it('numbers null sortOrder rows in list order before appending', async () => {
+    const { find, req } = createReq({ unorderedIds: [10, 11] })
 
-    await initializeMembershipSortOrder({
-      data: { libraryItem: 9, watchlist: 3 },
-      operation: 'create',
-      req,
-    } as unknown as Parameters<typeof initializeMembershipSortOrder>[0])
+    const result = await runHook(req, { libraryItem: 9, watchlist: 3 })
 
-    expect(context[SKIP_WATCHLIST_STATS_RECALC]).toBe(true)
+    expect(result).toMatchObject({ sortOrder: 2 })
+    expect(setWatchlistMembershipOrder).toHaveBeenCalledWith(req, 3, [10, 11], 0)
+    expect(find).toHaveBeenCalledWith(expect.objectContaining({ sort: 'addedAt,id' }))
+  })
+
+  it('appends after numbered rows and legacy null rows', async () => {
+    const { req } = createReq({ highestSortOrder: 2, unorderedIds: [8, 3] })
+
+    const result = await runHook(req, { libraryItem: 9, watchlist: 3 })
+
+    expect(result).toMatchObject({ sortOrder: 5 })
+    expect(setWatchlistMembershipOrder).toHaveBeenCalledWith(req, 3, [8, 3], 3)
   })
 
   it('keeps an explicit sortOrder, including 0', async () => {
     const { find, req } = createReq({ highestSortOrder: 4 })
 
-    const result = await initializeMembershipSortOrder({
-      data: { libraryItem: 9, sortOrder: 0, watchlist: 3 },
-      operation: 'create',
-      req,
-    } as unknown as Parameters<typeof initializeMembershipSortOrder>[0])
+    const result = await runHook(req, { libraryItem: 9, sortOrder: 0, watchlist: 3 })
 
     expect(result).toMatchObject({ sortOrder: 0 })
     expect(find).not.toHaveBeenCalled()
+    expect(lockWatchlistMemberships).not.toHaveBeenCalled()
   })
 
   it('does not assign sortOrder on update', async () => {
     const { find, req } = createReq({ highestSortOrder: 4 })
 
-    const result = await initializeMembershipSortOrder({
-      data: { note: 'later' },
-      operation: 'update',
-      req,
-    } as unknown as Parameters<typeof initializeMembershipSortOrder>[0])
+    const result = await runHook(req, { note: 'later' }, 'update')
 
     expect(result).toEqual({ note: 'later' })
     expect(find).not.toHaveBeenCalled()
+    expect(lockWatchlistMemberships).not.toHaveBeenCalled()
   })
 })
