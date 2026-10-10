@@ -21,7 +21,7 @@ todos:
     content: "Phase 1c: /dashboard/watchlists/[slug] — watchlist detail only: sortable membership rows (dnd-kit), row actions, persist sortOrder (no challenge UI)"
     status: completed
   - id: phase-1-title-detail
-    content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — log-watch flow, status change, optimistic updates; share mutations/dialogs with watchlist row actions (Phase 1c)"
+    content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — wireframe media page (hero, actions, tabs); Overview tab MVP; shared log-watch/status with Phase 1c"
     status: pending
   - id: phase-2-dashboard
     content: "Phase 2: /dashboard overview widgets + /dashboard/continue-watching + /dashboard/recent-activity — parallel useQuery + invalidation"
@@ -594,22 +594,104 @@ type SearchFilters = {
 
 ---
 
-#### Phase 1d — Title detail + log-watch flow (`phase-1-title-detail`)
+#### Phase 1d — Media / title page (`phase-1-title-detail`)
 
-**Route:** `/dashboard/title/[mediaType]/[tmdbId]` (not in sidebar; linked from search grid, library, watchlist rows)
+**Route:** `/dashboard/title/[mediaType]/[tmdbId]` (not in sidebar; linked from search, library, watchlist rows)
 
-**Deliverables:**
+**Design reference:** Plotline **media page wireframe** — full-width hero (backdrop + poster + metadata + primary actions), tab bar below hero, two-column **Overview** tab (main + sidebar). Match layout hierarchy and action placement from the wireframe; use existing shadcn primitives (`Tabs`, `Button`, `DropdownMenu`, `Badge`, `Card`).
 
-- Title detail page opened from search grid items, library rows, watchlist membership title links
-- Display TMDB metadata (from `media` cache or on-demand upsert)
-- Current library status for the signed-in user (if in library)
-- **Log watch** form — `useLogWatch` → `POST /api/library/log-watch` with optimistic update + rollback
-- **Status change** — planned / watching / completed / on hold / dropped via mutation
-- **Add to watchlist** — reuse `useAddToList` from search
-- Invalidate `libraryItems`, `watchEvents`, `watchlists`, `watchlist(slug)` on success
-- **Shared with Phase 1c:** Extract reusable **Log watch** and **Change status** flows (sheet/dialog + mutations) so watchlist row dropdown actions and title detail use the same modules — avoid duplicating forms in `WatchlistMembershipRow` and title page
+**Page shell:**
 
-**Backend:** Fully ready (`library-items`, `watch-events`, `watchlist-memberships`). BFF POST routes already exist for log-watch; membership delete + reorder require new BFF routes (specified in Phase 1c).
+- Breadcrumbs: dynamic parent (e.g. **Discover** / **Library** / **Watchlist name**) + title — extend [`breadcrumb-routes.ts`](apps/plotline/src/features/navigation/breadcrumbs/services/breadcrumb-routes.ts) with dynamic pattern for `/dashboard/title/[mediaType]/[tmdbId]`
+- RSC shell: auth, metadata, prefetch TMDB upsert + library item when present
+- Client island: `MediaTitlePage` in `src/features/media-detail/` (or `title/`)
+
+---
+
+**Hero section (wireframe top block)**
+
+| Zone | Spec |
+| ---- | ---- |
+| Backdrop | TMDB `backdrop_path` full-width still with bottom gradient overlay for text contrast |
+| Poster | Left-aligned poster (`MediaPoster` / existing poster helpers) overlapping backdrop |
+| Type label | Small caps label: **TV SERIES** or **FILM** (wireframe note 01) |
+| Title | Primary heading (e.g. *Severance*) |
+| Meta line | Single line: **year** · **Film/Series** · **TV:** season count · **certification** when TMDB provides it (e.g. TV-MA) · **Film:** runtime when available |
+| Primary actions (row under title) | **Mark watched** (primary button, check icon) → `useLogWatch` / [`LogWatchPopover`](apps/plotline/src/features/library/log-watch/components/popover/LogWatchPopover.tsx) pattern |
+| | **Add to watchlist** (outline, bookmark icon) → watchlist picker + `useAddToList` |
+| | **Set status** (outline dropdown, eye icon) → [`UpdateLibraryItemStatusPopover`](apps/plotline/src/features/library/library-grid/components/drawer/UpdateLibraryItemStatusPopover.tsx) or shared status menu |
+| | **Rate** (outline, stars + “Rate”) — **stub in Phase 1d** (full review UI Phase 4); can open placeholder or disabled state |
+| TV progress strip | When user has `status=watching` and TV progress exists, show line under actions: e.g. **S2 · E7 · 78%** (wireframe annotation); reuse library progress formatting |
+
+If title is **not in library**, hero actions should **add to library** first (via add-to-list / create library item) then enable log-watch and status.
+
+---
+
+**Tab bar (wireframe note 03 — horizontal tabs under hero)**
+
+Use shadcn **Tabs**. Default tab: **Overview**.
+
+| Tab | Phase 1d scope |
+| --- | -------------- |
+| **Overview** | **MVP — build fully** (see below) |
+| **Seasons** | **TV only** (wireframe note 02); list seasons/episodes from TMDB — MVP list or stub with “coming soon” if TMDB season fetch is deferred |
+| **Cast & crew** | Horizontal avatar row + “Full cast” — TMDB credits; MVP top cast on Overview, full tab stub or basic list |
+| **Your activity** | User `watch-events` for this media — timeline stub or basic list |
+| **Ratings & reviews** | Placeholder tab; Phase 4 |
+| **Similar** | Placeholder tab; Phase 6 discover |
+
+---
+
+**Overview tab layout (two columns)**
+
+**Main column (left):**
+
+- **Synopsis** — overview text from TMDB / Payload `media`
+- **Metadata grid** (label/value rows, wireframe style):
+  - **CREATED BY** — TV: created_by; Film: director/writers when available from TMDB
+  - **GENRES** — joined genre names
+  - **EPISODES** — TV: count + avg runtime; Film: runtime
+  - **NETWORK** — TV: networks; Film: production companies or omit
+  - **STATUS** — returning / ended / released (TMDB status)
+- **Cast & crew preview** — row of circular headshots + **Full cast >** link switching to Cast tab
+
+**Sidebar column (right):**
+
+| Block | Phase 1d |
+| ----- | -------- |
+| **Where to watch** (wireframe note 04) | Placeholder card (“Availability coming soon”) — real data Phase 9 |
+| **Community ratings** (wireframe note 05) | TMDB **vote_average** (large score), star display, vote count; optional simple 1–5 bar distribution if TMDB provides or approximate from average |
+
+---
+
+**Data & mutations**
+
+- **Load:** `GET /api/media/[mediaType]/[tmdbId]` (or extend existing upsert flow) — returns Payload `media` + signed-in user’s `library-item` if any + memberships
+- Upsert via Payload `/api/tmdb/upsert` on first visit when not cached
+- Mutations: `useLogWatch`, library status update, `useAddToList`; invalidate `libraryItems`, `watchEvents`, `watchlists`, `watchlist(slug)`, media detail query key
+
+**Shared with Phase 1c:** Extract **Mark watched / Log watch** and **Set status** into shared modules used by `WatchlistMembershipRow` dropdown and hero actions (avoid duplicating popover/dialog logic from library drawer).
+
+**Reuse from library drawer:** [`LibraryItemDrawerPrimaryColumn`](apps/plotline/src/features/library/library-grid/components/drawer/LibraryItemDrawerPrimaryColumn.tsx) patterns for meta line, status badge, and action buttons — refactor into shared `MediaTitleActions` / `MediaTitleHero` where the drawer and full page both consume them.
+
+---
+
+**Files (indicative)**
+
+- `src/app/dashboard/title/[mediaType]/[tmdbId]/page.tsx`
+- `src/features/media-detail/components/MediaTitlePage.tsx`
+- `src/features/media-detail/components/MediaTitleHero.tsx`
+- `src/features/media-detail/components/MediaTitleTabs.tsx`
+- `src/features/media-detail/components/overview/MediaOverviewTab.tsx`
+- `src/features/media-detail/components/overview/MediaMetadataGrid.tsx`
+- `src/features/media-detail/components/overview/MediaCommunityRatings.tsx`
+- `src/features/media-detail/hooks/use-media-title-page.ts`
+- `src/app/api/media/[mediaType]/[tmdbId]/route.ts` (BFF)
+- Shared extractions under `src/features/library/` or `src/features/media-detail/` for log-watch + status controls
+
+**Out of scope Phase 1d:** Full reviews tab (Phase 4), similar titles (Phase 6), streaming availability (Phase 9), challenge UI (Phase 3).
+
+**Backend:** `library-items`, `watch-events`, `watchlist-memberships`, `media`, TMDB details endpoints. Log-watch BFF exists; media aggregate BFF is new for this page.
 
 ---
 

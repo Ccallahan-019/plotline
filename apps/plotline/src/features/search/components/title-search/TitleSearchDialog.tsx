@@ -61,7 +61,7 @@ export function TitleSearchDialog({
     onListKeys,
     open,
   })
-  const actionLabel = destination === 'library' ? 'Add to library' : 'Add to list'
+  const actionLabel = destination === 'library' ? 'Add to Library' : 'Add to List'
   const submitLabel = search.isSubmitting
     ? 'Adding...'
     : search.libraryLookupPending && search.selectedKey != null

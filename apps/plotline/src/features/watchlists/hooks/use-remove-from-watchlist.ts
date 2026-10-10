@@ -5,6 +5,8 @@ import type { WatchlistMembership } from '@plotline/payload-types'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
+import type { RemoveFromWatchlistVariables } from '../services/pending-watchlist-remove'
+
 import { deleteWatchlistMembership } from '../services/fetch-watchlists'
 import { restoreMembershipAfterFailedRemove } from '../services/order-watchlist-memberships'
 import { watchlistQueryKeys } from '../services/query-keys'
@@ -14,22 +16,20 @@ type RemoveContext = {
   queryKey: readonly ['watchlists', string, 'memberships']
 }
 
-type RemoveFromWatchlistVariables = {
-  membershipId: number
-  slug: string
-  title?: string
-}
-
 /**
  * Deletes one membership from a watchlist.
  *
- * Drops the row from the detail cache immediately. If the delete fails, that
- * row is inserted back among the rows still in the cache so a reorder that
- * landed in the meantime keeps its order. Invalidates watchlist and per-title
- * membership queries when the mutation settles so title counts and add-to-list
- * state refresh. The library item is not removed.
+ * Drops the row from the detail cache immediately. `onListKey` stays available
+ * on the in-flight mutation so search can keep treating that title as on the
+ * list until this delete settles. A successful delete cancels in-flight detail
+ * refetches and drops the row again, because a refetch started by another write
+ * can still include it. If the delete fails, that row is inserted back among
+ * the rows still in the cache so a reorder that landed in the meantime keeps
+ * its order. Invalidates watchlist and per-title membership queries when the
+ * mutation settles so title counts and add-to-list state refresh. The library
+ * item is not removed.
  *
- * @returns A React Query mutation for `{ membershipId, slug, title }`
+ * @returns A React Query mutation for `{ membershipId, onListKey, slug, title }`
  */
 export function useRemoveFromWatchlist() {
   const queryClient = useQueryClient()
@@ -55,6 +55,7 @@ export function useRemoveFromWatchlist() {
         })
         .unwrap()
     },
+    mutationKey: watchlistQueryKeys.removeMembership(),
     onError: (_error, variables, context) => {
       if (!context?.previous) {
         return
@@ -87,6 +88,22 @@ export function useRemoveFromWatchlist() {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['watchlists'] })
       void queryClient.invalidateQueries({ queryKey: ['watchlist-memberships'] })
+    },
+    onSuccess: async (_data, variables) => {
+      const queryKey = watchlistQueryKeys.watchlistDetailMemberships(variables.slug)
+
+      await queryClient.cancelQueries({ queryKey })
+
+      const current = queryClient.getQueryData<WatchlistMembership[]>(queryKey)
+
+      if (!current?.some((membership) => membership.id === variables.membershipId)) {
+        return
+      }
+
+      queryClient.setQueryData(
+        queryKey,
+        current.filter((membership) => membership.id !== variables.membershipId),
+      )
     },
   })
 }

@@ -18,11 +18,17 @@ import { WatchlistMembershipsEmpty } from './WatchlistMembershipsEmpty'
 
 type WatchlistMembershipListProps = {
   memberships: WatchlistMembership[]
+  onAddTitle: () => void
   slug: string
   sort: WatchlistMembershipSort
 }
 
-export function WatchlistMembershipList({ memberships, slug, sort }: WatchlistMembershipListProps) {
+export function WatchlistMembershipList({
+  memberships,
+  onAddTitle,
+  slug,
+  sort,
+}: WatchlistMembershipListProps) {
   const { handleDragEnd, handleRemove, logTarget, reorder, rows, setLogTarget } =
     useWatchlistMembershipList({
       memberships,
@@ -51,7 +57,7 @@ export function WatchlistMembershipList({ memberships, slug, sort }: WatchlistMe
   }
 
   if (rowsToRender.length === 0) {
-    return <WatchlistMembershipsEmpty />
+    return <WatchlistMembershipsEmpty onAddTitle={onAddTitle} />
   }
 
   return (
