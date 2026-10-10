@@ -34,6 +34,16 @@ export type AddToListsFormInput = {
 export type AddToListTmdbMediaInput = AddToListMediaFields &
   Required<Pick<AddToListInput, 'mediaType' | 'title' | 'tmdbId'>>
 
+/** Catalog media and optional library status for creating a library item. */
+export type CreateLibraryItemInput = Omit<
+  AddToListInput,
+  'note' | 'watchlistId' | 'watchlistSlug'
+>
+
+export type CreateLibraryItemResult = {
+  libraryItem: LibraryItem
+}
+
 export type LogWatchBatchInput = {
   episodes: Array<{
     episode: number

@@ -1,6 +1,8 @@
 import { fetchJson } from '@/lib/api/fetch-json'
 
 import type {
+  CreateLibraryItemInput,
+  CreateLibraryItemResult,
   RemoveLibraryItemResult,
   UpdateLibraryItemInput,
   UpdateLibraryItemResult,
@@ -39,6 +41,24 @@ export function patchLibraryItem(
     body: JSON.stringify(input),
     headers: { 'Content-Type': 'application/json' },
     method: 'PATCH',
+  })
+}
+
+/**
+ * Creates a library item through the library-items BFF route.
+ *
+ * The server upserts catalog media and inserts the row. Status defaults to
+ * `planned` when omitted. A title already in the library is rejected.
+ *
+ * @param input - Existing media id or TMDB fields, plus optional library status
+ * @returns The created library item
+ * @throws {FetchJsonError} When the BFF or Payload rejects the create
+ */
+export function postLibraryItem(input: CreateLibraryItemInput): Promise<CreateLibraryItemResult> {
+  return fetchJson<CreateLibraryItemResult>('/api/library-items', {
+    body: JSON.stringify(input),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
   })
 }
 
