@@ -21,7 +21,7 @@ todos:
     content: "Phase 1c: /dashboard/watchlists/[slug] — watchlist detail only: sortable membership rows (dnd-kit), row actions, persist sortOrder (no challenge UI)"
     status: completed
   - id: phase-1-title-detail
-    content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — wireframe media page (hero, actions, tabs); Overview tab MVP; shared log-watch/status with Phase 1c"
+    content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — responsive media page (desktop + mobile wireframes), Overview MVP, shared log-watch/status with Phase 1c"
     status: pending
   - id: phase-2-dashboard
     content: "Phase 2: /dashboard overview widgets + /dashboard/continue-watching + /dashboard/recent-activity — parallel useQuery + invalidation"
@@ -598,7 +598,14 @@ type SearchFilters = {
 
 **Route:** `/dashboard/title/[mediaType]/[tmdbId]` (not in sidebar; linked from search, library, watchlist rows)
 
-**Design reference:** Plotline **media page wireframe** — full-width hero (backdrop + poster + metadata + primary actions), tab bar below hero, two-column **Overview** tab (main + sidebar). Match layout hierarchy and action placement from the wireframe; use existing shadcn primitives (`Tabs`, `Button`, `DropdownMenu`, `Badge`, `Card`).
+**Design reference:** Two Plotline wireframes for the same route — implement **one responsive page** (Tailwind breakpoints, not separate routes):
+
+| Breakpoint | Wireframe | Layout summary |
+| ---------- | --------- | ---------------- |
+| **`md` and up (desktop)** | Media page (e.g. *Severance*) | Full backdrop hero, poster overlap, inline action row, tabs, **two-column Overview** (main + sidebar) |
+| **Below `md` (mobile)** | Mobile media page (e.g. *Perfect Days*) | Compact hero + back control, **stacked actions**, **Your rating** block, **horizontally scrolling tabs**, **single-column Overview** + Where to watch below |
+
+Use shadcn primitives (`Tabs`, `Button`, `DropdownMenu`, `Badge`, `Card`, `ScrollArea` or overflow-x for mobile tabs).
 
 **Page shell:**
 
@@ -608,59 +615,72 @@ type SearchFilters = {
 
 ---
 
-**Hero section (wireframe top block)**
+**Hero section**
 
-| Zone | Spec |
-| ---- | ---- |
-| Backdrop | TMDB `backdrop_path` full-width still with bottom gradient overlay for text contrast |
-| Poster | Left-aligned poster (`MediaPoster` / existing poster helpers) overlapping backdrop |
-| Type label | Small caps label: **TV SERIES** or **FILM** (wireframe note 01) |
-| Title | Primary heading (e.g. *Severance*) |
-| Meta line | Single line: **year** · **Film/Series** · **TV:** season count · **certification** when TMDB provides it (e.g. TV-MA) · **Film:** runtime when available |
-| Primary actions (row under title) | **Mark watched** (primary button, check icon) → `useLogWatch` / [`LogWatchPopover`](apps/plotline/src/features/library/log-watch/components/popover/LogWatchPopover.tsx) pattern |
-| | **Add to watchlist** (outline, bookmark icon) → watchlist picker + `useAddToList` |
-| | **Set status** (outline dropdown, eye icon) → [`UpdateLibraryItemStatusPopover`](apps/plotline/src/features/library/library-grid/components/drawer/UpdateLibraryItemStatusPopover.tsx) or shared status menu |
-| | **Rate** (outline, stars + “Rate”) — **stub in Phase 1d** (full review UI Phase 4); can open placeholder or disabled state |
-| TV progress strip | When user has `status=watching` and TV progress exists, show line under actions: e.g. **S2 · E7 · 78%** (wireframe annotation); reuse library progress formatting |
+| Zone | Desktop (`md+`) | Mobile (`<md`) |
+| ---- | --------------- | -------------- |
+| Navigation | Breadcrumbs in app chrome | **Back** control (top-left, circular icon button) → `router.back()` or sensible fallback (`/dashboard/library`) |
+| Backdrop | TMDB `backdrop_path` full-width still + bottom gradient | Optional subtle top band or omit large backdrop; **compact hero** — poster + text block (mobile wireframe) |
+| Poster | Left-aligned, overlapping backdrop | **Square poster** left of title block in hero row |
+| Type label | Small caps **TV SERIES** / **FILM** | Same |
+| Title | Primary heading | Same |
+| Meta line | **year** · Film/Series · seasons (TV) · certification · runtime (Film) | Same pattern (e.g. `2023 · Film · 2h 4m · PG`) |
+| TV progress | Line under actions when watching (S2 · E7 · 78%) | Same, full width below actions |
 
-If title is **not in library**, hero actions should **add to library** first (via add-to-list / create library item) then enable log-watch and status.
+**Actions (shared behavior, responsive layout)**
 
----
+| Action | Desktop | Mobile |
+| ------ | ------- | ------ |
+| **Mark watched** | In horizontal row with other actions | **Full-width primary button** directly under hero (mobile wireframe: “Primary action goes full width under the hero”) |
+| **Add to watchlist** | Same row | Second row: **half width** (or flex-1) with bookmark icon |
+| **Set status** | Same row (dropdown) | Same row beside Add to watchlist (dropdown) |
+| **Rate** | Outline button in action row | **Separate block** below actions: **YOUR RATING** label + 5 stars + “Rate” — stub Phase 1d, full UI Phase 4 |
 
-**Tab bar (wireframe note 03 — horizontal tabs under hero)**
+All actions wire to existing mutations (`useLogWatch`, `useAddToList`, status update). Reuse [`LogWatchPopover`](apps/plotline/src/features/library/log-watch/components/popover/LogWatchPopover.tsx) / shared `MediaTitleActions` where popovers fit mobile (sheet on small screens if needed).
 
-Use shadcn **Tabs**. Default tab: **Overview**.
-
-| Tab | Phase 1d scope |
-| --- | -------------- |
-| **Overview** | **MVP — build fully** (see below) |
-| **Seasons** | **TV only** (wireframe note 02); list seasons/episodes from TMDB — MVP list or stub with “coming soon” if TMDB season fetch is deferred |
-| **Cast & crew** | Horizontal avatar row + “Full cast” — TMDB credits; MVP top cast on Overview, full tab stub or basic list |
-| **Your activity** | User `watch-events` for this media — timeline stub or basic list |
-| **Ratings & reviews** | Placeholder tab; Phase 4 |
-| **Similar** | Placeholder tab; Phase 6 discover |
+If title is **not in library**, hero actions should **add to library** first, then enable log-watch and status.
 
 ---
 
-**Overview tab layout (two columns)**
+**Tab bar**
 
-**Main column (left):**
+Default tab: **Overview**.
 
-- **Synopsis** — overview text from TMDB / Payload `media`
-- **Metadata grid** (label/value rows, wireframe style):
-  - **CREATED BY** — TV: created_by; Film: director/writers when available from TMDB
-  - **GENRES** — joined genre names
-  - **EPISODES** — TV: count + avg runtime; Film: runtime
-  - **NETWORK** — TV: networks; Film: production companies or omit
-  - **STATUS** — returning / ended / released (TMDB status)
-- **Cast & crew preview** — row of circular headshots + **Full cast >** link switching to Cast tab
+| Tab | Desktop | Mobile | Phase 1d scope |
+| --- | ------- | ------ | -------------- |
+| **Overview** | Yes | Yes | **MVP — build fully** |
+| **Seasons** | Yes, TV only | TV only when applicable | TMDB seasons list or stub |
+| **Cast & crew** | Yes | Yes (in scroll row) | Credits stub or basic list |
+| **Your activity** | Yes | Yes | Watch-events stub or basic list |
+| **Ratings & reviews** | Yes | Yes | Placeholder; Phase 4 |
+| **Similar** | Desktop wireframe | Omitted from mobile tab strip | Placeholder; Phase 6 |
 
-**Sidebar column (right):**
+**Mobile tab UX:** Tabs **scroll horizontally** (`overflow-x-auto`, no wrap) — mobile wireframe shows Overview · Cast & crew · Your activity · Ratings & reviews in one scrollable row. Use `ScrollArea` or native overflow; active tab underline matches desktop.
 
-| Block | Phase 1d |
-| ----- | -------- |
-| **Where to watch** (wireframe note 04) | Placeholder card (“Availability coming soon”) — real data Phase 9 |
-| **Community ratings** (wireframe note 05) | TMDB **vote_average** (large score), star display, vote count; optional simple 1–5 bar distribution if TMDB provides or approximate from average |
+**Desktop tab UX:** Standard horizontal `TabsList` (all tabs visible when space allows).
+
+---
+
+**Overview tab content**
+
+**Synopsis + metadata (both breakpoints):**
+
+- Section heading **Overview** (mobile wireframe)
+- Synopsis body from TMDB / Payload `media`
+- **Metadata grid** — two-column label/value grid on mobile and desktop:
+  - **Film (mobile wireframe):** DIRECTOR, GENRES, RUNTIME, RELEASED, LANGUAGE
+  - **TV (desktop wireframe):** CREATED BY, GENRES, EPISODES, NETWORK, STATUS
+  - Map from TMDB detail response; show film vs TV field set based on `mediaType`
+
+**Cast preview (desktop Overview main column):** circular headshots + **Full cast >** → Cast tab. Optional on mobile (cast lives primarily in Cast tab).
+
+**Layout by breakpoint:**
+
+| Block | Desktop (`md+`) | Mobile (`<md`) |
+| ----- | --------------- | -------------- |
+| Synopsis + metadata | **Main column (left)** | **Single column**, full width, stacked |
+| Community ratings | **Sidebar (right)** — score, stars, vote count, optional distribution | Below metadata (stacked) or compact card; same TMDB data |
+| **Where to watch** | Sidebar below community ratings | **Below Overview sections**, full width — header **Where to watch** + **region selector** (e.g. US dropdown using `profiles.preferences.region`; placeholder providers: “Stream · subscription”) — real data Phase 9 |
 
 ---
 
@@ -680,8 +700,10 @@ Use shadcn **Tabs**. Default tab: **Overview**.
 
 - `src/app/dashboard/title/[mediaType]/[tmdbId]/page.tsx`
 - `src/features/media-detail/components/MediaTitlePage.tsx`
-- `src/features/media-detail/components/MediaTitleHero.tsx`
-- `src/features/media-detail/components/MediaTitleTabs.tsx`
+- `src/features/media-detail/components/MediaTitleHero.tsx` — responsive desktop/mobile hero
+- `src/features/media-detail/components/MediaTitleActions.tsx` — desktop row vs mobile stacked/full-width
+- `src/features/media-detail/components/MediaTitleYourRating.tsx` — mobile-visible; optional hide on `md+` if desktop keeps Rate in action row
+- `src/features/media-detail/components/MediaTitleTabs.tsx` — scrollable tab list on mobile
 - `src/features/media-detail/components/overview/MediaOverviewTab.tsx`
 - `src/features/media-detail/components/overview/MediaMetadataGrid.tsx`
 - `src/features/media-detail/components/overview/MediaCommunityRatings.tsx`
