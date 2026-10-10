@@ -1,15 +1,16 @@
 'use client'
 
-import type { Watchlist } from '@plotline/payload-types'
+import { useMemo, useState } from 'react'
 
-import Link from 'next/link'
-
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Spinner } from '@/components/ui/spinner'
 import { ErrorEmpty } from '@/components/utils/ErrorEmpty'
-import { useWatchlists } from '@/features/watchlists/hooks/use-watchlists'
+import { useWatchlistCards } from '@/features/watchlists/hooks/use-watchlist-cards'
+import { sortWatchlistCards } from '@/features/watchlists/services/build-watchlist-cards'
 import { getErrorMessage } from '@/utils/get-error-message'
 
+import { DEFAULT_WATCHLIST_CARD_SORT, type WatchlistCard, type WatchlistCardSort } from '../types'
+import { WatchlistGridCard } from './WatchlistCard'
+import { WatchlistCardSortSelector } from './WatchlistCardSortSelector'
 import { WatchlistsEmpty } from './WatchlistsEmpty'
 
 const ERROR_EMPTY_PROPS = {
@@ -18,18 +19,20 @@ const ERROR_EMPTY_PROPS = {
 }
 
 type WatchlistsGridProps = {
-  initialData: Watchlist[]
+  initialData: WatchlistCard[]
   initialError?: null | string
 }
 
 export function WatchlistsGrid({ initialData, initialError = null }: WatchlistsGridProps) {
+  const [sort, setSort] = useState<WatchlistCardSort>(DEFAULT_WATCHLIST_CARD_SORT)
   const {
-    data: watchlists = initialData,
+    data: cards = initialData,
     error,
     isFetching,
-  } = useWatchlists(undefined, {
+  } = useWatchlistCards({
     initialData,
   })
+  const sortedCards = useMemo(() => sortWatchlistCards(cards, sort), [cards, sort])
 
   const errorMessage = getErrorMessage(error) ?? initialError
 
@@ -37,30 +40,39 @@ export function WatchlistsGrid({ initialData, initialError = null }: WatchlistsG
     return <ErrorEmpty {...ERROR_EMPTY_PROPS} errorMessage={errorMessage} />
   }
 
-  if (watchlists.length === 0) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <WatchlistCardSortSelector onSortChange={setSort} sort={sort} />
+      </div>
+      <div aria-busy={isFetching} className="relative">
+        <GridContent cards={sortedCards} />
+        <FetchingOverlay isFetching={isFetching} />
+      </div>
+    </div>
+  )
+}
+
+const FetchingOverlay = ({ isFetching }: { isFetching: boolean }) => {
+  if (!isFetching) return null
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
+      <Spinner className="size-7" />
+    </div>
+  )
+}
+
+const GridContent = ({ cards }: { cards: WatchlistCard[] }) => {
+  if (cards.length === 0) {
     return <WatchlistsEmpty />
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {isFetching ? <p className="text-sm text-muted-foreground">Refreshing watchlists…</p> : null}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {watchlists.map((watchlist) => (
-          <Link href={`/dashboard/watchlists/${watchlist.slug}`} key={watchlist.id}>
-            <Card className="h-full transition-colors hover:border-primary/40">
-              <CardHeader>
-                <CardTitle>{watchlist.name}</CardTitle>
-                <CardDescription>{watchlist.description ?? 'No description'}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                <Badge variant="outline">{watchlist.visibility}</Badge>
-                {watchlist.isSystem ? <Badge variant="secondary">System</Badge> : null}
-                {watchlist.challenge?.enabled ? <Badge>Challenge</Badge> : null}
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+    <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))]">
+      {cards.map((card) => (
+        <WatchlistGridCard card={card} key={card.id} />
+      ))}
     </div>
   )
 }

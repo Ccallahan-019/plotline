@@ -14,3 +14,8 @@ export const MEDIA_STATUS_OPTIONS = MEDIA_STATUSES.map((status) => ({
   label: MEDIA_STATUS_LABELS[status],
   value: status,
 }))
+
+/** Statuses offered when adding a title. Dropped is chosen later, not at add time. */
+export const MEDIA_STATUS_OPTIONS_FOR_ADD = MEDIA_STATUS_OPTIONS.filter(
+  (option) => option.value !== 'dropped',
+)

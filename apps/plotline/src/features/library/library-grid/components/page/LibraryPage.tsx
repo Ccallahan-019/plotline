@@ -1,3 +1,4 @@
+import { LibraryTitleSearchProvider } from '../../providers/LibraryTitleSearchProvider'
 import { LibraryFilterBar } from '../filters/LibraryFilterBar'
 import { LibraryGrid } from '../grid/LibraryGrid'
 import { LibraryPagination } from '../pagination/LibraryPagination'
@@ -5,15 +6,17 @@ import { LibraryPageHeading } from './LibraryPageHeading'
 
 export function LibraryPage() {
   return (
-    <div className="flex flex-col gap-5">
-      <LibraryPageHeading />
+    <LibraryTitleSearchProvider>
+      <div className="flex flex-col gap-5">
+        <LibraryPageHeading />
 
-      <LibraryFilterBar />
+        <LibraryFilterBar />
 
-      <section className="flex flex-col gap-5 scroll-mt-6" id="library-results">
-        <LibraryGrid />
-        <LibraryPagination />
-      </section>
-    </div>
+        <section className="flex flex-col gap-5 scroll-mt-6" id="library-results">
+          <LibraryGrid />
+          <LibraryPagination />
+        </section>
+      </div>
+    </LibraryTitleSearchProvider>
   )
 }

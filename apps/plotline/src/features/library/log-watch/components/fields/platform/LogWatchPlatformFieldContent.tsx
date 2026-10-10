@@ -36,7 +36,7 @@ export function LogWatchPlatformFieldContent({
     return (
       <div className="flex w-full flex-wrap gap-2">
         {STREAMING_PLATFORM_REGISTRY.map((entry) => (
-          <Skeleton className="size-8 rounded-sm" key={entry.value} />
+          <Skeleton className="h-20 w-31.5 rounded-md" key={entry.value} />
         ))}
       </div>
     )

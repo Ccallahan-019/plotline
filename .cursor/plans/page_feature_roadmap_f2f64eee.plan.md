@@ -18,16 +18,16 @@ todos:
     content: "Phase 1b: /dashboard/library (+ status/type filter routes) — useLibraryItems grid, shared LibraryList client island, thin wrapper pages"
     status: completed
   - id: phase-1-watchlist-detail
-    content: "Phase 1c: /dashboard/watchlists/[slug] — complete stub with useWatchlist, membership media grid, challenge progress, add/remove"
-    status: pending
+    content: "Phase 1c: /dashboard/watchlists/[slug] — watchlist detail only: sortable membership rows (dnd-kit), row actions, persist sortOrder (no challenge UI)"
+    status: completed
   - id: phase-1-title-detail
-    content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — log-watch flow, status change, optimistic updates"
+    content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — responsive media page (desktop + mobile wireframes), Overview MVP, shared log-watch/status with Phase 1c"
     status: pending
   - id: phase-2-dashboard
     content: "Phase 2: /dashboard overview widgets + /dashboard/continue-watching + /dashboard/recent-activity — parallel useQuery + invalidation"
     status: pending
   - id: phase-3-watchlists
-    content: "Phase 3: /dashboard/watchlists/new, /dashboard/challenges/*, BFF GET /api/watchlists/:slug/stats + useWatchlistStats"
+    content: "Phase 3: watchlist/challenge CRUD, challenge progress on watchlist detail, /dashboard/challenges/*, useWatchlistStats + stats BFF"
     status: pending
   - id: phase-4-reviews
     content: "Phase 4: /dashboard/reviews, /dashboard/reviews/rated, /dashboard/reviews/written + review forms on title detail"
@@ -531,38 +531,189 @@ type SearchFilters = {
 
 ---
 
-#### Phase 1c — `/dashboard/watchlists/[slug]` (`phase-1-watchlist-detail`)
+#### Phase 1c — Watchlist detail pages (`phase-1-watchlist-detail`)
 
-**Routes:** `/dashboard/watchlists/[slug]` (serves sidebar shortcuts `/dashboard/watchlists/watchlist`, `/dashboard/watchlists/currently-watching`, etc. via slug)
+**Scope:** **Watchlist pages only** — membership list UX on `/dashboard/watchlists/[slug]`. **Out of scope for Phase 1c:** challenge mode badges, progress bars, pacing, and `statsCache` summary (Phase 3).
 
-**Deliverables:**
+**Routes:** `/dashboard/watchlists/[slug]` (serves sidebar shortcuts `/dashboard/watchlists/watchlist`, `/dashboard/watchlists/currently-watching`, etc. via slug). The watchlists index (`/dashboard/watchlists`) is already implemented separately; Phase 1c does not expand challenge or create-list flows.
 
-- Replace stub in `src/app/dashboard/watchlists/[slug]/page.tsx`
-- `useWatchlist(slug)` via `GET /api/watchlists/[slug]` (memberships + populated media)
-- Membership media grid with poster, title, list-scoped status
-- Challenge progress bar when `challenge.enabled` (from existing `statsCache`)
-- Add/remove membership actions with cache invalidation
-- Keep existing stats summary; back link to `/dashboard/watchlists`
+**Page header (minimal):** Watchlist name, description, visibility badge, back link to `/dashboard/watchlists`. Do **not** show challenge-mode UI or stats cache cards in this phase (remove/replace the current stub stats card when building the row list).
+
+**Layout:** **Row list** — not a poster grid. Vertical stack of membership rows (optionally grouped inside a `Card` or plain list).
+
+**Membership row spec** (each row, left → right):
+
+| Zone | Content |
+| ---- | ------- |
+| Drag handle | **Left of poster** — grip icon (`GripVertical`); only the handle initiates drag (use `@dnd-kit` sensors so row body remains clickable) |
+| Poster | Small poster thumbnail (reuse poster URL helpers from [`media-display.ts`](apps/plotline/src/features/media/services/media-display.ts); similar scale to [`MediaListItem`](apps/plotline/src/features/media/components/MediaListItem.tsx) `ItemMedia`) |
+| Primary text | **Title** (link to `/dashboard/title/[mediaType]/[tmdbId]`) |
+| Metadata | **Release year**, **Film** / **Series** label, **Added to list** date — format `addedAt` from `watchlist-memberships` (e.g. localized short date) |
+| Trailing (far right) | [`StatusBadge`](apps/plotline/src/components/utils/StatusBadge.tsx) for **library item** `status` (planned / watching / completed / on hold / dropped) |
+| Trailing actions | **More actions** icon button (`MoreHorizontal` or `Ellipsis`) → shadcn **DropdownMenu** with: **Log a watch**, **Change status**, **Remove from watchlist** |
+
+**Row component:** New `WatchlistMembershipRow` in `src/features/watchlists/components/` — do not force-fit `MediaListItem` if drag handle + trailing actions break its layout; may share poster/title helpers from `getMediaItemDisplay`.
+
+**Drag-and-drop reorder:**
+
+- Install **`@dnd-kit/react`** (and typical peers: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`) in `@plotline/plotline`
+- Wrap membership list in `DndContext` + `SortableContext`; each row is a `useSortable` item keyed by membership id
+- On drag end: compute new order → call reorder mutation → optimistic update + rollback on error
+
+**Persist order in database:**
+
+- [`watchlist-memberships.sortOrder`](apps/payload/src/collections/watchlist-memberships/index.ts) already exists — use it as source of truth
+- BFF: `PATCH /api/watchlists/[slug]/memberships/reorder` (or `POST .../reorder`) accepting ordered membership ids; server updates `sortOrder` (0..n-1) in a transaction or batched Payload updates scoped to profile
+- `GET /api/watchlists/[slug]` (or memberships query) must return memberships **sorted by `sortOrder` asc**, then `addedAt` as tiebreaker
+- Initialize `sortOrder` on membership create if not already set (Payload hook or add-to-list path)
+
+**Dropdown actions (mutations):**
+
+| Menu item | Behavior |
+| --------- | -------- |
+| Log a watch | Opens log-watch UI (sheet/dialog) or navigates to title detail — reuse `useLogWatch` / existing library log-watch form components |
+| Change status | Submenu or dialog to set library item status — reuse library status mutation patterns |
+| Remove from watchlist | Delete membership — new `useRemoveFromWatchlist` mutation; invalidate `watchlist(slug)` + `watchlists` |
+
+**Other deliverables:**
+
+- Replace stub in [`watchlists/[slug]/page.tsx`](apps/plotline/src/app/dashboard/watchlists/[slug]/page.tsx) with client island `WatchlistDetail` focused on the **sortable membership list** (remove stub “Stats cache” card; challenge UI comes in Phase 3)
+- `useWatchlist(slug)` / memberships fetch with populated `libraryItem` + `media`, ordered by `sortOrder`
+
+**Explicitly deferred to Phase 3:** `challenge.enabled` badge, progress bar, goal pacing (days left, on-track / overdue), and any `statsCache`-driven summary on this page.
+
+**Files (additions):**
+
+- `WatchlistMembershipList.tsx` — dnd-kit context + sortable list
+- `WatchlistMembershipRow.tsx` — row layout, drag handle, dropdown
+- `hooks/use-reorder-watchlist-memberships.ts`
+- `hooks/use-remove-from-watchlist.ts`
+- `app/api/watchlists/[slug]/memberships/reorder/route.ts` (Payload updates)
 
 **Sidebar note:** `/dashboard/watchlists/watchlist`, `/dashboard/watchlists/currently-watching`, and `/dashboard/watchlists/custom` should **redirect or filter** to system slug pages or filtered `/dashboard/watchlists` — not separate page implementations.
 
 ---
 
-#### Phase 1d — Title detail + log-watch flow (`phase-1-title-detail`)
+#### Phase 1d — Media / title page (`phase-1-title-detail`)
 
-**Route:** `/dashboard/title/[mediaType]/[tmdbId]` (not in sidebar; linked from search grid, library, watchlists)
+**Route:** `/dashboard/title/[mediaType]/[tmdbId]` (not in sidebar; linked from search, library, watchlist rows)
 
-**Deliverables:**
+**Design reference:** Two Plotline wireframes for the same route — implement **one responsive page** (Tailwind breakpoints, not separate routes):
 
-- Title detail page opened from search grid items, library rows, watchlist memberships
-- Display TMDB metadata (from `media` cache or on-demand upsert)
-- Current library status for the signed-in user (if in library)
-- **Log watch** form — `useLogWatch` → `POST /api/library/log-watch` with optimistic update + rollback
-- **Status change** — planned / watching / completed / on hold / dropped via mutation
-- **Add to watchlist** — reuse `useAddToList` from search
-- Invalidate `libraryItems`, `watchEvents`, `watchlists`, `watchlist(slug)` on success
+| Breakpoint | Wireframe | Layout summary |
+| ---------- | --------- | ---------------- |
+| **`md` and up (desktop)** | Media page (e.g. *Severance*) | Full backdrop hero, poster overlap, inline action row, tabs, **two-column Overview** (main + sidebar) |
+| **Below `md` (mobile)** | Mobile media page (e.g. *Perfect Days*) | Compact hero + back control, **stacked actions**, **Your rating** block, **horizontally scrolling tabs**, **single-column Overview** + Where to watch below |
 
-**Backend:** Fully ready (`library-items`, `watch-events`, `watchlist-memberships`). BFF POST routes already exist.
+Use shadcn primitives (`Tabs`, `Button`, `DropdownMenu`, `Badge`, `Card`, `ScrollArea` or overflow-x for mobile tabs).
+
+**Page shell:**
+
+- Breadcrumbs: dynamic parent (e.g. **Discover** / **Library** / **Watchlist name**) + title — extend [`breadcrumb-routes.ts`](apps/plotline/src/features/navigation/breadcrumbs/services/breadcrumb-routes.ts) with dynamic pattern for `/dashboard/title/[mediaType]/[tmdbId]`
+- RSC shell: auth, metadata, prefetch TMDB upsert + library item when present
+- Client island: `MediaTitlePage` in `src/features/media-detail/` (or `title/`)
+
+---
+
+**Hero section**
+
+| Zone | Desktop (`md+`) | Mobile (`<md`) |
+| ---- | --------------- | -------------- |
+| Navigation | Breadcrumbs in app chrome | **Back** control (top-left, circular icon button) → `router.back()` or sensible fallback (`/dashboard/library`) |
+| Backdrop | TMDB `backdrop_path` full-width still + bottom gradient | Optional subtle top band or omit large backdrop; **compact hero** — poster + text block (mobile wireframe) |
+| Poster | Left-aligned, overlapping backdrop | **Square poster** left of title block in hero row |
+| Type label | Small caps **TV SERIES** / **FILM** | Same |
+| Title | Primary heading | Same |
+| Meta line | **year** · Film/Series · seasons (TV) · certification · runtime (Film) | Same pattern (e.g. `2023 · Film · 2h 4m · PG`) |
+| TV progress | Line under actions when watching (S2 · E7 · 78%) | Same, full width below actions |
+
+**Actions (shared behavior, responsive layout)**
+
+| Action | Desktop | Mobile |
+| ------ | ------- | ------ |
+| **Mark watched** | In horizontal row with other actions | **Full-width primary button** directly under hero (mobile wireframe: “Primary action goes full width under the hero”) |
+| **Add to watchlist** | Same row | Second row: **half width** (or flex-1) with bookmark icon |
+| **Set status** | Same row (dropdown) | Same row beside Add to watchlist (dropdown) |
+| **Rate** | Outline button in action row | **Separate block** below actions: **YOUR RATING** label + 5 stars + “Rate” — stub Phase 1d, full UI Phase 4 |
+
+All actions wire to existing mutations (`useLogWatch`, `useAddToList`, status update). Reuse [`LogWatchPopover`](apps/plotline/src/features/library/log-watch/components/popover/LogWatchPopover.tsx) / shared `MediaTitleActions` where popovers fit mobile (sheet on small screens if needed).
+
+If title is **not in library**, hero actions should **add to library** first, then enable log-watch and status.
+
+---
+
+**Tab bar**
+
+Default tab: **Overview**.
+
+| Tab | Desktop | Mobile | Phase 1d scope |
+| --- | ------- | ------ | -------------- |
+| **Overview** | Yes | Yes | **MVP — build fully** |
+| **Seasons** | Yes, TV only | TV only when applicable | TMDB seasons list or stub |
+| **Cast & crew** | Yes | Yes (in scroll row) | Credits stub or basic list |
+| **Your activity** | Yes | Yes | Watch-events stub or basic list |
+| **Ratings & reviews** | Yes | Yes | Placeholder; Phase 4 |
+| **Similar** | Desktop wireframe | Omitted from mobile tab strip | Placeholder; Phase 6 |
+
+**Mobile tab UX:** Tabs **scroll horizontally** (`overflow-x-auto`, no wrap) — mobile wireframe shows Overview · Cast & crew · Your activity · Ratings & reviews in one scrollable row. Use `ScrollArea` or native overflow; active tab underline matches desktop.
+
+**Desktop tab UX:** Standard horizontal `TabsList` (all tabs visible when space allows).
+
+---
+
+**Overview tab content**
+
+**Synopsis + metadata (both breakpoints):**
+
+- Section heading **Overview** (mobile wireframe)
+- Synopsis body from TMDB / Payload `media`
+- **Metadata grid** — two-column label/value grid on mobile and desktop:
+  - **Film (mobile wireframe):** DIRECTOR, GENRES, RUNTIME, RELEASED, LANGUAGE
+  - **TV (desktop wireframe):** CREATED BY, GENRES, EPISODES, NETWORK, STATUS
+  - Map from TMDB detail response; show film vs TV field set based on `mediaType`
+
+**Cast preview (desktop Overview main column):** circular headshots + **Full cast >** → Cast tab. Optional on mobile (cast lives primarily in Cast tab).
+
+**Layout by breakpoint:**
+
+| Block | Desktop (`md+`) | Mobile (`<md`) |
+| ----- | --------------- | -------------- |
+| Synopsis + metadata | **Main column (left)** | **Single column**, full width, stacked |
+| Community ratings | **Sidebar (right)** — score, stars, vote count, optional distribution | Below metadata (stacked) or compact card; same TMDB data |
+| **Where to watch** | Sidebar below community ratings | **Below Overview sections**, full width — header **Where to watch** + **region selector** (e.g. US dropdown using `profiles.preferences.region`; placeholder providers: “Stream · subscription”) — real data Phase 9 |
+
+---
+
+**Data & mutations**
+
+- **Load:** `GET /api/media/[mediaType]/[tmdbId]` (or extend existing upsert flow) — returns Payload `media` + signed-in user’s `library-item` if any + memberships
+- Upsert via Payload `/api/tmdb/upsert` on first visit when not cached
+- Mutations: `useLogWatch`, library status update, `useAddToList`; invalidate `libraryItems`, `watchEvents`, `watchlists`, `watchlist(slug)`, media detail query key
+
+**Shared with Phase 1c:** Extract **Mark watched / Log watch** and **Set status** into shared modules used by `WatchlistMembershipRow` dropdown and hero actions (avoid duplicating popover/dialog logic from library drawer).
+
+**Reuse from library drawer:** [`LibraryItemDrawerPrimaryColumn`](apps/plotline/src/features/library/library-grid/components/drawer/LibraryItemDrawerPrimaryColumn.tsx) patterns for meta line, status badge, and action buttons — refactor into shared `MediaTitleActions` / `MediaTitleHero` where the drawer and full page both consume them.
+
+---
+
+**Files (indicative)**
+
+- `src/app/dashboard/title/[mediaType]/[tmdbId]/page.tsx`
+- `src/features/media-detail/components/MediaTitlePage.tsx`
+- `src/features/media-detail/components/MediaTitleHero.tsx` — responsive desktop/mobile hero
+- `src/features/media-detail/components/MediaTitleActions.tsx` — desktop row vs mobile stacked/full-width
+- `src/features/media-detail/components/MediaTitleYourRating.tsx` — mobile-visible; optional hide on `md+` if desktop keeps Rate in action row
+- `src/features/media-detail/components/MediaTitleTabs.tsx` — scrollable tab list on mobile
+- `src/features/media-detail/components/overview/MediaOverviewTab.tsx`
+- `src/features/media-detail/components/overview/MediaMetadataGrid.tsx`
+- `src/features/media-detail/components/overview/MediaCommunityRatings.tsx`
+- `src/features/media-detail/hooks/use-media-title-page.ts`
+- `src/app/api/media/[mediaType]/[tmdbId]/route.ts` (BFF)
+- Shared extractions under `src/features/library/` or `src/features/media-detail/` for log-watch + status controls
+
+**Out of scope Phase 1d:** Full reviews tab (Phase 4), similar titles (Phase 6), streaming availability (Phase 9), challenge UI (Phase 3).
+
+**Backend:** `library-items`, `watch-events`, `watchlist-memberships`, `media`, TMDB details endpoints. Log-watch BFF exists; media aggregate BFF is new for this page.
 
 ---
 
@@ -582,7 +733,7 @@ type SearchFilters = {
 
 ### Phase 3 — Watchlist & challenge management
 
-**Goal:** Full list CRUD and challenge-mode UX.
+**Goal:** Full list CRUD, challenge list routes, and **challenge-mode UX on watchlist pages** (including progress moved out of Phase 1c).
 
 | Order | Route(s)                                                 | Work                                                                                                                      |
 | ----- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
@@ -591,6 +742,15 @@ type SearchFilters = {
 | 3.3   | `/dashboard/challenges/active`, `/completed`, `/overdue` | Filter watchlists query by `challenge.enabled` + `statsCache.status`                                                      |
 | 3.4   | `/dashboard/challenges/new`                              | Create challenge watchlist mutation                                                                                       |
 | 3.5   | BFF                                                      | Add `GET /api/watchlists/:slug/stats` + `useWatchlistStats(slug)` hook per [`docs/architecture.md`](docs/architecture.md) |
+| 3.6   | `/dashboard/watchlists/[slug]` (challenge lists)         | **Challenge progress block** above membership rows when `challenge.enabled`: progress bar, completed/remaining from `statsCache`, pacing (days left, required/day, on-track / overdue). Replace generic stats stub; compose with Phase 1c row list (do not reimplement rows) |
+
+**Challenge detail UI spec (3.6):**
+
+- Show **Challenge mode** badge in page header when enabled
+- Progress bar from `statsCache.percentComplete` (or computed completed / total eligible)
+- Summary stats: completed, in progress, remaining (from existing watchlist `statsCache`)
+- Pacing fields from challenge cache: `daysRemaining`, `requiredPerDay`, `onTrack`, overdue state — per `@plotline/shared/watchlist-stats`
+- Membership **row list** remains Phase 1c; Phase 3 only adds the challenge header/progress **section** above it
 
 **Backend:** Challenge model is embedded in `watchlists` — no new collection. Stats recompute already exists in Payload hooks.
 
@@ -688,8 +848,8 @@ All routes **blocked** on new Payload collections per [`apps/plotline/README.md`
 | Data layer (cross-cutting) | —      | 0a                                 | Ready            | Setup + GET BFF routes           |
 | Dashboard                  | 3      | 2                                  | Ready            | Parallel queries                 |
 | Library (By Status / Type) | 8      | 1b                                 | Ready            | Filtered query keys              |
-| My Watchlists              | 5      | 1c + 3                             | Ready            | useWatchlist + mutations         |
-| Challenges                 | 4      | 3                                  | Ready            | Filtered watchlists query        |
+| My Watchlists              | 5      | 1c (detail rows) + 3 (challenge UI, CRUD) | Ready            | useWatchlist + mutations         |
+| Challenges                 | 4      | 3                                  | Ready            | Filtered watchlists query + stats |
 | Reviews & Ratings          | 3      | 4                                  | Ready            | useReviews + mutations           |
 | Stats & Insights           | 7      | 5                                  | Partial          | useInfiniteQuery for history     |
 | Discover                   | 6      | 1a (search + filters) + 6 (browse) | Partial / Future | useTmdbBrowse + genre list query |

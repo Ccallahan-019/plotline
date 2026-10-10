@@ -3,6 +3,7 @@ import type { MediaStatus, MediaType } from '@plotline/shared/constants'
 import type { LibraryItemSource } from '@/features/media-grid/filters/constants'
 
 import { DEFAULT_LIBRARY_SORT, type LibrarySort } from '@/features/library/library-grid/types'
+import { appendInFilter } from '@/lib/payload/append-in-filter'
 
 import { resolveLibrarySort } from './resolve-library-sort'
 
@@ -55,16 +56,6 @@ export function buildLibraryItemSearchParams({
   }
 
   return searchParams
-}
-
-function appendInFilter(
-  params: Record<string, number | string>,
-  field: string,
-  values: Array<number | string>,
-) {
-  values.forEach((value, index) => {
-    params[`where[${field}][in][${index}]`] = value
-  })
 }
 
 function appendNotInFilter(

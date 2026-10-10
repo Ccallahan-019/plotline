@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 
+import type { CreateLibraryItemInput } from '@/features/library/types/mutations'
+
 import { getLibraryItems } from '@/features/library/library-grid/services/get-library-items'
 import { parseLibraryItemsQuery } from '@/features/library/library-grid/services/parse-library-items-query'
+import { createLibraryItem } from '@/features/library/library-item/services/create-library-item'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 
@@ -21,6 +24,30 @@ export async function GET(request: Request) {
       pageSize: query.pageSize,
       sort: query.sort,
     })
+
+    return NextResponse.json(result)
+  } catch (error) {
+    return handlePayloadError(error)
+  }
+}
+
+export async function POST(request: Request) {
+  const authResult = await requireClerkUserId()
+
+  if (authResult instanceof NextResponse) {
+    return authResult
+  }
+
+  let body: CreateLibraryItemInput
+
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+
+  try {
+    const result = await createLibraryItem(authResult.clerkUserId, body)
 
     return NextResponse.json(result)
   } catch (error) {

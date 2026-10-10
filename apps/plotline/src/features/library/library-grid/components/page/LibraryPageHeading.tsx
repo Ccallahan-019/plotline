@@ -1,11 +1,15 @@
 'use client'
 
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { useFilters } from '@/features/media-grid/filters/providers/FiltersProvider'
+import { LibraryTitleSearchDialog } from '@/features/search/components/title-search/LibraryTitleSearchDialog'
 
 import { useLibraryBrowse } from '../../providers/LibraryBrowseProvider'
+import { useLibraryTitleSearch } from '../../providers/LibraryTitleSearchProvider'
 
 export function LibraryPageHeading() {
   const { totalResults } = useLibraryBrowse()
+  const { open, setOpen } = useLibraryTitleSearch()
   const { appliedFilters } = useFilters()
 
   const hasFilters = Object.keys(appliedFilters).length > 0
@@ -15,12 +19,16 @@ export function LibraryPageHeading() {
     : `${totalResults} titles in your library`
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-col">
-        <h1 className="text-2xl font-bold">{headingText}</h1>
+    <Item className="px-0">
+      <ItemContent>
+        <ItemTitle className="text-2xl">{headingText}</ItemTitle>
 
-        <p className="text-sm text-muted-foreground">{subtitleText}</p>
-      </div>
-    </div>
+        <ItemDescription>{subtitleText}</ItemDescription>
+      </ItemContent>
+
+      <ItemActions>
+        <LibraryTitleSearchDialog onOpenChange={setOpen} open={open} />
+      </ItemActions>
+    </Item>
   )
 }

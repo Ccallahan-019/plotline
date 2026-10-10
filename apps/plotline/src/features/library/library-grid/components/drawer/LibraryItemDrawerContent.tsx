@@ -22,7 +22,7 @@ export function LibraryItemDrawerContent({ item }: LibraryItemDrawerContentProps
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-3 md:gap-8 p-4">
+    <div className="grid gap-6 md:grid-cols-3 md:gap-8 p-4 overflow-y-auto scrollbar-none">
       <LibraryItemDrawerPrimaryColumn libraryItem={item} viewModel={viewModel} />
       <LibraryItemDrawerProgressColumn viewModel={viewModel} />
       <LibraryItemDrawerDetailsColumn
