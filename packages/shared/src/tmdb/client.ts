@@ -66,9 +66,21 @@ export class TmdbClient {
     return this.fetchValidated('/genre/movie/list', tmdbGenreListSchema)
   }
 
+  async getMovieRecommendations(id: number): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/movie/${id}/recommendations`, tmdbSearchResponseSchema, {
+      page: '1',
+    })
+  }
+
   async getMovieReviews(id: number, page = 1): Promise<TmdbReviewsResponse> {
     return this.fetchValidated(`/movie/${id}/reviews`, tmdbReviewsResponseSchema, {
       page: String(page),
+    })
+  }
+
+  async getMovieSimilar(id: number): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/movie/${id}/similar`, tmdbSearchResponseSchema, {
+      page: '1',
     })
   }
 
@@ -94,6 +106,12 @@ export class TmdbClient {
     return this.fetchValidated('/genre/tv/list', tmdbGenreListSchema)
   }
 
+  async getTvRecommendations(id: number): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/tv/${id}/recommendations`, tmdbSearchResponseSchema, {
+      page: '1',
+    })
+  }
+
   async getTvReviews(id: number, page = 1): Promise<TmdbReviewsResponse> {
     return this.fetchValidated(`/tv/${id}/reviews`, tmdbReviewsResponseSchema, {
       page: String(page),
@@ -102,6 +120,12 @@ export class TmdbClient {
 
   async getTvSeasonDetails(tvId: number, seasonNumber: number): Promise<TmdbTvSeasonDetails> {
     return this.fetchValidated(`/tv/${tvId}/season/${seasonNumber}`, tmdbTvSeasonDetailsSchema)
+  }
+
+  async getTvSimilar(id: number): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/tv/${id}/similar`, tmdbSearchResponseSchema, {
+      page: '1',
+    })
   }
 
   async getTvTitleDetails(id: number): Promise<TmdbTvTitleDetails> {

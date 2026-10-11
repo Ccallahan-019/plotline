@@ -10,10 +10,10 @@ import type { MediaTitlePageData } from '../types'
 
 import { MediaActivityTab } from './activity/MediaActivityTab'
 import { MediaCastTab } from './cast/MediaCastTab'
-import { MediaPlaceholderTab } from './MediaPlaceholderTab'
 import { MediaOverviewTab } from './overview/MediaOverviewTab'
 import { MediaReviewsTab } from './reviews/MediaReviewsTab'
 import { MediaSeasonsTab } from './seasons/MediaSeasonsTab'
+import { MediaSimilarTab } from './similar/MediaSimilarTab'
 
 type MediaTitleTabsProps = {
   data: MediaTitlePageData
@@ -89,7 +89,11 @@ export function MediaTitleTabs({ data }: MediaTitleTabsProps) {
         />
       </TabsContent>
       <TabsContent className="pt-4" value="similar">
-        <MediaPlaceholderTab description="Similar titles will show here." title="Similar" />
+        <MediaSimilarTab
+          enabled={tab === 'similar'}
+          mediaType={data.media.mediaType}
+          tmdbId={data.media.tmdbId}
+        />
       </TabsContent>
     </Tabs>
   )

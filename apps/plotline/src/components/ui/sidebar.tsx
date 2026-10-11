@@ -38,6 +38,16 @@ type SidebarContextProps = {
   toggleSidebar: () => void
 }
 
+// Primary clicks on in-sheet links dismiss the mobile overlay. Modified clicks leave it open so the link can open in another tab.
+function shouldCloseMobileSidebar(event: React.MouseEvent): boolean {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+    return false
+  }
+
+  const target = event.target
+  return target instanceof Element && target.closest('a[href]') != null
+}
+
 const SidebarContext = React.createContext<null | SidebarContextProps>(null)
 
 function Sidebar({
@@ -54,6 +64,10 @@ function Sidebar({
   variant?: 'floating' | 'inset' | 'sidebar'
 } & React.ComponentProps<'div'>) {
   const { isMobile, openMobile, setOpenMobile, state } = useSidebar()
+
+  const handleClick = (event: React.MouseEvent) => {
+    if (shouldCloseMobileSidebar(event)) setOpenMobile(false)
+  }
 
   if (collapsible === 'none') {
     return (
@@ -79,6 +93,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           dir={dir}
+          onClick={handleClick}
           side={side}
           style={
             {

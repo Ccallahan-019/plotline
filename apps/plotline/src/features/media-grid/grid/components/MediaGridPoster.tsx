@@ -16,7 +16,7 @@ type MediaGridPosterProps = {
 }
 
 export function MediaGridPoster({ className, media, ratio }: MediaGridPosterProps) {
-  const posterUrl = getPosterUrl(media.posterPath)
+  const posterUrl = getPosterUrl(media.posterPath, 'w780')
 
   const showRating = media.voteAverage !== undefined
 
@@ -36,7 +36,7 @@ export function MediaGridPoster({ className, media, ratio }: MediaGridPosterProp
         alt={`${media.title} poster`}
         className="absolute inset-0 object-cover"
         fill
-        sizes="(max-width: 768px) 100vw, 50vw"
+        sizes="(max-width: 479px) 100vw, (max-width: 639px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, (max-width: 1535px) 25vw, 20vw"
         src={posterUrl}
       />
     </AspectRatio>
