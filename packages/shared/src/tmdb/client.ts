@@ -3,30 +3,39 @@ import {
   tmdbGenreListSchema,
   type TmdbMovieDetails,
   tmdbMovieDetailsSchema,
+  type TmdbMovieTitleDetails,
+  tmdbMovieTitleDetailsSchema,
   type TmdbSearchResponse,
   tmdbSearchResponseSchema,
   type TmdbTvDetails,
   tmdbTvDetailsSchema,
   type TmdbTvSeasonDetails,
   tmdbTvSeasonDetailsSchema,
+  type TmdbTvTitleDetails,
+  tmdbTvTitleDetailsSchema,
   type TmdbWatchProviderList,
   tmdbWatchProviderListSchema,
 } from './schemas'
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
+const DEFAULT_TIMEOUT_MS = 10_000
 
 export type TmdbClientOptions = {
   accessToken: string
   baseUrl?: string
+  /** Per-request limit before the call is aborted. Defaults to 10 seconds. */
+  timeoutMs?: number
 }
 
 export class TmdbClient {
   private readonly accessToken: string
   private readonly baseUrl: string
+  private readonly timeoutMs: number
 
   constructor(options: TmdbClientOptions) {
     this.accessToken = normalizeAccessToken(options.accessToken)
     this.baseUrl = options.baseUrl ?? TMDB_BASE_URL
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
   }
 
   async discoverMovie(page = 1, params: Record<string, string> = {}): Promise<TmdbSearchResponse> {
@@ -55,6 +64,12 @@ export class TmdbClient {
     return this.fetchValidated('/genre/movie/list', tmdbGenreListSchema)
   }
 
+  async getMovieTitleDetails(id: number): Promise<TmdbMovieTitleDetails> {
+    return this.fetchValidated(`/movie/${id}`, tmdbMovieTitleDetailsSchema, {
+      append_to_response: 'credits,external_ids,release_dates',
+    })
+  }
+
   async getMovieWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
     return this.fetchValidated('/watch/providers/movie', tmdbWatchProviderListSchema, {
       watch_region: watchRegion,
@@ -73,6 +88,12 @@ export class TmdbClient {
 
   async getTvSeasonDetails(tvId: number, seasonNumber: number): Promise<TmdbTvSeasonDetails> {
     return this.fetchValidated(`/tv/${tvId}/season/${seasonNumber}`, tmdbTvSeasonDetailsSchema)
+  }
+
+  async getTvTitleDetails(id: number): Promise<TmdbTvTitleDetails> {
+    return this.fetchValidated(`/tv/${id}`, tmdbTvTitleDetailsSchema, {
+      append_to_response: 'aggregate_credits,content_ratings,external_ids',
+    })
   }
 
   async getTvWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
@@ -114,6 +135,7 @@ export class TmdbClient {
         accept: 'application/json',
         Authorization: `Bearer ${this.accessToken}`,
       },
+      signal: AbortSignal.timeout(this.timeoutMs),
     })
 
     if (!response.ok) {

@@ -47,7 +47,6 @@ type ToLogWatchInputOptions = {
   currentStatus?: MediaStatus
   mediaId: number | string
   mediaType: MediaType
-  runtimeMinutes?: number
   values: LogWatchFormValues
 }
 
@@ -269,13 +268,13 @@ export function toLogWatchBatchInput({
 /**
  * Maps log-watch form values to a single mutation payload.
  *
- * The server assigns `completed`, `progress`, or `rewatched`. This payload carries the
- * season and episode for TV and does not send an event type.
+ * The server assigns `completed`, `progress`, or `rewatched`, and stamps runtime from
+ * the catalog row or TMDB episode length. This payload carries the season and episode
+ * for TV and does not send an event type or a runtime.
  *
  * @param currentStatus - Existing library status, used to decide status transitions
  * @param mediaId - Library media id to attach the watch event to
  * @param mediaType - `movie` or `tv`; selects the status transition and TV context
- * @param runtimeMinutes - Optional runtime copied onto the payload when present
  * @param values - Submitted form values
  * @returns A `LogWatchInput` ready for the log-watch API
  */
@@ -283,7 +282,6 @@ export function toLogWatchInput({
   currentStatus,
   mediaId,
   mediaType,
-  runtimeMinutes,
   values,
 }: ToLogWatchInputOptions): LogWatchInput {
   const libraryItemStatus = resolveLogWatchLibraryItemStatus({
@@ -297,7 +295,6 @@ export function toLogWatchInput({
     mediaId,
     ...sharedFields,
     ...(libraryItemStatus ? { libraryItemStatus } : {}),
-    ...(runtimeMinutes != null ? { runtimeMinutes } : {}),
     ...(episode
       ? {
           tvContext: {

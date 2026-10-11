@@ -22,7 +22,7 @@ todos:
     status: completed
   - id: phase-1-title-detail
     content: "Phase 1d: /dashboard/title/[mediaType]/[tmdbId] — responsive media page (desktop + mobile wireframes), Overview MVP, shared log-watch/status with Phase 1c"
-    status: pending
+    status: completed
   - id: phase-2-dashboard
     content: "Phase 2: /dashboard overview widgets + /dashboard/continue-watching + /dashboard/recent-activity — parallel useQuery + invalidation"
     status: pending

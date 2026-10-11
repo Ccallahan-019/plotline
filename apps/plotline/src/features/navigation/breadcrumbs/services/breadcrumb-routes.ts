@@ -102,6 +102,8 @@ export const dynamicBreadcrumbRoutes: {
   parentHref: string
   parentLabel: string
   pattern: RegExp
+  /** When set, the last crumb stays a skeleton until the page publishes a label. */
+  pendingLabel?: boolean
 }[] = [
   {
     formatLabel: formatSlugLabel,
@@ -114,6 +116,13 @@ export const dynamicBreadcrumbRoutes: {
     parentHref: '/dashboard/stats',
     parentLabel: 'Summary',
     pattern: /^\/dashboard\/stats\/year\/(\d+)$/,
+  },
+  {
+    formatLabel: () => '',
+    parentHref: '/dashboard/library',
+    parentLabel: 'Library',
+    pattern: /^\/dashboard\/title\/(?:movie|tv)\/(\d+)$/,
+    pendingLabel: true,
   },
 ]
 

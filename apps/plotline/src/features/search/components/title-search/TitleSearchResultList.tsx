@@ -1,8 +1,6 @@
 'use client'
 
-import { ImageOff } from 'lucide-react'
-import Image from 'next/image'
-
+import { MediaPoster } from '@/components/media/MediaPoster'
 import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
 import { ShowIf } from '@/components/utils/ShowIf'
@@ -54,22 +52,6 @@ function ResultMessage({ children }: { children: React.ReactNode }) {
     <p className="flex min-h-24 items-center justify-center gap-2 px-3 text-center text-sm text-muted-foreground">
       {children}
     </p>
-  )
-}
-
-function TitleSearchPoster({ posterPath }: { posterPath?: null | string }) {
-  const posterUrl = getPosterUrl(posterPath)
-
-  return (
-    <div className="relative h-12 w-8 shrink-0 overflow-hidden rounded-sm bg-muted">
-      {posterUrl ? (
-        <Image alt="" className="object-cover" fill sizes="32px" src={posterUrl} />
-      ) : (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          <ImageOff aria-hidden className="size-3.5" />
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -153,7 +135,12 @@ function TitleSearchResultRow({
       variant={selected ? 'muted' : 'default'}
     >
       <ItemMedia>
-        <TitleSearchPoster posterPath={row.display.posterPath} />
+        <MediaPoster
+          className="h-12 w-8 shrink-0 rounded-sm"
+          fallbackIconClassName="size-3.5"
+          sizes="32px"
+          src={getPosterUrl(row.display.posterPath)}
+        />
       </ItemMedia>
       <ItemContent className="min-w-0">
         <ItemTitle className="w-full">{row.display.title}</ItemTitle>

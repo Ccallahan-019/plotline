@@ -15,7 +15,7 @@ export function UserProfileButton() {
   return (
     <div className="flex items-center gap-2">
       <UserButton fallback={<UserButtonSkeleton />} userProfileMode="modal" />
-      <ShowIf condition={!!user}>
+      <ShowIf condition={user != null}>
         <span className="text-sm font-medium group-data-[collapsible=icon]:hidden overflow-hidden truncate">
           {user?.fullName}
         </span>

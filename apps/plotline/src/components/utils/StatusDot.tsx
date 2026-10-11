@@ -1,5 +1,5 @@
 import { MediaStatus } from '@plotline/shared/constants'
-import { Circle } from 'lucide-react'
+import { Circle, LucideProps } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -16,8 +16,10 @@ const STATUS_DOT_COLORS: Record<Status, string> = {
 
 type StatusDotProps = {
   status: Status
-}
+} & LucideProps
 
-export function StatusDot({ status }: StatusDotProps) {
-  return <Circle className={cn(STATUS_DOT_COLORS[status], 'size-2')} fill="currentColor" />
+export function StatusDot({ status, ...props }: StatusDotProps) {
+  return (
+    <Circle className={cn(STATUS_DOT_COLORS[status], 'size-2')} fill="currentColor" {...props} />
+  )
 }

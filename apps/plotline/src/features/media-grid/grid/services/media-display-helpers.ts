@@ -98,6 +98,8 @@ export function toMediaDisplayFromMedia(media: Media): MediaDisplay {
       releaseDate: media.releaseDate,
       runtime: media.runtime,
       title: media.title,
+      tmdbId: media.tmdbId,
+      voteAverage: media.voteAverage ?? undefined,
     }
   }
 
@@ -110,6 +112,8 @@ export function toMediaDisplayFromMedia(media: Media): MediaDisplay {
     runtime: media.runtime,
     seasonCount: media.tvMeta?.seasonCount,
     title: media.title,
+    tmdbId: media.tmdbId,
+    voteAverage: media.voteAverage ?? undefined,
   }
 }
 

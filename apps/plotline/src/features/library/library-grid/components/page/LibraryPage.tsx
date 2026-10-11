@@ -1,3 +1,5 @@
+import { TitleBreadcrumbParentProvider } from '@/features/navigation/breadcrumbs/components/TitleBreadcrumbParentProvider'
+
 import { LibraryTitleSearchProvider } from '../../providers/LibraryTitleSearchProvider'
 import { LibraryFilterBar } from '../filters/LibraryFilterBar'
 import { LibraryGrid } from '../grid/LibraryGrid'
@@ -7,16 +9,18 @@ import { LibraryPageHeading } from './LibraryPageHeading'
 export function LibraryPage() {
   return (
     <LibraryTitleSearchProvider>
-      <div className="flex flex-col gap-5">
-        <LibraryPageHeading />
+      <TitleBreadcrumbParentProvider href="/dashboard/library" label="Library">
+        <div className="flex flex-col gap-5">
+          <LibraryPageHeading />
 
-        <LibraryFilterBar />
+          <LibraryFilterBar />
 
-        <section className="flex flex-col gap-5 scroll-mt-6" id="library-results">
-          <LibraryGrid />
-          <LibraryPagination />
-        </section>
-      </div>
+          <section className="flex flex-col gap-5 scroll-mt-6" id="library-results">
+            <LibraryGrid />
+            <LibraryPagination />
+          </section>
+        </div>
+      </TitleBreadcrumbParentProvider>
     </LibraryTitleSearchProvider>
   )
 }

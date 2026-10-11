@@ -9,8 +9,13 @@ import {
   withLibraryItemRowLock,
 } from '../../../collections/watch-events/utils/withLibraryItemRowLock'
 import { createWatchEvent } from '../create-watch-event'
+import { fetchTvEpisodeRuntimes } from '../fetch-tv-episode-runtimes'
 import { logWatchBatchEndpoint } from '../log-watch-batch'
 import { resolveOrCreateLibraryItem } from '../resolve-or-create-library-item'
+
+vi.mock('../fetch-tv-episode-runtimes', () => ({
+  fetchTvEpisodeRuntimes: vi.fn(async () => new Map()),
+}))
 
 vi.mock('../../helpers', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../helpers')>()
@@ -51,7 +56,7 @@ vi.mock('../../../collections/watch-events/utils/withLibraryItemRowLock', () => 
 type BatchDb = {
   existingWatchEvents: Array<{ tvContext?: null | WatchEvent['tvContext'] }>
   libraryItem: null | Pick<LibraryItem, 'id' | 'progress' | 'status'>
-  media: Pick<Media, 'id' | 'mediaType' | 'tvMeta'>
+  media: { tmdbId?: number } & Pick<Media, 'id' | 'mediaType' | 'tvMeta'>
   profile: { id: number; statsCache: null | object }
   watchEvents: Array<Pick<WatchEvent, 'id'>>
 }
@@ -104,6 +109,7 @@ describe('logWatchBatchEndpoint', () => {
       async (_req, _profileId, _mediaId, fn) => fn(),
     )
     vi.mocked(withLibraryItemRowLock).mockImplementation(async (_req, _id, fn) => fn())
+    vi.mocked(fetchTvEpisodeRuntimes).mockResolvedValue(new Map())
   })
 
   function createReq(body: {
@@ -519,5 +525,52 @@ describe('logWatchBatchEndpoint', () => {
       seasonsCompleted: [1],
       type: 'tv',
     })
+  })
+
+  it('stores each episode runtime from the season lookup', async () => {
+    db.media = { ...db.media, tmdbId: 1396 }
+    mockCreateWatchEvent()
+    vi.mocked(fetchTvEpisodeRuntimes).mockImplementation(async () => {
+      callOrder.push('runtimes')
+      return new Map([
+        ['1:2', 42],
+        ['2:1', 55],
+      ])
+    })
+
+    const { req } = createReq({
+      episodes: [
+        { episode: 2, season: 1 },
+        { episode: 1, season: 2 },
+      ],
+      mediaId: 5,
+    })
+
+    const response = await logWatchBatchEndpoint.handler(req)
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response).toHaveProperty('status', 200)
+    expect(callOrder.indexOf('runtimes')).toBeGreaterThanOrEqual(0)
+    expect(callOrder.indexOf('runtimes')).toBeLessThan(callOrder.indexOf('begin'))
+    expect(fetchTvEpisodeRuntimes).toHaveBeenCalledWith(1396, [
+      { episode: 2, season: 1 },
+      { episode: 1, season: 2 },
+    ])
+    expect(createWatchEvent).toHaveBeenNthCalledWith(
+      1,
+      req,
+      expect.objectContaining({
+        runtimeMinutes: 42,
+        tvContext: { episode: 2, season: 1 },
+      }),
+    )
+    expect(createWatchEvent).toHaveBeenNthCalledWith(
+      2,
+      req,
+      expect.objectContaining({
+        runtimeMinutes: 55,
+        tvContext: { episode: 1, season: 2 },
+      }),
+    )
   })
 })

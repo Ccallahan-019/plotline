@@ -5,11 +5,16 @@ import type { LogWatchBody } from './types'
 import { SKIP_COMPLETED_WATCH_EVENT } from '../../collections/library-items/context'
 import { buildWatchEventLibraryItemProgressUpdate } from '../../collections/watch-events/utils/buildWatchEventLibraryItemProgressUpdate'
 import { loadSeasonEpisodeCounts } from '../../collections/watch-events/utils/loadSeasonEpisodeCounts'
+import {
+  positiveRuntimeMinutes,
+  runtimeForEpisode,
+} from '../../collections/watch-events/utils/watch-event-runtime'
 import { withLibraryItemRowLock } from '../../collections/watch-events/utils/withLibraryItemRowLock'
 import { runInPayloadTransaction } from '../../utilities/runInPayloadTransaction'
 import { parseId, parseJsonBody, requireProfileContext, requireServiceAuth } from '../helpers'
 import { createWatchEvent } from './create-watch-event'
 import { deriveLogWatchRewatch, loadLogWatchRewatchContext } from './derive-rewatch'
+import { fetchTvEpisodeRuntimes } from './fetch-tv-episode-runtimes'
 import { parseLogWatchTvContext } from './parseLoggedEpisodes'
 import { resolveOrCreateLibraryItem } from './resolve-or-create-library-item'
 
@@ -48,6 +53,25 @@ export const logWatchEndpoint: Endpoint = {
     const { profileId } = profileResult
     const watchedAt = body.watchedAt ?? new Date().toISOString()
 
+    const media = await req.payload.findByID({
+      collection: 'media',
+      depth: 0,
+      id: mediaId,
+      overrideAccess: true,
+    })
+
+    if (!media) {
+      return Response.json({ error: 'Media not found' }, { status: 404 })
+    }
+
+    // Episode lengths come from TMDB before the row lock. A client runtime is ignored.
+    const episodeRuntimes =
+      media.mediaType === 'tv' && parsedTvContext
+        ? await fetchTvEpisodeRuntimes(media.tmdbId, [parsedTvContext])
+        : new Map<string, number>()
+    const movieRuntimeMinutes =
+      media.mediaType === 'movie' ? positiveRuntimeMinutes(media.runtime) : undefined
+
     const result = await runInPayloadTransaction(req, async () => {
       // Status from this request is applied after derive so a first watch is not classified as a rewatch.
       const libraryItemResult = await resolveOrCreateLibraryItem(req, {
@@ -72,6 +96,14 @@ export const logWatchEndpoint: Endpoint = {
             }
           : undefined
 
+        let runtimeMinutes: number | undefined
+
+        if (isTv && tvContext) {
+          runtimeMinutes = runtimeForEpisode(episodeRuntimes, tvContext)
+        } else if (!isTv) {
+          runtimeMinutes = movieRuntimeMinutes
+        }
+
         const watchEvent = await createWatchEvent(req, {
           eventType: derived.eventType,
           isRewatch: derived.isRewatch,
@@ -80,7 +112,7 @@ export const logWatchEndpoint: Endpoint = {
           platform: body.platform,
           platformOther: body.platformOther,
           profileId,
-          runtimeMinutes: body.runtimeMinutes,
+          ...(runtimeMinutes != null ? { runtimeMinutes } : {}),
           skipProgressSync: true,
           tvContext,
           visibility: body.visibility,

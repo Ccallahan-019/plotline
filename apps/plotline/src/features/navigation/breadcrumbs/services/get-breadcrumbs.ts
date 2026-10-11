@@ -47,6 +47,7 @@ function buildFallbackTrail(pathname: string) {
   return finalizeTrail(crumbs)
 }
 
+// Overview, then the section and group, then the current page.
 function buildTrailFromRoute(pathname: string, route: BreadcrumbRoute) {
   const crumbs: BreadcrumbSegment[] = [homeSegment]
 
@@ -65,12 +66,14 @@ function buildTrailFromRoute(pathname: string, route: BreadcrumbRoute) {
 
   crumbs.push({
     href: pathname === route.sectionHref ? route.sectionHref : undefined,
+    ...(route.pending ? { kind: 'pending' as const } : {}),
     label: route.label,
   })
 
   return finalizeTrail(crumbs)
 }
 
+// Drops the link on the current page. A pending title crumb stays a skeleton.
 function finalizeTrail(crumbs: BreadcrumbSegment[]) {
   const lastCrumb = crumbs.at(-1)
 
@@ -78,17 +81,35 @@ function finalizeTrail(crumbs: BreadcrumbSegment[]) {
     return []
   }
 
-  return crumbs.map((crumb, index) =>
-    index === crumbs.length - 1 ? { label: crumb.label } : crumb,
-  )
+  return crumbs.map((crumb, index) => {
+    if (index !== crumbs.length - 1) {
+      return crumb
+    }
+
+    if (crumb.kind === 'pending') {
+      return { kind: 'pending' as const, label: crumb.label }
+    }
+
+    return { label: crumb.label }
+  })
 }
 
+// Matches slug, year, and title paths that are not in the static route map.
 function resolveDynamicRoute(pathname: string): BreadcrumbRoute | undefined {
   for (const route of dynamicBreadcrumbRoutes) {
     const match = pathname.match(route.pattern)
 
     if (!match?.[1]) {
       continue
+    }
+
+    if (route.pendingLabel) {
+      return {
+        label: '',
+        pending: true,
+        section: route.parentLabel,
+        sectionHref: route.parentHref,
+      }
     }
 
     return {
