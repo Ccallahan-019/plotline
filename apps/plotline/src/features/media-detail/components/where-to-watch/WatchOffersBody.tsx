@@ -26,5 +26,10 @@ export function WatchOffersBody({ query, region }: WatchOffersBodyProps) {
     )
   }
 
+  // A disabled query (invalid title id) never fetches, so it must not show a spinner forever.
+  if (query.fetchStatus === 'idle') {
+    return <WatchOffersResult offers={{}} region={region} />
+  }
+
   return <WatchOffersLoading />
 }

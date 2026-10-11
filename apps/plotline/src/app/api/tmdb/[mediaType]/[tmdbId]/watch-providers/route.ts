@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 
 import { mapTitleWatchOffers } from '@/features/media-detail/services/map-title-watch-offers'
 import { parseMediaTitleParams } from '@/features/media-detail/services/parse-media-title-params'
-import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 import { tmdbErrorResponse } from '@/lib/api/tmdb-error-response'
 
@@ -49,6 +48,10 @@ export async function GET(_request: Request, context: RouteContext) {
       return tmdbErrorResponse(error, { notFound: 'Title not found' })
     }
 
-    return handlePayloadError(error)
+    // Anything else (network failure, a payload that fails schema validation) is an upstream
+    // problem rather than a server bug, so it is reported like other TMDB failures.
+    console.error(error)
+
+    return NextResponse.json({ error: 'TMDB request failed' }, { status: 502 })
   }
 }

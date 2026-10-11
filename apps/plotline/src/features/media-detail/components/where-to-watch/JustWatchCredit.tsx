@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 const JUSTWATCH_HREF = 'https://www.justwatch.com'
 
@@ -6,7 +7,7 @@ const JUSTWATCH_HREF = 'https://www.justwatch.com'
 // The gold mark stays visible on both light and dark backgrounds.
 export function JustWatchCredit() {
   return (
-    <a
+    <Link
       className="flex w-fit flex-nowrap items-center gap-2"
       href={JUSTWATCH_HREF}
       rel="noopener noreferrer"
@@ -20,6 +21,6 @@ export function JustWatchCredit() {
         src="/justwatch-logo.svg"
         width={132}
       />
-    </a>
+    </Link>
   )
 }

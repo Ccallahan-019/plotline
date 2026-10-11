@@ -6,12 +6,6 @@ const { getMovieTitleWatchProviders, getTvTitleWatchProviders } = vi.hoisted(() 
   getTvTitleWatchProviders: vi.fn(),
 }))
 
-vi.mock('@/lib/api/handle-payload-error', () => ({
-  handlePayloadError: vi.fn(() =>
-    Response.json({ error: 'Internal server error' }, { status: 500 }),
-  ),
-}))
-
 vi.mock('@/lib/api/require-clerk-user-id', () => ({
   requireClerkUserId: vi.fn(async () => 'user_1'),
 }))
@@ -120,6 +114,13 @@ describe('GET /api/tmdb/[mediaType]/[tmdbId]/watch-providers', () => {
 
     expect((await call('movie', '1')).status).toBe(502)
     expect(getTvTitleWatchProviders).not.toHaveBeenCalled()
+  })
+
+  it('reports a non-TMDB failure such as a schema error as 502', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    getMovieTitleWatchProviders.mockRejectedValueOnce(new Error('invalid payload'))
+
+    expect((await call('movie', '1')).status).toBe(502)
   })
 
   it('answers 503 when TMDB is not configured', async () => {

@@ -140,7 +140,7 @@ const tmdbTitleWatchProviderCountrySchema = z.object({
   buy: z.array(watchProviderSchema).optional(),
   flatrate: z.array(watchProviderSchema).optional(),
   free: z.array(watchProviderSchema).optional(),
-  link: z.string().optional(),
+  link: z.string().nullable().optional(),
   rent: z.array(watchProviderSchema).optional(),
 })
 

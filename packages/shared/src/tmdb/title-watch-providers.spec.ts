@@ -73,6 +73,15 @@ describe('tmdb title watch providers schema', () => {
     expect(parsed.results.FR?.buy).toBeUndefined()
   })
 
+  it('accepts a null country link', () => {
+    const parsed = tmdbTitleWatchProvidersSchema.parse({
+      id: 550,
+      results: { FR: { link: null } },
+    })
+
+    expect(parsed.results.FR?.link).toBeNull()
+  })
+
   it('strips an unknown key instead of failing the request', () => {
     const parsed = tmdbTitleWatchProvidersSchema.parse({
       id: 550,
