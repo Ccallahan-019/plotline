@@ -250,3 +250,28 @@ export const tmdbTvTitleDetailsSchema = tmdbTvDetailsSchema.extend({
 
 export type TmdbMovieTitleDetails = z.infer<typeof tmdbMovieTitleDetailsSchema>
 export type TmdbTvTitleDetails = z.infer<typeof tmdbTvTitleDetailsSchema>
+
+const tmdbReviewAuthorSchema = z.object({
+  avatar_path: z.string().nullable().optional(),
+  name: z.string().optional(),
+  rating: z.number().nullable().optional(),
+  username: z.string().optional(),
+})
+
+const tmdbReviewSchema = z.object({
+  author: z.string().optional(),
+  author_details: tmdbReviewAuthorSchema.optional(),
+  content: z.string().nullable().optional(),
+  created_at: z.string().optional(),
+  id: z.string(),
+})
+
+export const tmdbReviewsResponseSchema = z.object({
+  page: z.number(),
+  results: z.array(tmdbReviewSchema),
+  total_pages: z.number(),
+  total_results: z.number(),
+})
+
+export type TmdbReview = z.infer<typeof tmdbReviewSchema>
+export type TmdbReviewsResponse = z.infer<typeof tmdbReviewsResponseSchema>

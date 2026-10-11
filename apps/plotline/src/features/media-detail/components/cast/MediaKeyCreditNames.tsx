@@ -14,20 +14,17 @@ export function MediaKeyCreditNames({ label, names }: MediaKeyCreditNamesProps) 
   const hiddenCount = names.length - visibleNames.length
 
   return (
-    <dd className="text-sm">
+    <dd className="text-sm inline-flex flex-wrap items-center gap-1">
       {visibleNames.join(', ')}
       <ShowIf condition={hiddenCount > 0}>
-        <>
-          {' '}
-          <Tooltip>
-            <TooltipTrigger delay={200}>
-              <Badge aria-label={`Show all ${label.toLowerCase()}`}>+{hiddenCount}</Badge>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs text-left whitespace-normal">
-              {names.join(', ')}
-            </TooltipContent>
-          </Tooltip>
-        </>
+        <Tooltip>
+          <TooltipTrigger delay={200}>
+            <Badge aria-label={`Show all ${label.toLowerCase()}`}>+{hiddenCount}</Badge>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs text-left whitespace-normal">
+            {names.join(', ')}
+          </TooltipContent>
+        </Tooltip>
       </ShowIf>
     </dd>
   )

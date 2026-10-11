@@ -66,3 +66,20 @@ export type MediaTitleWatchEvent = {
   season: null | number
   watchedAt: string
 }
+
+export type TmdbCommunityReview = {
+  avatarUrl: null | string
+  body: string
+  id: string
+  initials: string
+  name: string
+  rating: null | number
+  writtenAt: string
+}
+
+export type TmdbCommunityReviewPage = {
+  page: number
+  reviews: TmdbCommunityReview[]
+  totalPages: number
+  totalResults: number
+}
