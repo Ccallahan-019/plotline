@@ -1,3 +1,5 @@
+import type { MediaType } from '../constants/media'
+
 import {
   type TmdbGenreList,
   tmdbGenreListSchema,
@@ -81,6 +83,32 @@ export class TmdbClient {
   async getMovieWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
     return this.fetchValidated('/watch/providers/movie', tmdbWatchProviderListSchema, {
       watch_region: watchRegion,
+    })
+  }
+
+  /**
+   * Loads page 1 of TMDB's recommendations for a title.
+   *
+   * @param mediaType - `movie` or `tv`
+   * @param id - TMDB title id
+   * @returns Results without `media_type`; callers stamp it from `mediaType`
+   */
+  async getRecommendations(mediaType: MediaType, id: number): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/${mediaType}/${id}/recommendations`, tmdbSearchResponseSchema, {
+      page: '1',
+    })
+  }
+
+  /**
+   * Loads page 1 of TMDB's similar titles for a title.
+   *
+   * @param mediaType - `movie` or `tv`
+   * @param id - TMDB title id
+   * @returns Results without `media_type`; callers stamp it from `mediaType`
+   */
+  async getSimilar(mediaType: MediaType, id: number): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/${mediaType}/${id}/similar`, tmdbSearchResponseSchema, {
+      page: '1',
     })
   }
 

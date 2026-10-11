@@ -6,6 +6,7 @@ import { parseMediaTitleParams } from '@/features/media-detail/services/parse-me
 import { parseReviewPage } from '@/features/media-detail/services/parse-review-page'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
+import { tmdbErrorResponse } from '@/lib/api/tmdb-error-response'
 
 type RouteContext = {
   params: Promise<{ mediaType: string; tmdbId: string }>
@@ -46,31 +47,12 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json(mapTmdbCommunityReviews(reviews))
   } catch (error) {
     if (error instanceof TmdbError) {
-      return tmdbErrorResponse(error)
+      return tmdbErrorResponse(error, {
+        invalidPage: 'Invalid page',
+        notFound: 'Reviews not found',
+      })
     }
 
     return handlePayloadError(error)
   }
-}
-
-/**
- * Maps a failed TMDB call to this route's response.
- *
- * Only a missing title and an out-of-range page are the caller's doing. Every other
- * upstream failure (bad token, quota, TMDB outage) is reported as 502, so it cannot be
- * mistaken for the user's own session status.
- *
- * @param error - Error thrown by the TMDB client
- * @returns 404 for a missing title, 400 for an invalid page, otherwise 502
- */
-function tmdbErrorResponse(error: TmdbError): NextResponse {
-  if (error.status === 404) {
-    return NextResponse.json({ error: 'Reviews not found' }, { status: 404 })
-  }
-
-  if (error.status === 422) {
-    return NextResponse.json({ error: 'Invalid page' }, { status: 400 })
-  }
-
-  return NextResponse.json({ error: 'TMDB request failed' }, { status: 502 })
 }
