@@ -134,6 +134,24 @@ export const tmdbWatchProviderListSchema = z.object({
 export type TmdbWatchProvider = z.infer<typeof watchProviderSchema>
 export type TmdbWatchProviderList = z.infer<typeof tmdbWatchProviderListSchema>
 
+// Unknown keys are stripped so a new TMDB offer field does not fail the request.
+const tmdbTitleWatchProviderCountrySchema = z.object({
+  ads: z.array(watchProviderSchema).optional(),
+  buy: z.array(watchProviderSchema).optional(),
+  flatrate: z.array(watchProviderSchema).optional(),
+  free: z.array(watchProviderSchema).optional(),
+  link: z.string().nullable().optional(),
+  rent: z.array(watchProviderSchema).optional(),
+})
+
+export const tmdbTitleWatchProvidersSchema = z.object({
+  id: z.number(),
+  results: z.record(z.string(), tmdbTitleWatchProviderCountrySchema),
+})
+
+export type TmdbTitleWatchProviderCountry = z.infer<typeof tmdbTitleWatchProviderCountrySchema>
+export type TmdbTitleWatchProviders = z.infer<typeof tmdbTitleWatchProvidersSchema>
+
 const tmdbCastMemberSchema = z.object({
   character: z.string().nullable().optional(),
   id: z.number(),

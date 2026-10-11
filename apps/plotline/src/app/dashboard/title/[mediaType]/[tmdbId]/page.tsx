@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { notFound, redirect } from 'next/navigation'
 
-import { MediaTitlePage } from '@/features/media-detail/components/MediaTitlePage'
+import { MediaTitlePage } from '@/features/media-detail/components/page/MediaTitlePage'
 import { getMediaTitlePage } from '@/features/media-detail/services/get-media-title'
 import { MediaTitleNotFoundError } from '@/features/media-detail/services/media-title-errors'
 import { parseMediaTitleParams } from '@/features/media-detail/services/parse-media-title-params'

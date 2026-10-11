@@ -6,4 +6,6 @@ export const mediaTitleQueryKeys = {
     ['tmdb-reviews', mediaType, tmdbId] as const,
   tmdbSimilar: (mediaType: MediaType, tmdbId: number) =>
     ['tmdb-similar', mediaType, tmdbId] as const,
+  tmdbWatchOffers: (mediaType: MediaType, tmdbId: number) =>
+    ['tmdb-watch-offers', mediaType, tmdbId] as const,
 }

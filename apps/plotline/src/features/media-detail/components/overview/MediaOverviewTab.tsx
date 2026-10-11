@@ -1,10 +1,10 @@
 import type { MediaTitlePageData } from '../../types'
 
 import { buildMediaMetadataRows } from '../../services/format-media-title'
+import { MediaWhereToWatch } from '../where-to-watch/MediaWhereToWatch'
 import { MediaCastPreview } from './MediaCastPreview'
 import { MediaCommunityRatings } from './MediaCommunityRatings'
 import { MediaMetadataGrid } from './MediaMetadataGrid'
-import { MediaWhereToWatch } from './MediaWhereToWatch'
 
 type MediaOverviewTabProps = {
   data: MediaTitlePageData
@@ -30,8 +30,12 @@ export function MediaOverviewTab({ data, onShowCast }: MediaOverviewTabProps) {
       </div>
 
       <div className="flex flex-col gap-6">
-        <MediaWhereToWatch region={data.region} />
         <MediaCommunityRatings voteAverage={data.voteAverage} voteCount={data.voteCount} />
+        <MediaWhereToWatch
+          mediaType={data.media.mediaType}
+          region={data.region}
+          tmdbId={data.media.tmdbId}
+        />
       </div>
     </div>
   )

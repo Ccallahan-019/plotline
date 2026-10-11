@@ -4,10 +4,10 @@ import type { MediaType } from '@plotline/shared/constants'
 
 import { useSyncTitleBreadcrumb } from '@/features/navigation/breadcrumbs/hooks/use-sync-title-breadcrumb'
 
-import type { MediaTitlePageData } from '../types'
+import type { MediaTitlePageData } from '../../types'
 
-import { useMediaTitlePage } from '../hooks/use-media-title-page'
-import { MediaTitleHero } from './hero/MediaTitleHero'
+import { useMediaTitlePage } from '../../hooks/use-media-title-page'
+import { MediaTitleHero } from '../hero/MediaTitleHero'
 import { MediaTitleTabs } from './MediaTitleTabs'
 
 type MediaTitlePageProps = {

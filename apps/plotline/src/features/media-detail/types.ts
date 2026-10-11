@@ -67,6 +67,27 @@ export type MediaTitleWatchEvent = {
   watchedAt: string
 }
 
+export type TitleWatchOffer = {
+  logoPath: null | string
+  name: string
+  providerId: number
+}
+
+export type TitleWatchOfferGroup = {
+  label: TitleWatchOfferLabel
+  offers: TitleWatchOffer[]
+}
+
+export type TitleWatchOfferLabel = 'Ads' | 'Buy' | 'Free' | 'Rent' | 'Stream'
+
+/** Country-code map of watch-page links and offer groups. A missing country is an empty region. */
+export type TitleWatchOffers = Record<string, TitleWatchRegionOffers>
+
+export type TitleWatchRegionOffers = {
+  groups: TitleWatchOfferGroup[]
+  link: null | string
+}
+
 export type TmdbCommunityReview = {
   avatarUrl: null | string
   body: string
