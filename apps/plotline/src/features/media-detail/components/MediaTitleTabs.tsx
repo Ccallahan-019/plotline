@@ -12,6 +12,7 @@ import { MediaActivityTab } from './activity/MediaActivityTab'
 import { MediaCastTab } from './cast/MediaCastTab'
 import { MediaPlaceholderTab } from './MediaPlaceholderTab'
 import { MediaOverviewTab } from './overview/MediaOverviewTab'
+import { MediaReviewsTab } from './reviews/MediaReviewsTab'
 import { MediaSeasonsTab } from './seasons/MediaSeasonsTab'
 
 type MediaTitleTabsProps = {
@@ -80,9 +81,11 @@ export function MediaTitleTabs({ data }: MediaTitleTabsProps) {
         <MediaActivityTab watchEvents={data.watchEvents} />
       </TabsContent>
       <TabsContent className="pt-4" value="reviews">
-        <MediaPlaceholderTab
-          description="Your rating and written reviews for this title will show here."
-          title="Ratings & Reviews"
+        <MediaReviewsTab
+          mediaType={data.media.mediaType}
+          tmdbId={data.media.tmdbId}
+          voteAverage={data.voteAverage}
+          voteCount={data.voteCount}
         />
       </TabsContent>
       <TabsContent className="pt-4" value="similar">

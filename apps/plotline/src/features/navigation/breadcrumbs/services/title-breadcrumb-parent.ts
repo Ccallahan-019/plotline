@@ -28,6 +28,31 @@ export function clearTitleBreadcrumbParent(): void {
 }
 
 /**
+ * Forgets the stored parent only when it is still the given one.
+ *
+ * Lets a list page withdraw its own entry on unmount without wiping a parent that another
+ * list has stored since. Storage failures are ignored for the same reason as the other helpers.
+ *
+ * @param parent - The parent this caller stored earlier
+ */
+export function clearTitleBreadcrumbParentIf(parent: TitleBreadcrumbParent): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY)
+    const stored = raw ? parseTitleBreadcrumbParent(JSON.parse(raw)) : null
+
+    if (stored?.href === parent.href && stored.label === parent.label) {
+      window.sessionStorage.removeItem(STORAGE_KEY)
+    }
+  } catch {
+    // Storage can be blocked or hold invalid JSON. The title page falls back to the default parent.
+  }
+}
+
+/**
  * Reads a stored breadcrumb parent.
  *
  * @param value - Unknown JSON from session storage

@@ -1,18 +1,14 @@
-"use client"
+'use client'
 
-import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area"
-import * as React from "react"
+import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
+import * as React from 'react'
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 
-function ScrollArea({
-  children,
-  className,
-  ...props
-}: ScrollAreaPrimitive.Root.Props) {
+function ScrollArea({ children, className, ...props }: ScrollAreaPrimitive.Root.Props) {
   return (
     <ScrollAreaPrimitive.Root
-      className={cn("relative", className)}
+      className={cn('relative', className)}
       data-slot="scroll-area"
       {...props}
     >
@@ -30,14 +26,14 @@ function ScrollArea({
 
 function ScrollBar({
   className,
-  orientation = "vertical",
+  orientation = 'vertical',
   ...props
 }: ScrollAreaPrimitive.Scrollbar.Props) {
   return (
     <ScrollAreaPrimitive.Scrollbar
       className={cn(
-        "flex touch-none p-px transition-colors select-none data-horizontal:h-2.5 data-horizontal:flex-col data-horizontal:border-t data-horizontal:border-t-transparent data-vertical:h-full data-vertical:w-2.5 data-vertical:border-l data-vertical:border-l-transparent",
-        className
+        'flex touch-none p-px transition-colors select-none data-horizontal:h-2.5 data-horizontal:flex-col data-horizontal:border-t data-horizontal:border-t-transparent data-vertical:h-full data-vertical:w-2.5 data-vertical:border-l data-vertical:border-l-transparent',
+        className,
       )}
       data-orientation={orientation}
       data-slot="scroll-area-scrollbar"

@@ -46,7 +46,15 @@ type FindArgs = {
   collection: string
 }
 
-function createReq(body: unknown, options?: { existingLibrary?: boolean; existingMembership?: boolean; ownerId?: number; watchlist?: boolean }) {
+function createReq(
+  body: unknown,
+  options?: {
+    existingLibrary?: boolean
+    existingMembership?: boolean
+    ownerId?: number
+    watchlist?: boolean
+  },
+) {
   const calls: string[] = []
   const find = vi.fn(async ({ collection }: FindArgs) => {
     calls.push(`find:${collection}`)
@@ -80,16 +88,18 @@ function createReq(body: unknown, options?: { existingLibrary?: boolean; existin
 
     return movie
   })
-  const create = vi.fn(async ({ collection, data }: { collection: string; data: Record<string, unknown> }) => {
-    calls.push(`create:${collection}`)
-    expect(insideTransaction).toBe(true)
-    expect(insideCreateLock).toBe(true)
+  const create = vi.fn(
+    async ({ collection, data }: { collection: string; data: Record<string, unknown> }) => {
+      calls.push(`create:${collection}`)
+      expect(insideTransaction).toBe(true)
+      expect(insideCreateLock).toBe(true)
 
-    return {
-      id: collection === 'library-items' ? 11 : 9,
-      ...data,
-    }
-  })
+      return {
+        id: collection === 'library-items' ? 11 : 9,
+        ...data,
+      }
+    },
+  )
 
   const req = {
     json: async () => body,

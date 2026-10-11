@@ -159,4 +159,3 @@ function parseLibraryItemPatch(body: unknown): LibraryItemPatchData | Response {
 
   return data
 }
-

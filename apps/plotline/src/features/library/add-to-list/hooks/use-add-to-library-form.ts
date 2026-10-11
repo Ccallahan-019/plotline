@@ -88,7 +88,9 @@ export function useAddToLibraryForm({
               success: (data) => {
                 const responseMedia = data[0]?.libraryItem.media
                 const title =
-                  typeof responseMedia === 'object' ? responseMedia.title : `Media #${responseMedia}`
+                  typeof responseMedia === 'object'
+                    ? responseMedia.title
+                    : `Media #${responseMedia}`
                 const watchlistCount = selectableWatchlistIds.length
                 const watchlistName = data[0]?.watchlist.name
 

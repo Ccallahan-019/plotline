@@ -15,7 +15,9 @@ export function LibraryTitleSearchProvider({ children }: PropsWithChildren) {
   const value = useMemo(() => ({ open, setOpen }), [open])
 
   return (
-    <LibraryTitleSearchContext.Provider value={value}>{children}</LibraryTitleSearchContext.Provider>
+    <LibraryTitleSearchContext.Provider value={value}>
+      {children}
+    </LibraryTitleSearchContext.Provider>
   )
 }
 

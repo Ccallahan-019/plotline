@@ -5,6 +5,8 @@ import {
   tmdbMovieDetailsSchema,
   type TmdbMovieTitleDetails,
   tmdbMovieTitleDetailsSchema,
+  type TmdbReviewsResponse,
+  tmdbReviewsResponseSchema,
   type TmdbSearchResponse,
   tmdbSearchResponseSchema,
   type TmdbTvDetails,
@@ -64,6 +66,12 @@ export class TmdbClient {
     return this.fetchValidated('/genre/movie/list', tmdbGenreListSchema)
   }
 
+  async getMovieReviews(id: number, page = 1): Promise<TmdbReviewsResponse> {
+    return this.fetchValidated(`/movie/${id}/reviews`, tmdbReviewsResponseSchema, {
+      page: String(page),
+    })
+  }
+
   async getMovieTitleDetails(id: number): Promise<TmdbMovieTitleDetails> {
     return this.fetchValidated(`/movie/${id}`, tmdbMovieTitleDetailsSchema, {
       append_to_response: 'credits,external_ids,release_dates',
@@ -84,6 +92,12 @@ export class TmdbClient {
 
   async getTvGenreList(): Promise<TmdbGenreList> {
     return this.fetchValidated('/genre/tv/list', tmdbGenreListSchema)
+  }
+
+  async getTvReviews(id: number, page = 1): Promise<TmdbReviewsResponse> {
+    return this.fetchValidated(`/tv/${id}/reviews`, tmdbReviewsResponseSchema, {
+      page: String(page),
+    })
   }
 
   async getTvSeasonDetails(tvId: number, seasonNumber: number): Promise<TmdbTvSeasonDetails> {

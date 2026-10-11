@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  applyBreadcrumbOverride,
-  resolveTitleBreadcrumbLabel,
-} from '../apply-breadcrumb-override'
+import { applyBreadcrumbOverride, resolveTitleBreadcrumbLabel } from '../apply-breadcrumb-override'
 import { getBreadcrumbs } from '../get-breadcrumbs'
 import { parseTitleBreadcrumbParent } from '../title-breadcrumb-parent'
 

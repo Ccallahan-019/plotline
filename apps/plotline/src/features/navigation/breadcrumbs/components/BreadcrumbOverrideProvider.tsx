@@ -16,7 +16,9 @@ export function BreadcrumbOverrideProvider({ children }: PropsWithChildren) {
   const value = useMemo(() => ({ override, setOverride }), [override])
 
   return (
-    <BreadcrumbOverrideContext.Provider value={value}>{children}</BreadcrumbOverrideContext.Provider>
+    <BreadcrumbOverrideContext.Provider value={value}>
+      {children}
+    </BreadcrumbOverrideContext.Provider>
   )
 }
 

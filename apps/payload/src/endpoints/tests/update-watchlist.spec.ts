@@ -1,6 +1,9 @@
 import type { PayloadRequest } from 'payload'
 
-import { WATCHLIST_DESCRIPTION_MAX_LENGTH, WATCHLIST_NAME_MAX_LENGTH } from '@plotline/shared/constants'
+import {
+  WATCHLIST_DESCRIPTION_MAX_LENGTH,
+  WATCHLIST_NAME_MAX_LENGTH,
+} from '@plotline/shared/constants'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Watchlists } from '../../collections/watchlists'

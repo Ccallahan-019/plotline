@@ -4,13 +4,13 @@ Shared utilities, constants, and TMDB client stubs used by both Plotline apps.
 
 ## Modules
 
-| Import                             | Purpose                                                      |
-| ---------------------------------- | ------------------------------------------------------------ |
-| `@plotline/shared/tmdb`            | TMDB client + Zod schemas                                    |
-| `@plotline/shared/constants`       | Media, streaming, and watchlist-challenge enums              |
-| `@plotline/shared/watchlist-stats` | Pure watchlist/challenge stats computation                   |
-| `@plotline/shared/utils`           | Date, number, and numeric helpers                            |
-| `@plotline/shared/env`             | Shared `@t3-oss/env-core` validation for server env vars     |
+| Import                             | Purpose                                                  |
+| ---------------------------------- | -------------------------------------------------------- |
+| `@plotline/shared/tmdb`            | TMDB client + Zod schemas                                |
+| `@plotline/shared/constants`       | Media, streaming, and watchlist-challenge enums          |
+| `@plotline/shared/watchlist-stats` | Pure watchlist/challenge stats computation               |
+| `@plotline/shared/utils`           | Date, number, and numeric helpers                        |
+| `@plotline/shared/env`             | Shared `@t3-oss/env-core` validation for server env vars |
 
 ## TMDB caching
 
