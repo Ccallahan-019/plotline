@@ -10,6 +10,7 @@ import { buildLibraryItemLookupByTmdb } from '@/features/search/services/build-l
 import { OpenStateProvider } from '@/providers/OpenStateProvider'
 
 import { useTmdbSimilar } from '../../hooks/use-tmdb-similar'
+import { deriveSimilarGridState } from '../../services/derive-similar-grid-state'
 import { MediaSimilarGridItem } from './MediaSimilarGridItem'
 import { MediaSimilarTitlesEmpty } from './MediaSimilarTitlesEmpty'
 import { MediaSimilarTitlesError } from './MediaSimilarTitlesError'
@@ -28,13 +29,7 @@ export function MediaSimilarTab({ enabled, mediaType, tmdbId }: MediaSimilarTabP
     [libraryQuery.data],
   )
   const results = query.data?.results ?? []
-  const state = query.isPending
-    ? 'loading'
-    : query.isError
-      ? 'error'
-      : results.length === 0
-        ? 'empty'
-        : 'success'
+  const state = deriveSimilarGridState(query, libraryQuery, results.length)
 
   return (
     <MediaGrid
@@ -49,10 +44,11 @@ export function MediaSimilarTab({ enabled, mediaType, tmdbId }: MediaSimilarTabP
         emptyState: <MediaSimilarTitlesEmpty mediaType={mediaType} />,
         errorState: (
           <MediaSimilarTitlesError
-            isFetching={query.isFetching}
+            isFetching={query.isFetching || libraryQuery.isFetching}
             mediaType={mediaType}
             onRetry={() => {
-              void query.refetch()
+              if (query.isError) void query.refetch()
+              if (libraryQuery.isError) void libraryQuery.refetch()
             }}
           />
         ),

@@ -1,3 +1,5 @@
+import type { MediaType } from '../constants/media'
+
 import {
   type TmdbGenreList,
   tmdbGenreListSchema,
@@ -66,21 +68,9 @@ export class TmdbClient {
     return this.fetchValidated('/genre/movie/list', tmdbGenreListSchema)
   }
 
-  async getMovieRecommendations(id: number): Promise<TmdbSearchResponse> {
-    return this.fetchValidated(`/movie/${id}/recommendations`, tmdbSearchResponseSchema, {
-      page: '1',
-    })
-  }
-
   async getMovieReviews(id: number, page = 1): Promise<TmdbReviewsResponse> {
     return this.fetchValidated(`/movie/${id}/reviews`, tmdbReviewsResponseSchema, {
       page: String(page),
-    })
-  }
-
-  async getMovieSimilar(id: number): Promise<TmdbSearchResponse> {
-    return this.fetchValidated(`/movie/${id}/similar`, tmdbSearchResponseSchema, {
-      page: '1',
     })
   }
 
@@ -96,6 +86,32 @@ export class TmdbClient {
     })
   }
 
+  /**
+   * Loads page 1 of TMDB's recommendations for a title.
+   *
+   * @param mediaType - `movie` or `tv`
+   * @param id - TMDB title id
+   * @returns Results without `media_type`; callers stamp it from `mediaType`
+   */
+  async getRecommendations(mediaType: MediaType, id: number): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/${mediaType}/${id}/recommendations`, tmdbSearchResponseSchema, {
+      page: '1',
+    })
+  }
+
+  /**
+   * Loads page 1 of TMDB's similar titles for a title.
+   *
+   * @param mediaType - `movie` or `tv`
+   * @param id - TMDB title id
+   * @returns Results without `media_type`; callers stamp it from `mediaType`
+   */
+  async getSimilar(mediaType: MediaType, id: number): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/${mediaType}/${id}/similar`, tmdbSearchResponseSchema, {
+      page: '1',
+    })
+  }
+
   async getTvDetails(id: number): Promise<TmdbTvDetails> {
     return this.fetchValidated(`/tv/${id}`, tmdbTvDetailsSchema, {
       append_to_response: 'external_ids',
@@ -106,12 +122,6 @@ export class TmdbClient {
     return this.fetchValidated('/genre/tv/list', tmdbGenreListSchema)
   }
 
-  async getTvRecommendations(id: number): Promise<TmdbSearchResponse> {
-    return this.fetchValidated(`/tv/${id}/recommendations`, tmdbSearchResponseSchema, {
-      page: '1',
-    })
-  }
-
   async getTvReviews(id: number, page = 1): Promise<TmdbReviewsResponse> {
     return this.fetchValidated(`/tv/${id}/reviews`, tmdbReviewsResponseSchema, {
       page: String(page),
@@ -120,12 +130,6 @@ export class TmdbClient {
 
   async getTvSeasonDetails(tvId: number, seasonNumber: number): Promise<TmdbTvSeasonDetails> {
     return this.fetchValidated(`/tv/${tvId}/season/${seasonNumber}`, tmdbTvSeasonDetailsSchema)
-  }
-
-  async getTvSimilar(id: number): Promise<TmdbSearchResponse> {
-    return this.fetchValidated(`/tv/${id}/similar`, tmdbSearchResponseSchema, {
-      page: '1',
-    })
   }
 
   async getTvTitleDetails(id: number): Promise<TmdbTvTitleDetails> {

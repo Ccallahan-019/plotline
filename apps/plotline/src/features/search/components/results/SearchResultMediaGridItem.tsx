@@ -1,14 +1,11 @@
 'use client'
 
 import { TmdbSearchResultItem } from '@plotline/shared/tmdb'
-import { Fragment } from 'react/jsx-runtime'
 
-import { AnimatedStatusBadge } from '@/components/utils/AnimatedStatusBadge'
-import { AddToLibraryPopover } from '@/features/library/add-to-list/components/AddToLibraryPopover'
-import { MediaGridItem } from '@/features/media-grid/grid/components/MediaGridItem'
 import { toMediaDisplayFromTmdbResult } from '@/features/media-grid/grid/services/media-display-helpers'
 
 import { useSearchLibraryItems } from '../../providers/SearchLibraryItemsProvider'
+import { TrackableMediaGridItem } from './TrackableMediaGridItem'
 
 type SearchResultMediaGridItemProps = {
   item: TmdbSearchResultItem
@@ -23,26 +20,7 @@ export function SearchResultMediaGridItem({ item }: SearchResultMediaGridItemPro
     return null
   }
 
-  const existingLibraryItem = getLibraryItemForMedia(media)
-
   return (
-    <MediaGridItem
-      media={media}
-      posterOverlay={(isHovered) => (
-        <Fragment>
-          <div className="absolute top-1 left-1">
-            <AnimatedStatusBadge
-              animationKey={existingLibraryItem?.id?.toString() ?? ''}
-              className="shadow-sm h-7 rounded-md"
-              status={existingLibraryItem?.status ?? 'untracked'}
-              triggerAnimation={isHovered}
-            />
-          </div>
-          <div className="absolute bottom-1 right-1">
-            <AddToLibraryPopover existingLibraryItem={existingLibraryItem} media={media} />
-          </div>
-        </Fragment>
-      )}
-    />
+    <TrackableMediaGridItem existingLibraryItem={getLibraryItemForMedia(media)} media={media} />
   )
 }

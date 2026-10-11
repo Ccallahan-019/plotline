@@ -2,6 +2,24 @@ import type { MediaType } from '@plotline/shared/constants'
 import type { TmdbSearchResponse } from '@plotline/shared/tmdb'
 
 /**
+ * Rewrites the paging totals to describe only the results this route returns.
+ *
+ * The route serves page 1 and has no way to request another, so TMDB's own totals would
+ * advertise pages that cannot be fetched.
+ *
+ * @param page - Recommendations or similar page chosen for the tab
+ * @returns The same page reported as the only page, with `total_results` equal to its length
+ */
+export function asSinglePage(page: TmdbSearchResponse): TmdbSearchResponse {
+  return {
+    ...page,
+    page: 1,
+    total_pages: page.results.length > 0 ? 1 : 0,
+    total_results: page.results.length,
+  }
+}
+
+/**
  * Chooses the similar-tab page.
  *
  * Recommendations are used when they include any title. Similar titles are loaded

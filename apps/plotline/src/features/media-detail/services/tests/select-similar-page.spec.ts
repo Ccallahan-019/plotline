@@ -2,7 +2,7 @@ import type { TmdbSearchResponse } from '@plotline/shared/tmdb'
 
 import { describe, expect, it, vi } from 'vitest'
 
-import { selectSimilarPage, withSimilarMediaType } from '../select-similar-page'
+import { asSinglePage, selectSimilarPage, withSimilarMediaType } from '../select-similar-page'
 
 function page(results: TmdbSearchResponse['results']): TmdbSearchResponse {
   return {
@@ -44,10 +44,7 @@ describe('withSimilarMediaType', () => {
       { id: 1396, name: 'Breaking Bad' },
     ])
 
-    const stamped = withSimilarMediaType(
-      { ...source, total_pages: 4, total_results: 40 },
-      'movie',
-    )
+    const stamped = withSimilarMediaType({ ...source, total_pages: 4, total_results: 40 }, 'movie')
 
     expect(stamped).toEqual({
       page: 1,
@@ -64,5 +61,26 @@ describe('withSimilarMediaType', () => {
 
   it('keeps an empty page empty', () => {
     expect(withSimilarMediaType(page([]), 'tv')).toEqual(page([]))
+  })
+})
+
+describe('asSinglePage', () => {
+  it('reports only the returned results as the one page', () => {
+    const source = {
+      ...page([{ id: 680, title: 'Pulp Fiction' }]),
+      total_pages: 4,
+      total_results: 80,
+    }
+
+    expect(asSinglePage(source)).toEqual(page([{ id: 680, title: 'Pulp Fiction' }]))
+  })
+
+  it('reports zero pages for an empty result set', () => {
+    expect(asSinglePage({ ...page([]), total_pages: 3, total_results: 60 })).toEqual({
+      page: 1,
+      results: [],
+      total_pages: 0,
+      total_results: 0,
+    })
   })
 })

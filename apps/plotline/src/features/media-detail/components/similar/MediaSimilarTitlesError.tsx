@@ -1,4 +1,5 @@
-import { MediaType } from '@plotline/shared/constants'
+import type { MediaType } from '@plotline/shared/constants'
+
 import { MonitorOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -17,17 +18,23 @@ type MediaSimilarTitlesErrorProps = {
   onRetry: () => void
 }
 
+const ERROR_COPY: Record<MediaType, { description: string; title: string }> = {
+  movie: {
+    description: 'Similar films could not be loaded.',
+    title: 'Error Loading Similar Films',
+  },
+  tv: {
+    description: 'Similar TV shows could not be loaded.',
+    title: 'Error Loading Similar TV Shows',
+  },
+}
+
 export function MediaSimilarTitlesError({
   isFetching,
   mediaType,
   onRetry,
 }: MediaSimilarTitlesErrorProps) {
-  const title =
-    mediaType === 'movie' ? 'Error Loading Similar Films' : 'Error Loading Similar TV Shows'
-  const description =
-    mediaType === 'movie'
-      ? 'Similar films could not be loaded.'
-      : 'Similar TV shows could not be loaded.'
+  const { description, title } = ERROR_COPY[mediaType]
 
   const buttonText = isFetching ? 'Loading…' : 'Try Again'
 
