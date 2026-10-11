@@ -1,9 +1,9 @@
 import { createTmdbClient, TmdbError } from '@plotline/shared/tmdb'
-import { toNonNegativeInteger } from '@plotline/shared/utils'
 import { NextResponse } from 'next/server'
 
 import { mapTmdbCommunityReviews } from '@/features/media-detail/services/map-tmdb-reviews'
 import { parseMediaTitleParams } from '@/features/media-detail/services/parse-media-title-params'
+import { parseReviewPage } from '@/features/media-detail/services/parse-review-page'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 
@@ -26,7 +26,7 @@ export async function GET(request: Request, context: RouteContext) {
 
   const params = await context.params
   const parsed = parseMediaTitleParams(params.mediaType, params.tmdbId)
-  const page = parseReviewPage(request)
+  const page = parseReviewPage(request.url)
 
   if (!parsed) {
     return NextResponse.json({ error: 'Invalid title' }, { status: 400 })
@@ -45,11 +45,8 @@ export async function GET(request: Request, context: RouteContext) {
 
     return NextResponse.json(mapTmdbCommunityReviews(reviews))
   } catch (error) {
-    if (error instanceof TmdbError && error.status >= 400 && error.status < 500) {
-      return NextResponse.json(
-        { error: error.status === 404 ? 'Reviews not found' : 'TMDB request failed' },
-        { status: error.status },
-      )
+    if (error instanceof TmdbError) {
+      return tmdbErrorResponse(error)
     }
 
     return handlePayloadError(error)
@@ -57,23 +54,23 @@ export async function GET(request: Request, context: RouteContext) {
 }
 
 /**
- * Reads the 1-based reviews page from the query string.
+ * Maps a failed TMDB call to this route's response.
  *
- * @param request - Incoming reviews request
- * @returns The page, `1` when omitted, or `null` when the value is not a positive integer
+ * Only a missing title and an out-of-range page are the caller's doing. Every other
+ * upstream failure (bad token, quota, TMDB outage) is reported as 502, so it cannot be
+ * mistaken for the user's own session status.
+ *
+ * @param error - Error thrown by the TMDB client
+ * @returns 404 for a missing title, 400 for an invalid page, otherwise 502
  */
-function parseReviewPage(request: Request): null | number {
-  const pageParam = new URL(request.url).searchParams.get('page')
-
-  if (pageParam == null || pageParam.trim() === '') {
-    return 1
+function tmdbErrorResponse(error: TmdbError): NextResponse {
+  if (error.status === 404) {
+    return NextResponse.json({ error: 'Reviews not found' }, { status: 404 })
   }
 
-  const page = toNonNegativeInteger(pageParam)
-
-  if (page == null || page < 1) {
-    return null
+  if (error.status === 422) {
+    return NextResponse.json({ error: 'Invalid page' }, { status: 400 })
   }
 
-  return page
+  return NextResponse.json({ error: 'TMDB request failed' }, { status: 502 })
 }

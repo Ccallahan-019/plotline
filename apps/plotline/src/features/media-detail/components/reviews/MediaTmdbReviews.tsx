@@ -10,37 +10,32 @@ import { ShowIf } from '@/components/utils/ShowIf'
 import type { TmdbCommunityReview } from '../../types'
 
 import { useTmdbReviews } from '../../hooks/use-tmdb-reviews'
+import { dedupeTmdbReviews } from '../../services/dedupe-tmdb-reviews'
 import { MediaTmdbReview } from './MediaTmdbReview'
 
 type CommunityReviewListProps = {
-  enabled: boolean
   query: ReturnType<typeof useTmdbReviews>
   reviews: TmdbCommunityReview[]
 }
 
 type MediaTmdbReviewsProps = {
-  enabled: boolean
   mediaType: MediaType
   tmdbId: number
 }
 
-export function MediaTmdbReviews({ enabled, mediaType, tmdbId }: MediaTmdbReviewsProps) {
-  const query = useTmdbReviews(mediaType, tmdbId, { enabled })
-  const reviews = query.data?.pages.flatMap((page) => page.reviews) ?? []
+export function MediaTmdbReviews({ mediaType, tmdbId }: MediaTmdbReviewsProps) {
+  const query = useTmdbReviews(mediaType, tmdbId)
+  const reviews = dedupeTmdbReviews(query.data?.pages.flatMap((page) => page.reviews) ?? [])
 
   return (
     <section className="flex flex-col gap-4">
       <h2 className="font-heading text-base font-medium">Community Reviews</h2>
-      <CommunityReviewList enabled={enabled} query={query} reviews={reviews} />
+      <CommunityReviewList query={query} reviews={reviews} />
     </section>
   )
 }
 
-function CommunityReviewList({ enabled, query, reviews }: CommunityReviewListProps) {
-  if (!enabled) {
-    return null
-  }
-
+function CommunityReviewList({ query, reviews }: CommunityReviewListProps) {
   if (query.isPending) {
     return (
       <div className="flex flex-col gap-3">
@@ -58,6 +53,16 @@ function CommunityReviewList({ enabled, query, reviews }: CommunityReviewListPro
           <EmptyTitle>Error Loading Community Reviews</EmptyTitle>
           <EmptyDescription>Community reviews could not be loaded.</EmptyDescription>
         </EmptyHeader>
+        <Button
+          disabled={query.isFetching}
+          onClick={() => {
+            void query.refetch()
+          }}
+          type="button"
+          variant="outline"
+        >
+          {query.isFetching ? 'Loading…' : 'Try Again'}
+        </Button>
       </Empty>
     )
   }

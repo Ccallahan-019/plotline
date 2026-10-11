@@ -2,6 +2,7 @@ import type { TmdbReview, TmdbReviewsResponse } from '@plotline/shared/tmdb'
 
 import type { TmdbCommunityReview, TmdbCommunityReviewPage } from '../types'
 
+import { formatPersonInitials } from './format-person-initials'
 import { mediaImageUrl } from './media-image-url'
 
 const AVATAR_SIZE = 'w185'
@@ -19,31 +20,6 @@ export function mapTmdbCommunityReviews(response: TmdbReviewsResponse): TmdbComm
     totalPages: response.total_pages,
     totalResults: response.total_results,
   }
-}
-
-/**
- * Up to two letters for an avatar fallback: first and last name, or the first two of a single name.
- *
- * @param name - Reviewer display name
- * @returns Uppercase initials, or an empty string when the name is blank
- */
-function formatPersonInitials(name: string): string {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter((part) => part.length > 0)
-  const first = parts[0]
-  const last = parts.at(-1)
-
-  if (!first || !last) {
-    return ''
-  }
-
-  if (parts.length === 1) {
-    return first.slice(0, 2).toLocaleUpperCase()
-  }
-
-  return `${first.charAt(0)}${last.charAt(0)}`.toLocaleUpperCase()
 }
 
 /**

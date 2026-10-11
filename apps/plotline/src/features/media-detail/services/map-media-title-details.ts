@@ -8,6 +8,8 @@ import type {
   MediaTitleSeason,
 } from '../types'
 
+import { formatPersonInitials } from './format-person-initials'
+
 const MAX_DISPLAYED_CREDITS = 50
 
 const FILM_KEY_CREDITS: readonly KeyCreditGroupDefinition[] = [
@@ -181,31 +183,6 @@ function firstCertification(
   const certification = (theatrical ?? any)?.certification?.trim()
 
   return certification || null
-}
-
-/**
- * Up to two letters for an avatar fallback: first and last name, or the first two of a single name.
- *
- * @param name - Person display name
- * @returns Uppercase initials, or an empty string when the name is blank
- */
-function formatPersonInitials(name: string): string {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter((part) => part.length > 0)
-  const first = parts[0]
-  const last = parts.at(-1)
-
-  if (!first || !last) {
-    return ''
-  }
-
-  if (parts.length === 1) {
-    return first.slice(0, 2).toLocaleUpperCase()
-  }
-
-  return `${first.charAt(0)}${last.charAt(0)}`.toLocaleUpperCase()
 }
 
 /**

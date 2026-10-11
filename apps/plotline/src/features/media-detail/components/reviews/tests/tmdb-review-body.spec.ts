@@ -34,4 +34,33 @@ describe('TmdbReviewBody', () => {
     expect(html).not.toContain('<img')
     expect(html).not.toContain('onerror')
   })
+
+  it('keeps the label of a markdown link with a script URL and drops the URL', () => {
+    const html = renderBody('[click me](javascript:alert(1))')
+
+    expect(html).toContain('click me')
+    expect(html).not.toContain('<a')
+    expect(html).not.toContain('javascript')
+  })
+
+  it('renders lists, quotes and inline code, and keeps single newlines as breaks', () => {
+    const html = renderBody(
+      ['- one', '- two', '', '> quoted', '', 'a `code` span', 'next line'].join('\n'),
+    )
+
+    expect(html).toContain('<ul')
+    expect(html).toContain('<li')
+    expect(html).toContain('<blockquote')
+    expect(html).toContain('<code')
+    expect(html).toContain('<br/>')
+  })
+
+  it('renders an image without alt text as nothing', () => {
+    const html = renderBody('before <img src="https://evil.example/p.png"> after')
+
+    expect(html).toContain('before')
+    expect(html).toContain('after')
+    expect(html).not.toContain('<img')
+    expect(html).not.toContain('evil.example')
+  })
 })

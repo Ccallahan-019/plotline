@@ -82,7 +82,6 @@ export function MediaTitleTabs({ data }: MediaTitleTabsProps) {
       </TabsContent>
       <TabsContent className="pt-4" value="reviews">
         <MediaReviewsTab
-          enabled={tab === 'reviews'}
           mediaType={data.media.mediaType}
           tmdbId={data.media.tmdbId}
           voteAverage={data.voteAverage}

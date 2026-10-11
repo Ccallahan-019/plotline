@@ -1,12 +1,17 @@
 import type { MediaType } from '@plotline/shared/constants'
 
+import dynamic from 'next/dynamic'
+
 import { Empty, EmptyDescription, EmptyHeader } from '@/components/ui/empty'
 
 import { MediaCommunityRatings } from '../overview/MediaCommunityRatings'
-import { MediaTmdbReviews } from './MediaTmdbReviews'
+
+// Loaded on demand so the markdown and HTML parsing stack stays out of the initial title-page bundle.
+const MediaTmdbReviews = dynamic(() =>
+  import('./MediaTmdbReviews').then((module) => module.MediaTmdbReviews),
+)
 
 type MediaReviewsTabProps = {
-  enabled: boolean
   mediaType: MediaType
   tmdbId: number
   voteAverage: null | number
@@ -19,7 +24,6 @@ type ReviewPlaceholderProps = {
 }
 
 export function MediaReviewsTab({
-  enabled,
   mediaType,
   tmdbId,
   voteAverage,
@@ -30,7 +34,7 @@ export function MediaReviewsTab({
       <div className="max-w-72">
         <MediaCommunityRatings voteAverage={voteAverage} voteCount={voteCount} />
       </div>
-      <MediaTmdbReviews enabled={enabled} mediaType={mediaType} tmdbId={tmdbId} />
+      <MediaTmdbReviews mediaType={mediaType} tmdbId={tmdbId} />
       <ReviewPlaceholder
         description="Public reviews from Plotline will show here."
         title="Public Reviews"
