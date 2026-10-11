@@ -6,14 +6,14 @@ import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ShowIf } from '@/components/utils/ShowIf'
 
-import type { MediaTitlePageData } from '../types'
+import type { MediaTitlePageData } from '../../types'
 
-import { MediaActivityTab } from './activity/MediaActivityTab'
-import { MediaCastTab } from './cast/MediaCastTab'
-import { MediaOverviewTab } from './overview/MediaOverviewTab'
-import { MediaReviewsTab } from './reviews/MediaReviewsTab'
-import { MediaSeasonsTab } from './seasons/MediaSeasonsTab'
-import { MediaSimilarTab } from './similar/MediaSimilarTab'
+import { MediaActivityTab } from '../activity/MediaActivityTab'
+import { MediaCastTab } from '../cast/MediaCastTab'
+import { MediaOverviewTab } from '../overview/MediaOverviewTab'
+import { MediaReviewsTab } from '../reviews/MediaReviewsTab'
+import { MediaSeasonsTab } from '../seasons/MediaSeasonsTab'
+import { MediaSimilarTab } from '../similar/MediaSimilarTab'
 
 type MediaTitleTabsProps = {
   data: MediaTitlePageData
