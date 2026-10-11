@@ -4,13 +4,13 @@ import { UserButton, useUser } from '@clerk/nextjs'
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { ShowIf } from '@/components/utils/ShowIf'
+import { useIsMounted } from '@/hooks/use-is-mounted'
 
 export function UserProfileButton() {
+  const isMounted = useIsMounted()
   const { isLoaded, user } = useUser()
 
-  if (!isLoaded) {
-    return <UserProfileSkeleton />
-  }
+  if (!isMounted || !isLoaded) return <UserProfileSkeleton />
 
   return (
     <div className="flex items-center gap-2">
