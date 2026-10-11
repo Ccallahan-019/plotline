@@ -11,6 +11,8 @@ import {
   tmdbReviewsResponseSchema,
   type TmdbSearchResponse,
   tmdbSearchResponseSchema,
+  type TmdbTitleWatchProviders,
+  tmdbTitleWatchProvidersSchema,
   type TmdbTvDetails,
   tmdbTvDetailsSchema,
   type TmdbTvSeasonDetails,
@@ -80,6 +82,10 @@ export class TmdbClient {
     })
   }
 
+  async getMovieTitleWatchProviders(id: number): Promise<TmdbTitleWatchProviders> {
+    return this.fetchValidated(`/movie/${id}/watch/providers`, tmdbTitleWatchProvidersSchema)
+  }
+
   async getMovieWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
     return this.fetchValidated('/watch/providers/movie', tmdbWatchProviderListSchema, {
       watch_region: watchRegion,
@@ -136,6 +142,10 @@ export class TmdbClient {
     return this.fetchValidated(`/tv/${id}`, tmdbTvTitleDetailsSchema, {
       append_to_response: 'aggregate_credits,content_ratings,external_ids',
     })
+  }
+
+  async getTvTitleWatchProviders(id: number): Promise<TmdbTitleWatchProviders> {
+    return this.fetchValidated(`/tv/${id}/watch/providers`, tmdbTitleWatchProvidersSchema)
   }
 
   async getTvWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
