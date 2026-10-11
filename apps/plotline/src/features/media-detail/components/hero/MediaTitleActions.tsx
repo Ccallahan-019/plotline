@@ -1,6 +1,5 @@
 'use client'
 
-import { LibraryItem, Media } from '@plotline/payload-types'
 import { Check, ChevronDown, Star } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -25,19 +24,14 @@ type MediaTitleActionsProps = {
   data: MediaTitlePageData
 }
 
-type MediaTitleLogWatchDialogProps = {
-  libraryItem: LibraryItem | null
-  media: Media
-  onOpenChange: (open: boolean) => void
-  open: boolean
-}
-
 export function MediaTitleActions({ data }: MediaTitleActionsProps) {
   const {
+    handleLogWatchSuccess,
     handleMarkWatched,
     handleStatusChange,
     isPending,
     libraryItem,
+    logWatchLibraryItem,
     logWatchOpen,
     setLogWatchOpen,
   } = useMediaTitleActions(data)
@@ -98,32 +92,13 @@ export function MediaTitleActions({ data }: MediaTitleActionsProps) {
         </div>
       </div>
 
-      <MediaTitleLogWatchDialog
-        libraryItem={libraryItem}
+      <LibraryLogWatchDialog
+        libraryItem={logWatchLibraryItem}
         media={data.media}
+        onLogged={handleLogWatchSuccess}
         onOpenChange={setLogWatchOpen}
         open={logWatchOpen}
       />
     </>
-  )
-}
-
-function MediaTitleLogWatchDialog({
-  libraryItem,
-  media,
-  onOpenChange,
-  open,
-}: MediaTitleLogWatchDialogProps) {
-  if (!libraryItem) {
-    return null
-  }
-
-  return (
-    <LibraryLogWatchDialog
-      libraryItem={libraryItem}
-      media={media}
-      onOpenChange={onOpenChange}
-      open={open}
-    />
   )
 }

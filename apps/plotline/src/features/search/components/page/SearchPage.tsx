@@ -1,4 +1,4 @@
-import { RememberTitleBreadcrumbParent } from '@/features/navigation/breadcrumbs/components/RememberTitleBreadcrumbParent'
+import { TitleBreadcrumbParentProvider } from '@/features/navigation/breadcrumbs/components/TitleBreadcrumbParentProvider'
 
 import { SearchFilterBar } from '../filters/SearchFilterBar'
 import { SearchFilterBarSeparator } from '../filters/SearchFilterBarSeparator'
@@ -13,30 +13,31 @@ import { SearchSortSelector } from './SearchSortSelector'
 
 export function SearchPage() {
   return (
-    <div className="flex flex-col gap-5">
-      <RememberTitleBreadcrumbParent href="/dashboard/search" label="Discover" />
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <BrowseModeToggle />
-          <IsFetchingIndicator />
+    <TitleBreadcrumbParentProvider href="/dashboard/search" label="Discover">
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <BrowseModeToggle />
+            <IsFetchingIndicator />
+          </div>
+
+          <MediaTypeToggle />
         </div>
 
-        <MediaTypeToggle />
+        <SearchInputGroup />
+        <SearchFilterBar />
+        <SearchFilterBarSeparator />
+
+        <section className="flex flex-col gap-5 scroll-mt-6" id="search-results">
+          <div className="flex items-end justify-between ">
+            <ResultsTitle />
+            <SearchSortSelector />
+          </div>
+
+          <SearchResultGrid />
+          <SearchPagination />
+        </section>
       </div>
-
-      <SearchInputGroup />
-      <SearchFilterBar />
-      <SearchFilterBarSeparator />
-
-      <section className="flex flex-col gap-5 scroll-mt-6" id="search-results">
-        <div className="flex items-end justify-between ">
-          <ResultsTitle />
-          <SearchSortSelector />
-        </div>
-
-        <SearchResultGrid />
-        <SearchPagination />
-      </section>
-    </div>
+    </TitleBreadcrumbParentProvider>
   )
 }

@@ -8,7 +8,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/co
 import { Spinner } from '@/components/ui/spinner'
 import { ErrorEmpty } from '@/components/utils/ErrorEmpty'
 import { ShowIf } from '@/components/utils/ShowIf'
-import { RememberTitleBreadcrumbParent } from '@/features/navigation/breadcrumbs/components/RememberTitleBreadcrumbParent'
+import { TitleBreadcrumbParentProvider } from '@/features/navigation/breadcrumbs/components/TitleBreadcrumbParentProvider'
 import { WatchlistTitleSearchDialog } from '@/features/search/components/title-search/WatchlistTitleSearchDialog'
 import { getErrorMessage } from '@/utils/get-error-message'
 
@@ -62,9 +62,7 @@ export function WatchlistDetail({
   // include them until the DELETE settles.
   const listedMemberships = useMemo(
     () =>
-      memberships == null
-        ? null
-        : omitPendingWatchlistRemoves(memberships, pendingRemoveKeys),
+      memberships == null ? null : omitPendingWatchlistRemoves(memberships, pendingRemoveKeys),
     [memberships, pendingRemoveKeys],
   )
   const errorMessage =
@@ -74,53 +72,51 @@ export function WatchlistDetail({
     listedMemberships == null ? null : formatWatchlistTitleCount(listedMemberships.length)
 
   return (
-    <div className="flex flex-col gap-4">
-      <RememberTitleBreadcrumbParent
-        href={`/dashboard/watchlists/${slug}`}
-        label={watchlist.name}
-      />
-      <Item className="px-0 rounded-none border-b-border">
-        <ItemContent>
-          <div className="flex items-center gap-2">
-            <ItemTitle className="text-2xl">{watchlist.name}</ItemTitle>
-            <WatchlistVisibilityBadge visibility={watchlist.visibility} />
-          </div>
-          <ShowIf condition={!!description}>
-            <ItemDescription className="max-w-2xl text-muted-foreground">
-              {description}
-            </ItemDescription>
-          </ShowIf>
-          <ShowIf condition={titleCountLabel != null}>
-            <ItemDescription>{titleCountLabel}</ItemDescription>
-          </ShowIf>
-        </ItemContent>
+    <TitleBreadcrumbParentProvider href={`/dashboard/watchlists/${slug}`} label={watchlist.name}>
+      <div className="flex flex-col gap-4">
+        <Item className="px-0 rounded-none border-b-border">
+          <ItemContent>
+            <div className="flex items-center gap-2">
+              <ItemTitle className="text-2xl">{watchlist.name}</ItemTitle>
+              <WatchlistVisibilityBadge visibility={watchlist.visibility} />
+            </div>
+            <ShowIf condition={!!description}>
+              <ItemDescription className="max-w-2xl text-muted-foreground">
+                {description}
+              </ItemDescription>
+            </ShowIf>
+            <ShowIf condition={titleCountLabel != null}>
+              <ItemDescription>{titleCountLabel}</ItemDescription>
+            </ShowIf>
+          </ItemContent>
 
-        <ItemActions>
-          <EditWatchlistDialog slug={slug} watchlist={watchlist} />
-        </ItemActions>
-      </Item>
+          <ItemActions>
+            <EditWatchlistDialog slug={slug} watchlist={watchlist} />
+          </ItemActions>
+        </Item>
 
-      <div className="flex flex-wrap gap-2 justify-between">
-        <WatchlistTitleSearchDialog
-          onListKeys={onListKeys}
-          onOpenChange={setTitleSearchOpen}
-          open={titleSearchOpen}
-          slug={slug}
-        />
-        <WatchlistMembershipSortSelector onSortChange={setSort} sort={sort} />
+        <div className="flex flex-wrap gap-2 justify-between">
+          <WatchlistTitleSearchDialog
+            onListKeys={onListKeys}
+            onOpenChange={setTitleSearchOpen}
+            open={titleSearchOpen}
+            slug={slug}
+          />
+          <WatchlistMembershipSortSelector onSortChange={setSort} sort={sort} />
+        </div>
+
+        <section aria-label="Titles">
+          <MembershipSection
+            errorMessage={errorMessage}
+            isPending={membershipsQuery.isPending}
+            memberships={memberships}
+            onAddTitle={() => setTitleSearchOpen(true)}
+            slug={slug}
+            sort={sort}
+          />
+        </section>
       </div>
-
-      <section aria-label="Titles">
-        <MembershipSection
-          errorMessage={errorMessage}
-          isPending={membershipsQuery.isPending}
-          memberships={memberships}
-          onAddTitle={() => setTitleSearchOpen(true)}
-          slug={slug}
-          sort={sort}
-        />
-      </section>
-    </div>
+    </TitleBreadcrumbParentProvider>
   )
 }
 

@@ -8,22 +8,27 @@ export type TvSeasonLoader = (seasonNumber: number) => Promise<TmdbTvSeasonDetai
  * Episode lengths for the pairs being logged.
  *
  * Each distinct season is loaded once. A season that fails to load is skipped so
- * the watch can still be saved; those episodes are absent from the map.
+ * the watch can still be saved; those episodes are absent from the map and the
+ * failure is passed to `onSeasonError`.
  *
  * @param episodes - Season and episode numbers from the log-watch request
  * @param fetchSeason - Loads one TMDB season. Callers supply the client or a fake
+ * @param onSeasonError - Called with the season number and error when a load fails
  * @returns `season:episode` keys to positive runtimes
  */
 export async function loadTvEpisodeRuntimes(
   episodes: readonly { episode: number; season: number }[],
   fetchSeason: TvSeasonLoader,
+  onSeasonError?: (season: number, error: unknown) => void,
 ): Promise<Map<string, number>> {
   const seasons = [...new Set(episodes.map((episode) => episode.season))]
   const loaded = await Promise.all(
     seasons.map(async (season) => {
       try {
         return { details: await fetchSeason(season), season }
-      } catch {
+      } catch (error) {
+        onSeasonError?.(season, error)
+
         return null
       }
     }),

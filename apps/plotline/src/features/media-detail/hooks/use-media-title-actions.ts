@@ -4,7 +4,7 @@ import type { LibraryItem } from '@plotline/payload-types'
 import type { MediaStatus } from '@plotline/shared/constants'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useCreateLibraryItem } from '@/features/library/library-item/hooks/use-create-library-item'
@@ -13,55 +13,55 @@ import { getErrorMessage } from '@/utils/get-error-message'
 
 import type { MediaTitlePageData } from '../types'
 
+import { buildPlaceholderLibraryItem } from '../services/placeholder-library-item'
 import { mediaTitleQueryKeys } from '../services/query-keys'
+import {
+  rememberTitleLibraryItem,
+  titlePageWithLibraryItem,
+} from '../services/remember-title-library-item'
 
 /**
  * Log-watch and status actions for the title hero.
  *
- * A title that is not in the library is created before those actions run.
- * The title query is patched with the returned row so the hero updates before
- * the shared library invalidation refetch finishes. Status updates reuse
- * `useUpdateLibraryItem`, which toasts and rolls back on failure.
+ * A status change on a title that is not in the library creates it first. Mark
+ * Watched on such a title opens log-watch against a placeholder row, and the
+ * endpoint creates the real one on submit, so cancelling leaves the library as it
+ * was. A successful log patches the title query with the row the form built (real
+ * id and progress) so the hero updates before the shared library invalidation
+ * refetch finishes. Status updates reuse `useUpdateLibraryItem`, which toasts and
+ * rolls back on failure.
  *
  * @param data - Loaded title page, including catalog media and the library row when present
- * @returns The library row to render, whether a write is in flight, log-watch dialog
- * state, and the mark-watched and status handlers
+ * @returns The library row to render, the row the log-watch dialog should use, whether a
+ * write is in flight, log-watch dialog state, and the mark-watched, log-watch success,
+ * and status handlers
  */
 export function useMediaTitleActions(data: MediaTitlePageData) {
   const queryClient = useQueryClient()
   const createLibraryItem = useCreateLibraryItem()
   const updateLibraryItem = useUpdateLibraryItem()
-  const [draftLibraryItem, setDraftLibraryItem] = useState<LibraryItem | null>(null)
   const [logWatchOpen, setLogWatchOpen] = useState(false)
-  const [openLogWatchAfterCreate, setOpenLogWatchAfterCreate] = useState(false)
   const inFlightRef = useRef(false)
-  const libraryItem = data.libraryItem ?? draftLibraryItem
+  const libraryItem = data.libraryItem
+  const logWatchLibraryItem = useMemo(
+    () => libraryItem ?? buildPlaceholderLibraryItem(data.media),
+    [data.media, libraryItem],
+  )
   const isPending = createLibraryItem.isPending || updateLibraryItem.isPending
 
-  // Mount the dialog closed, then open it. Opening in the same render that creates
-  // the library row can leave the dialog mounted already-open and invisible.
-  useEffect(() => {
-    if (!openLogWatchAfterCreate || !libraryItem) {
-      return
-    }
-
-    setLogWatchOpen(true)
-    setOpenLogWatchAfterCreate(false)
-  }, [libraryItem, openLogWatchAfterCreate])
-
   const rememberLibraryItem = (next: LibraryItem) => {
-    const populated: LibraryItem = {
-      ...next,
-      media: typeof next.media === 'object' ? next.media : data.media,
-    }
+    const populated = rememberTitleLibraryItem(next, data.media)
 
-    setDraftLibraryItem(populated)
     queryClient.setQueryData<MediaTitlePageData>(
       mediaTitleQueryKeys.detail(data.media.mediaType, data.media.tmdbId),
-      (current) => (current ? { ...current, libraryItem: populated } : current),
+      (current) => titlePageWithLibraryItem(current, next, data.media),
     )
 
     return populated
+  }
+
+  const handleLogWatchSuccess = (next: LibraryItem) => {
+    rememberLibraryItem(next)
   }
 
   const createWithStatus = async (status: MediaStatus) => {
@@ -78,25 +78,7 @@ export function useMediaTitleActions(data: MediaTitlePageData) {
       return
     }
 
-    if (libraryItem) {
-      setLogWatchOpen(true)
-      return
-    }
-
-    inFlightRef.current = true
-
-    void createWithStatus('planned')
-      .then(() => {
-        setOpenLogWatchAfterCreate(true)
-      })
-      .catch((error: unknown) => {
-        toast.error('Could not add this title', {
-          description: error instanceof Error ? (getErrorMessage(error) ?? undefined) : undefined,
-        })
-      })
-      .finally(() => {
-        inFlightRef.current = false
-      })
+    setLogWatchOpen(true)
   }
 
   const handleStatusChange = (status: MediaStatus) => {
@@ -139,10 +121,12 @@ export function useMediaTitleActions(data: MediaTitlePageData) {
   }
 
   return {
+    handleLogWatchSuccess,
     handleMarkWatched,
     handleStatusChange,
     isPending,
     libraryItem,
+    logWatchLibraryItem,
     logWatchOpen,
     setLogWatchOpen,
   }

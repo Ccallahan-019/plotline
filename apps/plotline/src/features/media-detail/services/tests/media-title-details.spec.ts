@@ -12,7 +12,11 @@ import {
   formatWatchActivityPlatform,
   getTvWatchProgress,
 } from '../format-media-title'
-import { mapMovieTitleDetails, mapTvTitleDetails, seasonsFromMedia } from '../map-media-title-details'
+import {
+  mapMovieTitleDetails,
+  mapTvTitleDetails,
+  seasonsFromMedia,
+} from '../map-media-title-details'
 
 describe('mapMovieTitleDetails', () => {
   it('prefers the viewer region and a theatrical certification', () => {
@@ -539,7 +543,6 @@ function pageData(overrides: Partial<MediaTitlePageData> = {}): MediaTitlePageDa
     language: null,
     libraryItem: null,
     media: movie(),
-    memberships: [],
     networks: [],
     region: 'US',
     releaseStatusLabel: null,

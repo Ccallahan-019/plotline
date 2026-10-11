@@ -20,6 +20,7 @@ import {
   getPosterUrl,
   getTitleHref,
 } from '@/features/media-grid/grid/services/media-display-helpers'
+import { useTitleBreadcrumbLinkProps } from '@/features/navigation/breadcrumbs/components/TitleBreadcrumbParentProvider'
 import { cn } from '@/lib/utils'
 
 import {
@@ -125,12 +126,14 @@ function LibraryItemStatus({ libraryItem }: { libraryItem: LibraryItem | null })
 }
 
 function MembershipTitle({ media, title }: { media: Media | null; title: string }) {
+  const titleLinkProps = useTitleBreadcrumbLinkProps()
+
   if (!media) {
     return <ItemTitle>{title}</ItemTitle>
   }
 
   return (
-    <Link className="w-fit hover:underline" href={membershipTitleHref(media)}>
+    <Link className="w-fit hover:underline" href={membershipTitleHref(media)} {...titleLinkProps}>
       <ItemTitle>{title}</ItemTitle>
     </Link>
   )

@@ -10,8 +10,8 @@ type LoggedEpisode = {
 /**
  * Loads per-episode runtimes for a series before the log-watch transaction.
  *
- * A missing token or TMDB id returns an empty map. Season failures are handled
- * inside `loadTvEpisodeRuntimes`. Do not call this under the library-item row lock.
+ * A missing token or TMDB id returns an empty map. A season that fails or times out
+ * is logged and skipped, so its episodes are saved without a runtime. Do not call this under the library-item row lock.
  *
  * @param tmdbId - TMDB series id from the catalog row
  * @param episodes - Episodes about to be logged
@@ -33,7 +33,11 @@ export async function fetchTvEpisodeRuntimes(
 
   const client = createTmdbClient(accessToken)
 
-  return loadTvEpisodeRuntimes(episodes, (seasonNumber) =>
-    client.getTvSeasonDetails(tmdbId, seasonNumber),
+  return loadTvEpisodeRuntimes(
+    episodes,
+    (seasonNumber) => client.getTvSeasonDetails(tmdbId, seasonNumber),
+    (season, error) => {
+      console.warn(`Could not load TMDB season ${season} runtimes for series ${tmdbId}`, error)
+    },
   )
 }

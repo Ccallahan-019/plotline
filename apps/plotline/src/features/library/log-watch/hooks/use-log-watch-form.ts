@@ -24,7 +24,7 @@ export type LogWatchFormApi = ReturnType<typeof useLogWatchForm>['form']
 type UseLogWatchFormOptions = {
   libraryItem: LibraryItem
   media: Media
-  onSuccess?: () => void
+  onSuccess?: (libraryItem: LibraryItem) => void
 }
 
 /**
@@ -33,12 +33,12 @@ type UseLogWatchFormOptions = {
  * Defaults the next TV episode from library progress, validates on submit, and posts a
  * single watch event or a multi-episode batch when more than one episode is selected.
  * Success toasts, resets the form to the following episode (and updated status) so a later
- * log in the same mounted session does not reuse stale defaults, then calls `onSuccess`.
- * Submit failures are shown in the toast and are not rethrown.
+ * log in the same mounted session does not reuse stale defaults, then calls `onSuccess`
+ * with that row. Submit failures are shown in the toast and are not rethrown.
  *
  * @param options.libraryItem - Library row used for progress defaults and status transitions
  * @param options.media - Title being logged; supplies media type and id
- * @param options.onSuccess - Called after a successful submit (typically to close the UI)
+ * @param options.onSuccess - Called with the post-log library row (real id and progress) so the caller can close the UI and patch its cache
  * @returns `form` (TanStack form API) and `isSubmitting` (mutation or form pending)
  */
 export function useLogWatchForm({ libraryItem, media, onSuccess }: UseLogWatchFormOptions) {
@@ -47,10 +47,15 @@ export function useLogWatchForm({ libraryItem, media, onSuccess }: UseLogWatchFo
   const mediaType = media.mediaType
   const validationSchema = useMemo(() => createLogWatchFormSchema(mediaType), [mediaType])
   const currentLibraryItemRef = useRef(libraryItem)
+  const onSuccessRef = useRef(onSuccess)
 
   if (currentLibraryItemRef.current.id !== libraryItem.id) {
     currentLibraryItemRef.current = libraryItem
   }
+
+  // The form can keep the first submit closure. Always invoke the latest callback
+  // so a title-page log patches the cache for the title that is on screen.
+  onSuccessRef.current = onSuccess
 
   const form = useAppForm({
     defaultValues: getDefaultLogWatchFormValues({ libraryItem, mediaType }),
@@ -101,7 +106,7 @@ export function useLogWatchForm({ libraryItem, media, onSuccess }: UseLogWatchFo
 
         currentLibraryItemRef.current = nextLibraryItem
         formApi.reset(getDefaultLogWatchFormValues({ libraryItem: nextLibraryItem, mediaType }))
-        onSuccess?.()
+        onSuccessRef.current?.(nextLibraryItem)
       } catch {
         // No-op - toast promise will handle the error
       }

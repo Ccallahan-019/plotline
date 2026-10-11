@@ -1,6 +1,6 @@
 import 'server-only'
 
-import type { LibraryItem, Media, WatchEvent, WatchlistMembership } from '@plotline/payload-types'
+import type { LibraryItem, Media, WatchEvent } from '@plotline/payload-types'
 import type { MediaType } from '@plotline/shared/constants'
 import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 
@@ -15,7 +15,7 @@ import { cache } from 'react'
 import { getProfileWatchRegion } from '@/features/search/services/get-profile-watch-region'
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
 
-import type { MediaTitleMembership, MediaTitlePageData, MediaTitleWatchEvent } from '../types'
+import type { MediaTitlePageData, MediaTitleWatchEvent } from '../types'
 
 import {
   mapMovieTitleDetails,
@@ -32,8 +32,7 @@ const ACTIVITY_LIMIT = 20
  * Loads the title page for one TMDB id.
  *
  * Refreshes the catalog row from TMDB when it is missing or older than a day, then
- * attaches the signed-in user's library item, watchlist memberships, and recent
- * watch events. Metadata and page loads in the same request share one call.
+ * attaches the signed-in user's library item and recent watch events. Metadata and page loads in the same request share one call.
  * A TMDB miss with no cached row throws `MediaTitleNotFoundError`. When TMDB fails
  * and a cached row exists, the page still renders from that row.
  *
@@ -53,11 +52,18 @@ export const getMediaTitlePage = cache(async function getMediaTitlePage(
   const regionPromise = getProfileWatchRegion(clerkUserId)
   const cachedPromise = findCachedMedia(clerkUserId, mediaType, tmdbId)
 
-  const loaded = accessToken
-    ? await loadTmdbTitle(createTmdbClient(accessToken), mediaType, tmdbId)
-    : { details: null, error: new Error('TMDB is not configured') }
+  const loadedPromise: Promise<LoadedTmdbTitle> = accessToken
+    ? loadTmdbTitle(createTmdbClient(accessToken), mediaType, tmdbId)
+    : Promise.resolve({ details: null, error: new Error('TMDB is not configured') })
 
-  const [region, cached] = await Promise.all([regionPromise, cachedPromise])
+  const cached = await cachedPromise
+  // A cached row already names the catalog id, so the viewer's rows load alongside TMDB.
+  const viewerStatePromise = cached ? loadViewerState(clerkUserId, cached.id) : null
+  // Keep a rejection from going unhandled if the page throws before it is awaited below.
+  viewerStatePromise?.catch(() => undefined)
+
+  const loaded = await loadedPromise
+  const region = await regionPromise
   const media = await resolveCatalogMedia(clerkUserId, cached, loaded)
 
   if (!media) {
@@ -78,20 +84,13 @@ export const getMediaTitlePage = cache(async function getMediaTitlePage(
       : mapTvTitleDetails(loaded.details.details, region)
     : detailsFromCachedMedia(media)
 
-  const [libraryItem, watchEvents] = await Promise.all([
-    findLibraryItem(clerkUserId, media.id),
-    findWatchEvents(clerkUserId, media.id),
-  ])
-  const populatedLibraryItem = libraryItem ? withMedia(libraryItem, media) : null
-  const memberships = populatedLibraryItem
-    ? await findMemberships(clerkUserId, populatedLibraryItem.id)
-    : []
+  const { libraryItem, watchEvents } = await (viewerStatePromise ??
+    loadViewerState(clerkUserId, media.id))
 
   return {
     ...detailFields,
-    libraryItem: populatedLibraryItem,
+    libraryItem: libraryItem ? withMedia(libraryItem, media) : null,
     media,
-    memberships,
     region,
     watchEvents,
   }
@@ -174,47 +173,6 @@ async function findLibraryItem(clerkUserId: string, mediaId: number): Promise<Li
 }
 
 /**
- * Loads watchlist memberships for a library item.
- *
- * @param clerkUserId - Clerk user id forwarded to Payload
- * @param libraryItemId - Library item whose memberships to load
- * @returns Memberships whose watchlist was populated, newest-independent of list order
- */
-async function findMemberships(
-  clerkUserId: string,
-  libraryItemId: number,
-): Promise<MediaTitleMembership[]> {
-  const result = await payloadFetch<PayloadPaginatedDocs<WatchlistMembership>>(
-    '/api/watchlist-memberships',
-    {
-      clerkUserId,
-      method: 'GET',
-      searchParams: {
-        depth: 1,
-        limit: 100,
-        'where[libraryItem][equals]': libraryItemId,
-      },
-    },
-  )
-
-  return result.docs.flatMap((membership) => {
-    const watchlist = membership.watchlist
-
-    if (typeof watchlist !== 'object' || watchlist == null) {
-      return []
-    }
-
-    return [
-      {
-        id: membership.id,
-        watchlistName: watchlist.name,
-        watchlistSlug: watchlist.slug,
-      },
-    ]
-  })
-}
-
-/**
  * Loads recent watch events for this title.
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
@@ -292,6 +250,25 @@ async function loadTmdbTitle(
   } catch (error) {
     return { details: null, error }
   }
+}
+
+/**
+ * Loads the viewer's library row and recent watch events for one catalog row.
+ *
+ * @param clerkUserId - Clerk user id forwarded to Payload
+ * @param mediaId - Payload media id
+ * @returns The library item (or `null`) and the activity list, fetched together
+ */
+async function loadViewerState(
+  clerkUserId: string,
+  mediaId: number,
+): Promise<{ libraryItem: LibraryItem | null; watchEvents: MediaTitleWatchEvent[] }> {
+  const [libraryItem, watchEvents] = await Promise.all([
+    findLibraryItem(clerkUserId, mediaId),
+    findWatchEvents(clerkUserId, mediaId),
+  ])
+
+  return { libraryItem, watchEvents }
 }
 
 /**

@@ -12,6 +12,7 @@ const EMPTY_WATCHED_EPISODES: readonly WatchedEpisodePair[] = []
 type LibraryLogWatchDialogProps = {
   libraryItem: LibraryItem
   media: Media
+  onLogged?: (libraryItem: LibraryItem) => void
   onOpenChange: (open: boolean) => void
   open: boolean
 }
@@ -19,6 +20,7 @@ type LibraryLogWatchDialogProps = {
 export function LibraryLogWatchDialog({
   libraryItem,
   media,
+  onLogged,
   onOpenChange,
   open,
 }: LibraryLogWatchDialogProps) {
@@ -28,7 +30,10 @@ export function LibraryLogWatchDialog({
   const { form, isSubmitting } = useLogWatchForm({
     libraryItem,
     media,
-    onSuccess: () => onOpenChange(false),
+    onSuccess: (logged) => {
+      onLogged?.(logged)
+      onOpenChange(false)
+    },
   })
 
   return (

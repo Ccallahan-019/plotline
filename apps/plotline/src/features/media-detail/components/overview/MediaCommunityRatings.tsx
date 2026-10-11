@@ -2,11 +2,6 @@ import { Star } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-type CommunityRatingsProps = {
-  voteAverage: null | number
-  voteCount: null | number
-}
-
 type MediaCommunityRatingsProps = {
   voteAverage: null | number
   voteCount: null | number
@@ -25,13 +20,13 @@ export function MediaCommunityRatings({ voteAverage, voteCount }: MediaCommunity
   )
 }
 
-function CommunityRatings({ voteAverage, voteCount }: CommunityRatingsProps) {
+function CommunityRatings({ voteAverage, voteCount }: MediaCommunityRatingsProps) {
   const hasScore = voteAverage != null
   const hasCount = voteCount != null
 
   if (hasScore) {
     const ratingCount = hasCount
-      ? voteCount > 1000
+      ? voteCount >= 1000
         ? `${(voteCount / 1000).toFixed(1)}k`
         : voteCount.toLocaleString()
       : null

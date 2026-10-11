@@ -209,7 +209,8 @@ export function getTvWatchProgress(input: {
     },
     media: input.media,
   })
-  const episodeCount = input.episodeCount != null && input.episodeCount > 0 ? input.episodeCount : null
+  const episodeCount =
+    input.episodeCount != null && input.episodeCount > 0 ? input.episodeCount : null
 
   return {
     episodeCount,
@@ -219,6 +220,7 @@ export function getTvWatchProgress(input: {
   }
 }
 
+// Trimmed value, or an em dash when it is missing or blank.
 function displayValue(value: null | string | undefined): string {
   const trimmed = value?.trim()
 

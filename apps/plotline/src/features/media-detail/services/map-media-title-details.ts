@@ -172,6 +172,7 @@ export function seasonsFromMedia(media: Media): MediaTitleSeason[] {
   }))
 }
 
+// Theatrical release rating (type 3) when listed, otherwise the first rated release.
 function firstCertification(
   releases: ReadonlyArray<{ certification?: string; type?: number }>,
 ): null | string {
@@ -189,7 +190,10 @@ function firstCertification(
  * @returns Uppercase initials, or an empty string when the name is blank
  */
 function formatPersonInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter((part) => part.length > 0)
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter((part) => part.length > 0)
   const first = parts[0]
   const last = parts.at(-1)
 
@@ -386,6 +390,7 @@ function mapTvKeyCredits(
   ]
 }
 
+// Film rating for the viewer's region, then the US, then any listed country.
 function movieCertification(details: TmdbMovieTitleDetails, region: string): null | string {
   const results = details.release_dates?.results ?? []
   const preferred = preferredRegions(region)
@@ -410,11 +415,13 @@ function movieCertification(details: TmdbMovieTitleDetails, region: string): nul
   return null
 }
 
+// Region codes to try in order: the viewer's, then the US.
 function preferredRegions(region: string): string[] {
   const normalized = region.trim().toUpperCase()
   return normalized === 'US' ? ['US'] : [normalized, 'US']
 }
 
+// TMDB's season name, or "Specials" / "Season N" when it is blank.
 function seasonName(seasonNumber: number, name: null | string | undefined): string {
   const trimmed = name?.trim()
 
@@ -474,6 +481,7 @@ function tvCastCredits(details: TmdbTvTitleDetails): readonly TmdbCastCredit[] |
     })
 }
 
+// Series content rating for the viewer's region, then the US, then any listed country.
 function tvCertification(details: TmdbTvTitleDetails, region: string): null | string {
   const results = details.content_ratings?.results ?? []
   const preferred = preferredRegions(region)
@@ -530,6 +538,7 @@ function tvCrewCredits(details: TmdbTvTitleDetails): readonly TmdbCrewCredit[] |
   })
 }
 
+// Trimmed names without blanks or repeats, in first-seen order.
 function uniqueNames(names: string[]): string[] {
   const seen = new Set<string>()
   const unique: string[] = []

@@ -29,12 +29,6 @@ export type MediaTitleKeyCreditGroup = {
   names: string[]
 }
 
-export type MediaTitleMembership = {
-  id: number
-  watchlistName: string
-  watchlistSlug: string
-}
-
 export type MediaTitlePageData = {
   cast: MediaTitleCastMember[]
   certification: null | string
@@ -45,7 +39,6 @@ export type MediaTitlePageData = {
   language: null | string
   libraryItem: LibraryItem | null
   media: Media
-  memberships: MediaTitleMembership[]
   networks: string[]
   region: string
   releaseStatusLabel: null | string
