@@ -59,695 +59,683 @@ export type SupportedTimezones =
   | 'Pacific/Guam'
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
-  | 'Pacific/Fiji'
+  | 'Pacific/Fiji';
 
 export interface Config {
   auth: {
-    users: UserAuthOperations
-  }
-  blocks: {}
+    users: UserAuthOperations;
+  };
+  blocks: {};
   collections: {
-    users: User
-    profiles: Profile
-    media: Media
-    'library-items': LibraryItem
-    watchlists: Watchlist
-    'watchlist-memberships': WatchlistMembership
-    'watch-events': WatchEvent
-    reviews: Review
-    'payload-kv': PayloadKv
-    'payload-locked-documents': PayloadLockedDocument
-    'payload-preferences': PayloadPreference
-    'payload-migrations': PayloadMigration
-  }
-  collectionsJoins: {}
+    users: User;
+    profiles: Profile;
+    media: Media;
+    'library-items': LibraryItem;
+    watchlists: Watchlist;
+    'watchlist-memberships': WatchlistMembership;
+    'watch-events': WatchEvent;
+    reviews: Review;
+    'payload-kv': PayloadKv;
+    'payload-locked-documents': PayloadLockedDocument;
+    'payload-preferences': PayloadPreference;
+    'payload-migrations': PayloadMigration;
+  };
+  collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>
-    profiles: ProfilesSelect<false> | ProfilesSelect<true>
-    media: MediaSelect<false> | MediaSelect<true>
-    'library-items': LibraryItemsSelect<false> | LibraryItemsSelect<true>
-    watchlists: WatchlistsSelect<false> | WatchlistsSelect<true>
-    'watchlist-memberships': WatchlistMembershipsSelect<false> | WatchlistMembershipsSelect<true>
-    'watch-events': WatchEventsSelect<false> | WatchEventsSelect<true>
-    reviews: ReviewsSelect<false> | ReviewsSelect<true>
-    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
-    'payload-locked-documents':
-      | PayloadLockedDocumentsSelect<false>
-      | PayloadLockedDocumentsSelect<true>
-    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>
-    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>
-  }
+    users: UsersSelect<false> | UsersSelect<true>;
+    profiles: ProfilesSelect<false> | ProfilesSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    'library-items': LibraryItemsSelect<false> | LibraryItemsSelect<true>;
+    watchlists: WatchlistsSelect<false> | WatchlistsSelect<true>;
+    'watchlist-memberships': WatchlistMembershipsSelect<false> | WatchlistMembershipsSelect<true>;
+    'watch-events': WatchEventsSelect<false> | WatchEventsSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
+    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
+    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
+  };
   db: {
-    defaultIDType: number
-  }
-  fallbackLocale: null
-  globals: {}
-  globalsSelect: {}
-  locale: null
+    defaultIDType: number;
+  };
+  fallbackLocale: null;
+  globals: {};
+  globalsSelect: {};
+  locale: null;
   widgets: {
-    collections: CollectionsWidget
-  }
-  user: User
+    collections: CollectionsWidget;
+  };
+  user: User;
   jobs: {
-    tasks: unknown
-    workflows: unknown
-  }
+    tasks: unknown;
+    workflows: unknown;
+  };
 }
 export interface UserAuthOperations {
   forgotPassword: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   login: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   registerFirstUser: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   unlock: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
-  id: number
-  roles: ('admin' | 'editor')[]
-  updatedAt: string
-  createdAt: string
-  email: string
-  resetPasswordToken?: string | null
-  resetPasswordExpiration?: string | null
-  salt?: string | null
-  hash?: string | null
-  loginAttempts?: number | null
-  lockUntil?: string | null
+  id: number;
+  roles: ('admin' | 'editor')[];
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
   sessions?:
     | {
-        id: string
-        createdAt?: string | null
-        expiresAt: string
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
       }[]
-    | null
-  password?: string | null
-  collection: 'users'
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "profiles".
  */
 export interface Profile {
-  id: number
-  clerkUserId: string
-  username: string
-  displayName: string
-  avatarUrl?: string | null
-  bio?: string | null
+  id: number;
+  clerkUserId: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  bio?: string | null;
   preferences?: {
-    defaultListVisibility?: ('private' | 'friends' | 'public' | 'unlisted') | null
-    spoilersHidden?: boolean | null
-    region?: string | null
-  }
+    defaultListVisibility?: ('private' | 'friends' | 'public' | 'unlisted') | null;
+    spoilersHidden?: boolean | null;
+    region?: string | null;
+  };
   privacySettings?: {
-    showActivity?: boolean | null
-    showRatings?: boolean | null
-  }
+    showActivity?: boolean | null;
+    showRatings?: boolean | null;
+  };
   statsCache?: null | {
-    hoursWatched?: number
-    lastCalculatedAt: string
-    totalCompleted?: number
-    totalPlanned?: number
-    totalWatching?: number
-  }
-  updatedAt: string
-  createdAt: string
+    hoursWatched?: number;
+    lastCalculatedAt: string;
+    totalCompleted?: number;
+    totalPlanned?: number;
+    totalWatching?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: number
-  tmdbId: number
-  mediaType: 'movie' | 'tv'
-  title: string
-  originalTitle?: string | null
-  overview?: string | null
-  tagline?: string | null
-  posterPath?: string | null
-  backdropPath?: string | null
-  releaseDate?: string | null
-  decade?: number | null
-  status?: ('released' | 'upcoming' | 'cancelled' | 'in_production') | null
-  runtime?: number | null
+  id: number;
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+  title: string;
+  originalTitle?: string | null;
+  overview?: string | null;
+  tagline?: string | null;
+  posterPath?: string | null;
+  backdropPath?: string | null;
+  releaseDate?: string | null;
+  decade?: number | null;
+  status?: ('released' | 'upcoming' | 'cancelled' | 'in_production') | null;
+  runtime?: number | null;
   genres?:
     | {
-        tmdbId: number
-        name: string
-        id?: string | null
+        tmdbId: number;
+        name: string;
+        id?: string | null;
       }[]
-    | null
-  popularity?: number | null
-  voteAverage?: number | null
+    | null;
+  popularity?: number | null;
+  voteAverage?: number | null;
   tvMeta?: {
-    seasonCount?: number | null
-    episodeCount?: number | null
+    seasonCount?: number | null;
+    episodeCount?: number | null;
     seasonEpisodeCounts?:
       | {
-          season: number
-          episodeCount: number
-          id?: string | null
+          season: number;
+          episodeCount: number;
+          id?: string | null;
         }[]
-      | null
-    inProduction?: boolean | null
-    nextEpisodeDate?: string | null
-    nextEpisodeSeason?: number | null
-    nextEpisodeNumber?: number | null
-  }
+      | null;
+    inProduction?: boolean | null;
+    nextEpisodeDate?: string | null;
+    nextEpisodeSeason?: number | null;
+    nextEpisodeNumber?: number | null;
+  };
   externalIds?: {
-    imdbId?: string | null
-    tvdbId?: number | null
-  }
-  metadataSyncedAt?: string | null
-  searchKeywords?: string | null
-  updatedAt: string
-  createdAt: string
+    imdbId?: string | null;
+    tvdbId?: number | null;
+  };
+  metadataSyncedAt?: string | null;
+  searchKeywords?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "library-items".
  */
 export interface LibraryItem {
-  id: number
-  profile: number | Profile
-  media: number | Media
-  status: 'planned' | 'watching' | 'completed' | 'dropped' | 'on_hold'
+  id: number;
+  profile: number | Profile;
+  media: number | Media;
+  status: 'planned' | 'watching' | 'completed' | 'dropped' | 'on_hold';
   progress: {
-    type: 'movie' | 'tv'
-    watched?: boolean | null
-    lastSeason?: number | null
-    lastEpisode?: number | null
-    episodesWatched?: number | null
-    seasonsCompleted?: number[] | null
-  }
-  startedAt?: string | null
-  completedAt?: string | null
-  lastWatchedAt?: string | null
-  rewatchCount?: number | null
-  personalNotes?: string | null
-  source?: ('manual' | 'import' | 'recommendation') | null
-  updatedAt: string
-  createdAt: string
+    type: 'movie' | 'tv';
+    watched?: boolean | null;
+    lastSeason?: number | null;
+    lastEpisode?: number | null;
+    episodesWatched?: number | null;
+    seasonsCompleted?: number[] | null;
+  };
+  startedAt?: string | null;
+  completedAt?: string | null;
+  lastWatchedAt?: string | null;
+  rewatchCount?: number | null;
+  personalNotes?: string | null;
+  source?: ('manual' | 'import' | 'recommendation') | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "watchlists".
  */
 export interface Watchlist {
-  id: number
-  owner: number | Profile
-  name: string
-  slug: string
-  description?: string | null
-  visibility: 'private' | 'friends' | 'public' | 'unlisted'
-  isDefault?: boolean | null
-  isSystem?: boolean | null
-  sortOrder?: number | null
-  coverMedia?: (number | null) | Media
+  id: number;
+  owner: number | Profile;
+  name: string;
+  slug: string;
+  description?: string | null;
+  visibility: 'private' | 'friends' | 'public' | 'unlisted';
+  isDefault?: boolean | null;
+  isSystem?: boolean | null;
+  sortOrder?: number | null;
+  coverMedia?: (number | null) | Media;
   challenge?: {
-    enabled?: boolean | null
-    startDate?: string | null
-    dueDate?: string | null
-    goalType?: ('count' | 'runtime_minutes') | null
-    goalCount?: number | null
-    goalRuntimeMinutes?: number | null
-    tvCountRule?: ('movies_only' | 'tv_as_series' | 'tv_by_episode' | 'tv_by_season') | null
+    enabled?: boolean | null;
+    startDate?: string | null;
+    dueDate?: string | null;
+    goalType?: ('count' | 'runtime_minutes') | null;
+    goalCount?: number | null;
+    goalRuntimeMinutes?: number | null;
+    tvCountRule?: ('movies_only' | 'tv_as_series' | 'tv_by_episode' | 'tv_by_season') | null;
     priorCompletionRule?:
       | ('exclude_if_already_completed' | 'count_if_completed_after_join' | 'count_all_on_join')
-      | null
-    includeRewatches?: boolean | null
-  }
+      | null;
+    includeRewatches?: boolean | null;
+  };
   statsCache?: null | {
-    actualPerDay?: number
-    completed: number
-    completedRuntimeMinutes?: number
-    daysElapsed?: number
-    daysRemaining?: number
-    daysTotal?: number
-    goalCount?: number
-    goalRuntimeMinutes?: number
-    inProgress: number
-    lastCalculatedAt: string
-    onTrack?: boolean
-    percentComplete: number
-    projectedFinishDate?: string
-    remaining: number
-    remainingRuntimeMinutes?: number
-    requiredPerDay?: number
-    status?: 'not_started' | 'active' | 'completed' | 'overdue'
-    totalEligible: number
-  }
-  updatedAt: string
-  createdAt: string
+    actualPerDay?: number;
+    completed: number;
+    completedRuntimeMinutes?: number;
+    daysElapsed?: number;
+    daysRemaining?: number;
+    daysTotal?: number;
+    goalCount?: number;
+    goalRuntimeMinutes?: number;
+    inProgress: number;
+    lastCalculatedAt: string;
+    onTrack?: boolean;
+    percentComplete: number;
+    projectedFinishDate?: string;
+    remaining: number;
+    remainingRuntimeMinutes?: number;
+    requiredPerDay?: number;
+    status?: 'not_started' | 'active' | 'completed' | 'overdue';
+    totalEligible: number;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "watchlist-memberships".
  */
 export interface WatchlistMembership {
-  id: number
-  watchlist: number | Watchlist
-  libraryItem: number | LibraryItem
-  addedAt: string
-  sortOrder?: number | null
-  note?: string | null
-  listStatus?: ('planned' | 'in_progress' | 'completed' | 'skipped') | null
-  completedForListAt?: string | null
-  countsTowardGoal?: boolean | null
-  goalWeight?: number | null
-  episodesCountedForList?: number | null
+  id: number;
+  watchlist: number | Watchlist;
+  libraryItem: number | LibraryItem;
+  addedAt: string;
+  sortOrder?: number | null;
+  note?: string | null;
+  listStatus?: ('planned' | 'in_progress' | 'completed' | 'skipped') | null;
+  completedForListAt?: string | null;
+  countsTowardGoal?: boolean | null;
+  goalWeight?: number | null;
+  episodesCountedForList?: number | null;
   /**
    * Episodes already watched on the library item when this membership was created; baseline for tv_by_episode counting.
    */
-  episodesAtJoin?: number | null
-  updatedAt: string
-  createdAt: string
+  episodesAtJoin?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "watch-events".
  */
 export interface WatchEvent {
-  id: number
-  profile: number | Profile
-  media: number | Media
-  libraryItem?: (number | null) | LibraryItem
-  eventType: 'started' | 'progress' | 'completed' | 'rewatched' | 'dropped' | 'on_hold'
-  watchedAt: string
+  id: number;
+  profile: number | Profile;
+  media: number | Media;
+  libraryItem?: (number | null) | LibraryItem;
+  eventType: 'started' | 'progress' | 'completed' | 'rewatched' | 'dropped' | 'on_hold';
+  watchedAt: string;
   platform?:
-    | (
-        | 'netflix'
-        | 'disney_plus'
-        | 'hulu'
-        | 'max'
-        | 'apple_tv'
-        | 'amazon'
-        | 'theater'
-        | 'physical'
-        | 'other'
-      )
-    | null
-  platformOther?: string | null
-  runtimeMinutes?: number | null
+    | ('netflix' | 'disney_plus' | 'hulu' | 'max' | 'apple_tv' | 'amazon' | 'theater' | 'physical' | 'other')
+    | null;
+  platformOther?: string | null;
+  runtimeMinutes?: number | null;
   tvContext?: {
-    season?: number | null
-    episode?: number | null
-  }
-  isRewatch?: boolean | null
-  visibility: 'private' | 'friends' | 'public'
-  updatedAt: string
-  createdAt: string
+    season?: number | null;
+    episode?: number | null;
+  };
+  isRewatch?: boolean | null;
+  visibility: 'private' | 'friends' | 'public';
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reviews".
  */
 export interface Review {
-  id: number
-  profile: number | Profile
-  media: number | Media
-  rating: number
-  title?: string | null
-  body?: string | null
-  containsSpoilers?: boolean | null
-  watchedAt?: string | null
-  visibility: 'private' | 'friends' | 'public'
-  updatedAt: string
-  createdAt: string
+  id: number;
+  profile: number | Profile;
+  media: number | Media;
+  rating: number;
+  title?: string | null;
+  body?: string | null;
+  containsSpoilers?: boolean | null;
+  watchedAt?: string | null;
+  visibility: 'private' | 'friends' | 'public';
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number
-  key: string
+  id: number;
+  key: string;
   data:
     | {
-        [k: string]: unknown
+        [k: string]: unknown;
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null
+    | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number
+  id: number;
   document?:
     | ({
-        relationTo: 'users'
-        value: number | User
+        relationTo: 'users';
+        value: number | User;
       } | null)
     | ({
-        relationTo: 'profiles'
-        value: number | Profile
+        relationTo: 'profiles';
+        value: number | Profile;
       } | null)
     | ({
-        relationTo: 'media'
-        value: number | Media
+        relationTo: 'media';
+        value: number | Media;
       } | null)
     | ({
-        relationTo: 'library-items'
-        value: number | LibraryItem
+        relationTo: 'library-items';
+        value: number | LibraryItem;
       } | null)
     | ({
-        relationTo: 'watchlists'
-        value: number | Watchlist
+        relationTo: 'watchlists';
+        value: number | Watchlist;
       } | null)
     | ({
-        relationTo: 'watchlist-memberships'
-        value: number | WatchlistMembership
+        relationTo: 'watchlist-memberships';
+        value: number | WatchlistMembership;
       } | null)
     | ({
-        relationTo: 'watch-events'
-        value: number | WatchEvent
+        relationTo: 'watch-events';
+        value: number | WatchEvent;
       } | null)
     | ({
-        relationTo: 'reviews'
-        value: number | Review
-      } | null)
-  globalSlug?: string | null
+        relationTo: 'reviews';
+        value: number | Review;
+      } | null);
+  globalSlug?: string | null;
   user: {
-    relationTo: 'users'
-    value: number | User
-  }
-  updatedAt: string
-  createdAt: string
+    relationTo: 'users';
+    value: number | User;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number
+  id: number;
   user: {
-    relationTo: 'users'
-    value: number | User
-  }
-  key?: string | null
+    relationTo: 'users';
+    value: number | User;
+  };
+  key?: string | null;
   value?:
     | {
-        [k: string]: unknown
+        [k: string]: unknown;
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null
-  updatedAt: string
-  createdAt: string
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number
-  name?: string | null
-  batch?: number | null
-  updatedAt: string
-  createdAt: string
+  id: number;
+  name?: string | null;
+  batch?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  roles?: T
-  updatedAt?: T
-  createdAt?: T
-  email?: T
-  resetPasswordToken?: T
-  resetPasswordExpiration?: T
-  salt?: T
-  hash?: T
-  loginAttempts?: T
-  lockUntil?: T
+  roles?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
   sessions?:
     | T
     | {
-        id?: T
-        createdAt?: T
-        expiresAt?: T
-      }
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "profiles_select".
  */
 export interface ProfilesSelect<T extends boolean = true> {
-  clerkUserId?: T
-  username?: T
-  displayName?: T
-  avatarUrl?: T
-  bio?: T
+  clerkUserId?: T;
+  username?: T;
+  displayName?: T;
+  avatarUrl?: T;
+  bio?: T;
   preferences?:
     | T
     | {
-        defaultListVisibility?: T
-        spoilersHidden?: T
-        region?: T
-      }
+        defaultListVisibility?: T;
+        spoilersHidden?: T;
+        region?: T;
+      };
   privacySettings?:
     | T
     | {
-        showActivity?: T
-        showRatings?: T
-      }
-  statsCache?: T
-  updatedAt?: T
-  createdAt?: T
+        showActivity?: T;
+        showRatings?: T;
+      };
+  statsCache?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  tmdbId?: T
-  mediaType?: T
-  title?: T
-  originalTitle?: T
-  overview?: T
-  tagline?: T
-  posterPath?: T
-  backdropPath?: T
-  releaseDate?: T
-  decade?: T
-  status?: T
-  runtime?: T
+  tmdbId?: T;
+  mediaType?: T;
+  title?: T;
+  originalTitle?: T;
+  overview?: T;
+  tagline?: T;
+  posterPath?: T;
+  backdropPath?: T;
+  releaseDate?: T;
+  decade?: T;
+  status?: T;
+  runtime?: T;
   genres?:
     | T
     | {
-        tmdbId?: T
-        name?: T
-        id?: T
-      }
-  popularity?: T
-  voteAverage?: T
+        tmdbId?: T;
+        name?: T;
+        id?: T;
+      };
+  popularity?: T;
+  voteAverage?: T;
   tvMeta?:
     | T
     | {
-        seasonCount?: T
-        episodeCount?: T
+        seasonCount?: T;
+        episodeCount?: T;
         seasonEpisodeCounts?:
           | T
           | {
-              season?: T
-              episodeCount?: T
-              id?: T
-            }
-        inProduction?: T
-        nextEpisodeDate?: T
-        nextEpisodeSeason?: T
-        nextEpisodeNumber?: T
-      }
+              season?: T;
+              episodeCount?: T;
+              id?: T;
+            };
+        inProduction?: T;
+        nextEpisodeDate?: T;
+        nextEpisodeSeason?: T;
+        nextEpisodeNumber?: T;
+      };
   externalIds?:
     | T
     | {
-        imdbId?: T
-        tvdbId?: T
-      }
-  metadataSyncedAt?: T
-  searchKeywords?: T
-  updatedAt?: T
-  createdAt?: T
+        imdbId?: T;
+        tvdbId?: T;
+      };
+  metadataSyncedAt?: T;
+  searchKeywords?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "library-items_select".
  */
 export interface LibraryItemsSelect<T extends boolean = true> {
-  profile?: T
-  media?: T
-  status?: T
+  profile?: T;
+  media?: T;
+  status?: T;
   progress?:
     | T
     | {
-        type?: T
-        watched?: T
-        lastSeason?: T
-        lastEpisode?: T
-        episodesWatched?: T
-        seasonsCompleted?: T
-      }
-  startedAt?: T
-  completedAt?: T
-  lastWatchedAt?: T
-  rewatchCount?: T
-  personalNotes?: T
-  source?: T
-  updatedAt?: T
-  createdAt?: T
+        type?: T;
+        watched?: T;
+        lastSeason?: T;
+        lastEpisode?: T;
+        episodesWatched?: T;
+        seasonsCompleted?: T;
+      };
+  startedAt?: T;
+  completedAt?: T;
+  lastWatchedAt?: T;
+  rewatchCount?: T;
+  personalNotes?: T;
+  source?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "watchlists_select".
  */
 export interface WatchlistsSelect<T extends boolean = true> {
-  owner?: T
-  name?: T
-  slug?: T
-  description?: T
-  visibility?: T
-  isDefault?: T
-  isSystem?: T
-  sortOrder?: T
-  coverMedia?: T
+  owner?: T;
+  name?: T;
+  slug?: T;
+  description?: T;
+  visibility?: T;
+  isDefault?: T;
+  isSystem?: T;
+  sortOrder?: T;
+  coverMedia?: T;
   challenge?:
     | T
     | {
-        enabled?: T
-        startDate?: T
-        dueDate?: T
-        goalType?: T
-        goalCount?: T
-        goalRuntimeMinutes?: T
-        tvCountRule?: T
-        priorCompletionRule?: T
-        includeRewatches?: T
-      }
-  statsCache?: T
-  updatedAt?: T
-  createdAt?: T
+        enabled?: T;
+        startDate?: T;
+        dueDate?: T;
+        goalType?: T;
+        goalCount?: T;
+        goalRuntimeMinutes?: T;
+        tvCountRule?: T;
+        priorCompletionRule?: T;
+        includeRewatches?: T;
+      };
+  statsCache?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "watchlist-memberships_select".
  */
 export interface WatchlistMembershipsSelect<T extends boolean = true> {
-  watchlist?: T
-  libraryItem?: T
-  addedAt?: T
-  sortOrder?: T
-  note?: T
-  listStatus?: T
-  completedForListAt?: T
-  countsTowardGoal?: T
-  goalWeight?: T
-  episodesCountedForList?: T
-  episodesAtJoin?: T
-  updatedAt?: T
-  createdAt?: T
+  watchlist?: T;
+  libraryItem?: T;
+  addedAt?: T;
+  sortOrder?: T;
+  note?: T;
+  listStatus?: T;
+  completedForListAt?: T;
+  countsTowardGoal?: T;
+  goalWeight?: T;
+  episodesCountedForList?: T;
+  episodesAtJoin?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "watch-events_select".
  */
 export interface WatchEventsSelect<T extends boolean = true> {
-  profile?: T
-  media?: T
-  libraryItem?: T
-  eventType?: T
-  watchedAt?: T
-  platform?: T
-  platformOther?: T
-  runtimeMinutes?: T
+  profile?: T;
+  media?: T;
+  libraryItem?: T;
+  eventType?: T;
+  watchedAt?: T;
+  platform?: T;
+  platformOther?: T;
+  runtimeMinutes?: T;
   tvContext?:
     | T
     | {
-        season?: T
-        episode?: T
-      }
-  isRewatch?: T
-  visibility?: T
-  updatedAt?: T
-  createdAt?: T
+        season?: T;
+        episode?: T;
+      };
+  isRewatch?: T;
+  visibility?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reviews_select".
  */
 export interface ReviewsSelect<T extends boolean = true> {
-  profile?: T
-  media?: T
-  rating?: T
-  title?: T
-  body?: T
-  containsSpoilers?: T
-  watchedAt?: T
-  visibility?: T
-  updatedAt?: T
-  createdAt?: T
+  profile?: T;
+  media?: T;
+  rating?: T;
+  title?: T;
+  body?: T;
+  containsSpoilers?: T;
+  watchedAt?: T;
+  visibility?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
-  key?: T
-  data?: T
+  key?: T;
+  data?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
-  document?: T
-  globalSlug?: T
-  user?: T
-  updatedAt?: T
-  createdAt?: T
+  document?: T;
+  globalSlug?: T;
+  user?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences_select".
  */
 export interface PayloadPreferencesSelect<T extends boolean = true> {
-  user?: T
-  key?: T
-  value?: T
-  updatedAt?: T
-  createdAt?: T
+  user?: T;
+  key?: T;
+  value?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations_select".
  */
 export interface PayloadMigrationsSelect<T extends boolean = true> {
-  name?: T
-  batch?: T
-  updatedAt?: T
-  createdAt?: T
+  name?: T;
+  batch?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -755,14 +743,14 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface CollectionsWidget {
   data?: {
-    [k: string]: unknown
-  }
-  width: 'full'
+    [k: string]: unknown;
+  };
+  width: 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {
-  [k: string]: unknown
+  [k: string]: unknown;
 }
