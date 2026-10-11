@@ -3,7 +3,13 @@
 import type { MediaType } from '@plotline/shared/constants'
 
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ShowIf } from '@/components/utils/ShowIf'
 
@@ -38,9 +44,9 @@ export function MediaTmdbReviews({ mediaType, tmdbId }: MediaTmdbReviewsProps) {
 function CommunityReviewList({ query, reviews }: CommunityReviewListProps) {
   if (query.isPending) {
     return (
-      <div className="flex flex-col gap-3">
-        {Array.from({ length: 3 }, (_, index) => (
-          <Skeleton className="h-16 w-full" key={index} />
+      <div className="flex flex-col gap-6">
+        {Array.from({ length: 5 }, (_, index) => (
+          <Skeleton className="h-48 w-full" key={index} />
         ))}
       </div>
     )
@@ -53,16 +59,19 @@ function CommunityReviewList({ query, reviews }: CommunityReviewListProps) {
           <EmptyTitle>Error Loading Community Reviews</EmptyTitle>
           <EmptyDescription>Community reviews could not be loaded.</EmptyDescription>
         </EmptyHeader>
-        <Button
-          disabled={query.isFetching}
-          onClick={() => {
-            void query.refetch()
-          }}
-          type="button"
-          variant="outline"
-        >
-          {query.isFetching ? 'Loading…' : 'Try Again'}
-        </Button>
+
+        <EmptyContent>
+          <Button
+            disabled={query.isFetching}
+            onClick={() => {
+              void query.refetch()
+            }}
+            type="button"
+            variant="outline"
+          >
+            {query.isFetching ? 'Loading…' : 'Try Again'}
+          </Button>
+        </EmptyContent>
       </Empty>
     )
   }
@@ -80,7 +89,7 @@ function CommunityReviewList({ query, reviews }: CommunityReviewListProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         {reviews.map((review) => (
           <MediaTmdbReview key={review.id} review={review} />
         ))}
