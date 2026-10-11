@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  classifyTitleSearchRow,
-  shouldShowTitleSearchStatus,
-} from '../classify-title-search-row'
+import { classifyTitleSearchRow, shouldShowTitleSearchStatus } from '../classify-title-search-row'
 
 describe('classifyTitleSearchRow', () => {
   describe('library', () => {

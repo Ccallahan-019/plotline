@@ -12,10 +12,7 @@ type AddToLibraryStatusFieldProps = {
   form: AddToLibraryFormApi
 }
 
-export function AddToLibraryStatusField({
-  disabled = false,
-  form,
-}: AddToLibraryStatusFieldProps) {
+export function AddToLibraryStatusField({ disabled = false, form }: AddToLibraryStatusFieldProps) {
   return (
     <form.AppField name="status">
       {(field) => (

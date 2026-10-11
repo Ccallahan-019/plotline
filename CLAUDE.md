@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 pnpm + Turborepo monorepo (Node >= 20, pnpm 10) for Plotline, a movie/TV tracking app.
 
-| Workspace                     | Role                                                                 |
-| ----------------------------- | -------------------------------------------------------------------- |
-| `apps/payload`                | Payload CMS 3 backend on Next.js (port 3001): admin, REST, Postgres   |
-| `apps/plotline`               | User-facing Next.js app (port 3000): Clerk auth, shadcn/ui, BFF       |
-| `packages/shared`             | Pure TS shared by both apps (subpath exports, see below)              |
-| `packages/payload-types`      | Generated Payload types (`@plotline/payload-types`), do not hand-edit |
-| `packages/eslint-config`, `packages/typescript-config` | Shared tooling config                        |
+| Workspace                                              | Role                                                                  |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
+| `apps/payload`                                         | Payload CMS 3 backend on Next.js (port 3001): admin, REST, Postgres   |
+| `apps/plotline`                                        | User-facing Next.js app (port 3000): Clerk auth, shadcn/ui, BFF       |
+| `packages/shared`                                      | Pure TS shared by both apps (subpath exports, see below)              |
+| `packages/payload-types`                               | Generated Payload types (`@plotline/payload-types`), do not hand-edit |
+| `packages/eslint-config`, `packages/typescript-config` | Shared tooling config                                                 |
 
 `apps/plotline/CLAUDE.md` pulls in `apps/plotline/AGENTS.md`: the app runs a Next.js version with breaking changes. Read the relevant guide in `apps/plotline/node_modules/next/dist/docs/` before writing Next.js code there.
 

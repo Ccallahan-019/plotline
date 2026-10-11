@@ -1,10 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import {
-  STREAMING_PLATFORMS,
-  VISIBILITIES,
-  WATCH_EVENT_TYPES,
-} from '@plotline/shared/constants'
+import { STREAMING_PLATFORMS, VISIBILITIES, WATCH_EVENT_TYPES } from '@plotline/shared/constants'
 
 import { watchEventsAccess } from './access'
 import { syncLibraryItemFromWatchEvent } from './hooks/syncLibraryItemFromWatchEvent'

@@ -46,7 +46,11 @@ export function resolveSeasonsCompleted(
 
     const { episodeCount, season } = entry
 
-    if (!isSeasonNumber(season) || !isPositiveEpisodeCount(episodeCount) || considered.has(season)) {
+    if (
+      !isSeasonNumber(season) ||
+      !isPositiveEpisodeCount(episodeCount) ||
+      considered.has(season)
+    ) {
       continue
     }
 

@@ -39,10 +39,7 @@ export const watchedEpisodesEndpoint: Endpoint = {
       overrideAccess: true,
       req,
       where: {
-        and: [
-          { id: { equals: libraryItemId } },
-          { profile: { equals: profileResult.profileId } },
-        ],
+        and: [{ id: { equals: libraryItemId } }, { profile: { equals: profileResult.profileId } }],
       },
     })
 

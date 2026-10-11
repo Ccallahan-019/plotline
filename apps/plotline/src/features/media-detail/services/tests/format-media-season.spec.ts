@@ -110,9 +110,10 @@ describe('resolveSelectedSeason', () => {
 
   it('falls back to the lowest regular season', () => {
     expect(resolveSelectedSeason(seasons, null, null)?.seasonNumber).toBe(1)
-    expect(resolveSelectedSeason([season(2), season(0, 'Specials'), season(1)], null, null)?.seasonNumber).toBe(
-      1,
-    )
+    expect(
+      resolveSelectedSeason([season(2), season(0, 'Specials'), season(1)], null, null)
+        ?.seasonNumber,
+    ).toBe(1)
   })
 
   it('falls back to specials when the series has no regular seasons', () => {

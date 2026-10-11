@@ -9,7 +9,11 @@ import { ShowIf } from '@/components/utils/ShowIf'
 
 import type { LogWatchEpisodeInput } from '../../../services/log-watch-form-schema'
 
-import { formatEpisodeOption, isEpisodeSelected, isLoggedEpisodeWatched } from '../../../services/episode-field'
+import {
+  formatEpisodeOption,
+  isEpisodeSelected,
+  isLoggedEpisodeWatched,
+} from '../../../services/episode-field'
 import { LogWatchEpisodeRow } from './LogWatchEpisodeRow'
 
 type LogWatchEpisodesFallbackListProps = {

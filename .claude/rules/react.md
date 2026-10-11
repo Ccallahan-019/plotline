@@ -103,7 +103,8 @@ const DOCUMENT_STATUS_RENDERERS: Record<DocumentStatus, (doc: Document) => React
   approved: (doc) => <ApprovedBadge doc={doc} />,
 }
 
-export const DocumentStatusCell = ({ doc }: { doc: Document }) => DOCUMENT_STATUS_RENDERERS[doc.status](doc)
+export const DocumentStatusCell = ({ doc }: { doc: Document }) =>
+  DOCUMENT_STATUS_RENDERERS[doc.status](doc)
 ```
 
 Adding a new status means adding one entry to the map — no existing branch is touched, so there's nothing to regression-test in the existing cases.
@@ -209,7 +210,8 @@ export const buildStockSummary = async (productUnitId: string, repo: StockReposi
 
 // production wiring provides the concrete implementation
 const payloadStockRepository: StockRepository = {
-  getQuantity: (id) => payload.findByID({ collection: 'product-unit-stock', id }).then((doc) => doc.quantity),
+  getQuantity: (id) =>
+    payload.findByID({ collection: 'product-unit-stock', id }).then((doc) => doc.quantity),
 }
 ```
 

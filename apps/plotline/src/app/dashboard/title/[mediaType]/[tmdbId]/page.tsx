@@ -44,9 +44,7 @@ export default async function TitlePage({ params }: TitlePageProps) {
   try {
     const data = await getMediaTitlePage(userId, parsed.mediaType, parsed.tmdbId)
 
-    return (
-      <MediaTitlePage initialData={data} mediaType={parsed.mediaType} tmdbId={parsed.tmdbId} />
-    )
+    return <MediaTitlePage initialData={data} mediaType={parsed.mediaType} tmdbId={parsed.tmdbId} />
   } catch (error) {
     if (error instanceof MediaTitleNotFoundError) {
       notFound()

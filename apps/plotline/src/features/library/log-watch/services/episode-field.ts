@@ -16,11 +16,7 @@ export type LogWatchWatchedCoverage = {
 }
 
 // `S1E3 — Episode Title` when TMDB provided a name; otherwise `S1E3`.
-export function formatEpisodeOption(
-  season: number,
-  episodeNumber: number,
-  name?: null | string,
-) {
+export function formatEpisodeOption(season: number, episodeNumber: number, name?: null | string) {
   const code = `S${season}E${episodeNumber}`
   return name ? `${code} — ${name}` : code
 }

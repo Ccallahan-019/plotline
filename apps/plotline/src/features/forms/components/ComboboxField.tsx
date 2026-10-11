@@ -90,7 +90,11 @@ export function ComboboxField<T extends number | string>({
         <ComboboxEmpty>{emptyContent}</ComboboxEmpty>
         <ComboboxList>
           {(item: ComboboxFieldItem<T>) => (
-            <ComboboxItem disabled={item.disabled || disabled} key={String(item.value)} value={item}>
+            <ComboboxItem
+              disabled={item.disabled || disabled}
+              key={String(item.value)}
+              value={item}
+            >
               {renderItem?.(item) ?? item.label}
             </ComboboxItem>
           )}

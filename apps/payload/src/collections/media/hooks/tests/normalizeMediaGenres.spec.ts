@@ -16,11 +16,9 @@ describe('normalizeMediaGenreRows', () => {
   })
 
   it('keeps Payload string row ids and existing tmdbId values on update', () => {
-    expect(
-      normalizeMediaGenreRows([
-        { id: 'row_abc', name: 'Drama', tmdbId: 18 },
-      ]),
-    ).toEqual([{ id: 'row_abc', name: 'Drama', tmdbId: 18 }])
+    expect(normalizeMediaGenreRows([{ id: 'row_abc', name: 'Drama', tmdbId: 18 }])).toEqual([
+      { id: 'row_abc', name: 'Drama', tmdbId: 18 },
+    ])
   })
 
   it('prefers tmdbId when both tmdbId and a numeric id are present', () => {
