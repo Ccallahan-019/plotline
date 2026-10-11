@@ -3,12 +3,16 @@ import {
   tmdbGenreListSchema,
   type TmdbMovieDetails,
   tmdbMovieDetailsSchema,
+  type TmdbMovieTitleDetails,
+  tmdbMovieTitleDetailsSchema,
   type TmdbSearchResponse,
   tmdbSearchResponseSchema,
   type TmdbTvDetails,
   tmdbTvDetailsSchema,
   type TmdbTvSeasonDetails,
   tmdbTvSeasonDetailsSchema,
+  type TmdbTvTitleDetails,
+  tmdbTvTitleDetailsSchema,
   type TmdbWatchProviderList,
   tmdbWatchProviderListSchema,
 } from './schemas'
@@ -55,6 +59,12 @@ export class TmdbClient {
     return this.fetchValidated('/genre/movie/list', tmdbGenreListSchema)
   }
 
+  async getMovieTitleDetails(id: number): Promise<TmdbMovieTitleDetails> {
+    return this.fetchValidated(`/movie/${id}`, tmdbMovieTitleDetailsSchema, {
+      append_to_response: 'credits,external_ids,release_dates',
+    })
+  }
+
   async getMovieWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
     return this.fetchValidated('/watch/providers/movie', tmdbWatchProviderListSchema, {
       watch_region: watchRegion,
@@ -73,6 +83,12 @@ export class TmdbClient {
 
   async getTvSeasonDetails(tvId: number, seasonNumber: number): Promise<TmdbTvSeasonDetails> {
     return this.fetchValidated(`/tv/${tvId}/season/${seasonNumber}`, tmdbTvSeasonDetailsSchema)
+  }
+
+  async getTvTitleDetails(id: number): Promise<TmdbTvTitleDetails> {
+    return this.fetchValidated(`/tv/${id}`, tmdbTvTitleDetailsSchema, {
+      append_to_response: 'aggregate_credits,content_ratings,external_ids',
+    })
   }
 
   async getTvWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {

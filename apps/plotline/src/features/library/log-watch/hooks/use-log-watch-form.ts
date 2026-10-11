@@ -37,7 +37,7 @@ type UseLogWatchFormOptions = {
  * Submit failures are shown in the toast and are not rethrown.
  *
  * @param options.libraryItem - Library row used for progress defaults and status transitions
- * @param options.media - Title being logged; supplies media type, id, and optional runtime
+ * @param options.media - Title being logged; supplies media type and id
  * @param options.onSuccess - Called after a successful submit (typically to close the UI)
  * @returns `form` (TanStack form API) and `isSubmitting` (mutation or form pending)
  */
@@ -72,7 +72,6 @@ export function useLogWatchForm({ libraryItem, media, onSuccess }: UseLogWatchFo
                 currentStatus,
                 mediaId,
                 mediaType,
-                runtimeMinutes: media.runtime ?? undefined,
                 values: value,
               }),
             )

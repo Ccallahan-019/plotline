@@ -3,11 +3,9 @@
 import type { LibraryItem, Media, WatchlistMembership } from '@plotline/payload-types'
 
 import { useSortable } from '@dnd-kit/react/sortable'
-import { ImageOff } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 
-import { AspectRatio } from '@/components/ui/aspect-ratio'
+import { MediaPoster } from '@/components/media/MediaPoster'
 import {
   Item,
   ItemActions,
@@ -84,7 +82,13 @@ export function WatchlistMembershipRow({
         </ShowIf>
 
         <ItemMedia>
-          <MembershipPoster media={media} />
+          <MediaPoster
+            className="w-16 shrink-0 rounded-sm"
+            fallbackIconClassName="size-4"
+            ratio={2 / 3}
+            sizes="64px"
+            src={getPosterUrl(media?.posterPath)}
+          />
         </ItemMedia>
 
         <ItemContent className="min-w-0">
@@ -118,25 +122,6 @@ function LibraryItemStatus({ libraryItem }: { libraryItem: LibraryItem | null })
   }
 
   return <StatusBadge status={libraryItem.status} />
-}
-
-function MembershipPoster({ media }: { media: Media | null }) {
-  const posterUrl = media ? getPosterUrl(media.posterPath) : undefined
-
-  return (
-    <AspectRatio
-      className="w-16 relative shrink-0 overflow-hidden rounded-sm bg-muted"
-      ratio={2 / 3}
-    >
-      {posterUrl ? (
-        <Image alt="" className="absolute inset-0 object-cover" fill sizes="64px" src={posterUrl} />
-      ) : (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          <ImageOff aria-hidden className="size-4" />
-        </div>
-      )}
-    </AspectRatio>
-  )
 }
 
 function MembershipTitle({ media, title }: { media: Media | null; title: string }) {

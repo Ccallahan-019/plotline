@@ -133,3 +133,120 @@ export const tmdbWatchProviderListSchema = z.object({
 
 export type TmdbWatchProvider = z.infer<typeof watchProviderSchema>
 export type TmdbWatchProviderList = z.infer<typeof tmdbWatchProviderListSchema>
+
+const tmdbCastMemberSchema = z.object({
+  character: z.string().nullable().optional(),
+  id: z.number(),
+  name: z.string(),
+  profile_path: z.string().nullable().optional(),
+})
+
+const tmdbCrewMemberSchema = z.object({
+  id: z.number(),
+  job: z.string().optional(),
+  name: z.string(),
+  profile_path: z.string().nullable().optional(),
+})
+
+const tmdbCreditsSchema = z.object({
+  cast: z.array(tmdbCastMemberSchema).optional(),
+  crew: z.array(tmdbCrewMemberSchema).optional(),
+})
+
+const tmdbAggregateCastMemberSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  order: z.number().optional(),
+  profile_path: z.string().nullable().optional(),
+  roles: z
+    .array(
+      z.object({
+        character: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
+})
+
+const tmdbAggregateCrewMemberSchema = z.object({
+  id: z.number(),
+  jobs: z
+    .array(
+      z.object({
+        job: z.string().optional(),
+      }),
+    )
+    .optional(),
+  name: z.string(),
+  profile_path: z.string().nullable().optional(),
+})
+
+const tmdbAggregateCreditsSchema = z.object({
+  cast: z.array(tmdbAggregateCastMemberSchema).optional(),
+  crew: z.array(tmdbAggregateCrewMemberSchema).optional(),
+})
+
+const tmdbReleaseDatesSchema = z.object({
+  results: z.array(
+    z.object({
+      iso_3166_1: z.string(),
+      release_dates: z.array(
+        z.object({
+          certification: z.string().optional(),
+          type: z.number().optional(),
+        }),
+      ),
+    }),
+  ),
+})
+
+const tmdbContentRatingsSchema = z.object({
+  results: z.array(
+    z.object({
+      iso_3166_1: z.string(),
+      rating: z.string().optional(),
+    }),
+  ),
+})
+
+const tmdbTitleSeasonSchema = z.object({
+  air_date: z.string().nullable().optional(),
+  episode_count: z.number().nullable().optional(),
+  name: z.string().nullable().optional(),
+  poster_path: z.string().nullable().optional(),
+  season_number: z.number().nullable().optional(),
+})
+
+export const tmdbMovieTitleDetailsSchema = tmdbMovieDetailsSchema.extend({
+  credits: tmdbCreditsSchema.optional(),
+  original_language: z.string().optional(),
+  release_dates: tmdbReleaseDatesSchema.optional(),
+  vote_count: z.number().optional(),
+})
+
+export const tmdbTvTitleDetailsSchema = tmdbTvDetailsSchema.extend({
+  aggregate_credits: tmdbAggregateCreditsSchema.optional(),
+  content_ratings: tmdbContentRatingsSchema.optional(),
+  created_by: z
+    .array(
+      z.object({
+        id: z.number().optional(),
+        name: z.string(),
+      }),
+    )
+    .optional(),
+  credits: tmdbCreditsSchema.optional(),
+  networks: z
+    .array(
+      z.object({
+        id: z.number().optional(),
+        name: z.string(),
+      }),
+    )
+    .optional(),
+  original_language: z.string().optional(),
+  seasons: z.array(tmdbTitleSeasonSchema).optional(),
+  vote_count: z.number().optional(),
+})
+
+export type TmdbMovieTitleDetails = z.infer<typeof tmdbMovieTitleDetailsSchema>
+export type TmdbTvTitleDetails = z.infer<typeof tmdbTvTitleDetailsSchema>

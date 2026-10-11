@@ -1,3 +1,5 @@
+import { RememberTitleBreadcrumbParent } from '@/features/navigation/breadcrumbs/components/RememberTitleBreadcrumbParent'
+
 import { SearchFilterBar } from '../filters/SearchFilterBar'
 import { SearchFilterBarSeparator } from '../filters/SearchFilterBarSeparator'
 import { ResultsTitle } from '../results/ResultsTitle'
@@ -12,6 +14,7 @@ import { SearchSortSelector } from './SearchSortSelector'
 export function SearchPage() {
   return (
     <div className="flex flex-col gap-5">
+      <RememberTitleBreadcrumbParent href="/dashboard/search" label="Discover" />
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <BrowseModeToggle />

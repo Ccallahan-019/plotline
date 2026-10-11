@@ -11,7 +11,9 @@ type UseTvSeasonEpisodesOptions = {
 }
 
 /**
- * Loads TMDB episode titles for a TV season when the log-watch UI is open.
+ * Loads TMDB episode titles for one TV season.
+ *
+ * Used by log-watch and the title page seasons tab. The two share this cache.
  *
  * The query is disabled until both `tmdbId` and `seasonNumber` are present (and
  * `options.enabled` is not `false`). Cached for about an hour.

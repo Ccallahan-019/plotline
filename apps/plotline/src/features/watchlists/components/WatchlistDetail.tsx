@@ -8,6 +8,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/co
 import { Spinner } from '@/components/ui/spinner'
 import { ErrorEmpty } from '@/components/utils/ErrorEmpty'
 import { ShowIf } from '@/components/utils/ShowIf'
+import { RememberTitleBreadcrumbParent } from '@/features/navigation/breadcrumbs/components/RememberTitleBreadcrumbParent'
 import { WatchlistTitleSearchDialog } from '@/features/search/components/title-search/WatchlistTitleSearchDialog'
 import { getErrorMessage } from '@/utils/get-error-message'
 
@@ -74,6 +75,10 @@ export function WatchlistDetail({
 
   return (
     <div className="flex flex-col gap-4">
+      <RememberTitleBreadcrumbParent
+        href={`/dashboard/watchlists/${slug}`}
+        label={watchlist.name}
+      />
       <Item className="px-0 rounded-none border-b-border">
         <ItemContent>
           <div className="flex items-center gap-2">

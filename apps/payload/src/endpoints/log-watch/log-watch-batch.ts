@@ -8,11 +8,13 @@ import {
   type BatchLoggedEpisode,
   buildBatchTvProgressUpdate,
 } from '../../collections/watch-events/utils/buildBatchTvProgressUpdate'
+import { runtimeForEpisode } from '../../collections/watch-events/utils/watch-event-runtime'
 import { withLibraryItemRowLock } from '../../collections/watch-events/utils/withLibraryItemRowLock'
 import { runInPayloadTransaction } from '../../utilities/runInPayloadTransaction'
 import { parseId, parseJsonBody, requireProfileContext, requireServiceAuth } from '../helpers'
 import { createWatchEvent } from './create-watch-event'
 import { deriveLogWatchRewatch, loadLogWatchRewatchContext } from './derive-rewatch'
+import { fetchTvEpisodeRuntimes } from './fetch-tv-episode-runtimes'
 import { parseLoggedEpisodes } from './parseLoggedEpisodes'
 import { resolveOrCreateLibraryItem } from './resolve-or-create-library-item'
 
@@ -69,6 +71,8 @@ export const logWatchBatchEndpoint: Endpoint = {
     }
 
     const watchedAt = body.watchedAt ?? new Date().toISOString()
+    // One TMDB season request per distinct season, before the row lock.
+    const episodeRuntimes = await fetchTvEpisodeRuntimes(media.tmdbId, episodes)
 
     const result = await runInPayloadTransaction(req, async () => {
       // Status from this request is applied after derive so a first watch is not classified as a rewatch.
@@ -98,6 +102,8 @@ export const logWatchBatchEndpoint: Endpoint = {
             season: episode.season,
           })
 
+          const runtimeMinutes = runtimeForEpisode(episodeRuntimes, episode)
+
           watchEvents.push(
             await createWatchEvent(req, {
               eventType: derived.eventType,
@@ -107,6 +113,7 @@ export const logWatchBatchEndpoint: Endpoint = {
               platform: body.platform,
               platformOther: body.platformOther,
               profileId,
+              ...(runtimeMinutes != null ? { runtimeMinutes } : {}),
               skipProgressSync: true,
               tvContext: {
                 episode: episode.episode,

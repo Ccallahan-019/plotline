@@ -9,7 +9,12 @@ import {
   withLibraryItemRowLock,
 } from '../../../collections/watch-events/utils/withLibraryItemRowLock'
 import { createWatchEvent } from '../create-watch-event'
+import { fetchTvEpisodeRuntimes } from '../fetch-tv-episode-runtimes'
 import { logWatchEndpoint } from '../log-watch'
+
+vi.mock('../fetch-tv-episode-runtimes', () => ({
+  fetchTvEpisodeRuntimes: vi.fn(async () => new Map()),
+}))
 
 vi.mock('../../helpers', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../helpers')>()
@@ -41,6 +46,8 @@ vi.mock('../../../collections/watch-events/utils/withLibraryItemRowLock', () => 
 type LogWatchDb = {
   existingWatchEvents: Array<{ tvContext?: null | WatchEvent['tvContext'] }>
   libraryItem: Pick<LibraryItem, 'id' | 'progress' | 'rewatchCount' | 'status'>
+  runtime?: null | number
+  tmdbId?: number
   tvMeta?: Media['tvMeta']
 }
 
@@ -94,6 +101,7 @@ describe('logWatchEndpoint', () => {
       async (_req, _profileId, _mediaId, fn) => fn(),
     )
     vi.mocked(withLibraryItemRowLock).mockImplementation(async (_req, _id, fn) => fn())
+    vi.mocked(fetchTvEpisodeRuntimes).mockResolvedValue(new Map())
   })
 
   function createReq(body: Record<string, unknown>) {
@@ -140,6 +148,8 @@ describe('logWatchEndpoint', () => {
             return {
               id: 5,
               mediaType: db.libraryItem.progress.type,
+              runtime: db.runtime,
+              tmdbId: db.tmdbId,
               tvMeta: db.tvMeta,
             }
           }
@@ -422,5 +432,73 @@ describe('logWatchEndpoint', () => {
       seasonsCompleted: [1],
       type: 'tv',
     })
+  })
+
+  it('stores the film runtime from the catalog row and ignores a client runtime', async () => {
+    db.runtime = 124
+    mockCreateWatchEvent()
+
+    const { req } = createReq({
+      mediaId: 5,
+      runtimeMinutes: 10,
+    })
+
+    const response = await logWatchEndpoint.handler(req)
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response).toHaveProperty('status', 200)
+    expect(fetchTvEpisodeRuntimes).not.toHaveBeenCalled()
+    expect(createWatchEvent).toHaveBeenCalledWith(
+      req,
+      expect.objectContaining({ runtimeMinutes: 124 }),
+    )
+  })
+
+  it('loads the episode runtime before the transaction and stores that length', async () => {
+    db.libraryItem = createTvLibraryItem()
+    db.tmdbId = 1396
+    mockCreateWatchEvent()
+    vi.mocked(fetchTvEpisodeRuntimes).mockImplementation(async () => {
+      callOrder.push('runtimes')
+      return new Map([['1:4', 47]])
+    })
+
+    const { req } = createReq({
+      mediaId: 5,
+      runtimeMinutes: 60,
+      tvContext: { episode: 4, season: 1 },
+    })
+
+    const response = await logWatchEndpoint.handler(req)
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response).toHaveProperty('status', 200)
+    expect(callOrder.indexOf('runtimes')).toBeGreaterThanOrEqual(0)
+    expect(callOrder.indexOf('runtimes')).toBeLessThan(callOrder.indexOf('begin'))
+    expect(fetchTvEpisodeRuntimes).toHaveBeenCalledWith(1396, [{ episode: 4, season: 1 }])
+    expect(createWatchEvent).toHaveBeenCalledWith(
+      req,
+      expect.objectContaining({ runtimeMinutes: 47 }),
+    )
+  })
+
+  it('omits runtime when the episode length is unknown', async () => {
+    db.libraryItem = createTvLibraryItem()
+    db.tmdbId = 1396
+    mockCreateWatchEvent()
+
+    const { req } = createReq({
+      mediaId: 5,
+      tvContext: { episode: 4, season: 1 },
+    })
+
+    const response = await logWatchEndpoint.handler(req)
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response).toHaveProperty('status', 200)
+    expect(createWatchEvent).toHaveBeenCalledWith(
+      req,
+      expect.not.objectContaining({ runtimeMinutes: expect.anything() }),
+    )
   })
 })

@@ -17,16 +17,24 @@ import {
 } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ShowIf } from '@/components/utils/ShowIf'
+import { cn } from '@/lib/utils'
 import { useOpenState } from '@/providers/OpenStateProvider'
 
 import { AddToLibraryForm } from './AddToLibraryForm'
 
 type AddToLibraryPopoverProps = {
+  appearance?: 'button' | 'icon'
+  className?: string
   existingLibraryItem?: LibraryItem
   media: MediaDisplay
 }
 
-export function AddToLibraryPopover({ existingLibraryItem, media }: AddToLibraryPopoverProps) {
+export function AddToLibraryPopover({
+  appearance = 'icon',
+  className,
+  existingLibraryItem,
+  media,
+}: AddToLibraryPopoverProps) {
   const { isOpen, setIsOpen } = useOpenState()
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -40,6 +48,43 @@ export function AddToLibraryPopover({ existingLibraryItem, media }: AddToLibrary
   const triggerContent = existingLibraryItem ? <Bookmark fill="currentColor" /> : <BookmarkPlus />
 
   const popoverTitle = existingLibraryItem ? 'Add to Watchlists' : 'Add to Library'
+
+  const popoverBody = (
+    <>
+      <PopoverHeader>
+        <PopoverTitle>{popoverTitle}</PopoverTitle>
+        <PopoverDescription className="line-clamp-2">{media.title}</PopoverDescription>
+      </PopoverHeader>
+
+      <ShowIf condition={isOpen}>
+        <AddToLibraryForm
+          existingLibraryItem={existingLibraryItem}
+          media={media}
+          onSuccess={handleSuccess}
+        />
+      </ShowIf>
+    </>
+  )
+
+  if (appearance === 'button') {
+    return (
+      <Popover onOpenChange={handleOpenChange} open={isOpen}>
+        <PopoverTrigger
+          aria-label={`Add ${media.title} to a watchlist`}
+          render={
+            <Button className={cn('justify-center', className)} type="button" variant="secondary" />
+          }
+        >
+          <Bookmark />
+          Add to Watchlist
+        </PopoverTrigger>
+
+        <PopoverContent align="start" className="w-80" side="bottom" sideOffset={8}>
+          {popoverBody}
+        </PopoverContent>
+      </Popover>
+    )
+  }
 
   return (
     <Tooltip>
@@ -59,18 +104,7 @@ export function AddToLibraryPopover({ existingLibraryItem, media }: AddToLibrary
         />
 
         <PopoverContent align="start" className="w-80" side="top" sideOffset={3}>
-          <PopoverHeader>
-            <PopoverTitle>{popoverTitle}</PopoverTitle>
-            <PopoverDescription className="line-clamp-2">{media.title}</PopoverDescription>
-          </PopoverHeader>
-
-          <ShowIf condition={isOpen}>
-            <AddToLibraryForm
-              existingLibraryItem={existingLibraryItem}
-              media={media}
-              onSuccess={handleSuccess}
-            />
-          </ShowIf>
+          {popoverBody}
         </PopoverContent>
       </Popover>
 

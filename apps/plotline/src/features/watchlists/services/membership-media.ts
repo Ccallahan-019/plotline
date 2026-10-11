@@ -37,9 +37,6 @@ export function getMembershipMedia(membership: WatchlistMembership): Media | nul
 /**
  * Card fields for a membership title, including the TMDB id the title route needs.
  *
- * `toMediaDisplayFromMedia` omits `tmdbId`, and title links fall back to the library
- * without it.
- *
  * @param media - Populated media for the membership
  * @returns Display fields for grid cards and title links
  */

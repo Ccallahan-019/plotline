@@ -3,11 +3,11 @@ import type { QueryClient } from '@tanstack/react-query'
 import { watchlistQueryKeys } from '@/features/watchlists/services/query-keys'
 
 /**
- * Refreshes library, watch-event, and watchlist queries after a library write.
+ * Refreshes library, watch-event, watchlist, and open title-page queries after a library write.
  *
  * The `library-items` prefix includes watched-episode keys
  * (`['library-items', id, 'watched-episodes']`), so TV log-watch refetches episode
- * coverage along with the grid.
+ * coverage along with the grid. `media-title` refreshes the title page hero.
  *
  * @param queryClient - React Query client holding library caches
  * @param options.watchlistSlug - Single watchlist to refresh in addition to the list queries
@@ -18,6 +18,7 @@ export function invalidateAfterLibraryMutation(
   options?: { watchlistSlug?: string; watchlistSlugs?: string[] },
 ) {
   void queryClient.invalidateQueries({ queryKey: ['library-items'] })
+  void queryClient.invalidateQueries({ queryKey: ['media-title'] })
   void queryClient.invalidateQueries({ queryKey: ['watch-events'] })
   void queryClient.invalidateQueries({ queryKey: ['watchlists'] })
   void queryClient.invalidateQueries({ queryKey: ['watchlist-memberships'] })

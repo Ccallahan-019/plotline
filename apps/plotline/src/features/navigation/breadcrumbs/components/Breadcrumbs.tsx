@@ -11,12 +11,15 @@ import {
 } from '@/components/ui/breadcrumb'
 import { ShowIf } from '@/components/utils/ShowIf'
 
+import { applyBreadcrumbOverride } from '../services/apply-breadcrumb-override'
 import { getBreadcrumbs } from '../services/get-breadcrumbs'
 import { BreadcrumbItemContent } from './BreadcrumbItemContent'
+import { useBreadcrumbOverride } from './BreadcrumbOverrideProvider'
 
 export function Breadcrumbs() {
   const pathname = usePathname()
-  const segments = getBreadcrumbs(pathname)
+  const { override } = useBreadcrumbOverride()
+  const segments = applyBreadcrumbOverride(getBreadcrumbs(pathname), pathname, override)
 
   if (segments.length === 0) {
     return null
