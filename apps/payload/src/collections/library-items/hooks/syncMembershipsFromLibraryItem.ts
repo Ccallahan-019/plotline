@@ -116,6 +116,8 @@ export const syncMembershipsFromLibraryItem: CollectionAfterChangeHook = async (
       addedAt,
       challenge: watchlist.challenge as null | undefined | WatchlistChallengeConfig,
       episodesAtJoin,
+      // Not written below, so a manual opt-out survives this recompute.
+      excludeFromGoal: membership.excludeFromGoal,
       libraryItem: {
         completedAt: doc.completedAt,
         progress: doc.progress,

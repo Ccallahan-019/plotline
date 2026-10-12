@@ -57,6 +57,15 @@ export const WatchlistMemberships: CollectionConfig = {
       type: 'checkbox',
     },
     {
+      admin: {
+        description:
+          'Manual opt-out from the challenge goal. Library sync and challenge rule changes keep this value and fold it into countsTowardGoal.',
+      },
+      defaultValue: false,
+      name: 'excludeFromGoal',
+      type: 'checkbox',
+    },
+    {
       name: 'goalWeight',
       type: 'number',
     },

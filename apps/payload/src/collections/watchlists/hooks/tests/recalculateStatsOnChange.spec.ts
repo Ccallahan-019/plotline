@@ -137,6 +137,70 @@ describe('recalculateStatsAfterWatchlistChange', () => {
     expect(statsCompleted(updates)).toBe(1)
   })
 
+  it('keeps a manual exclusion from counting when rewatches become eligible', async () => {
+    const doc = {
+      challenge: challenge({ includeRewatches: true }),
+      createdAt: '2026-01-01T00:00:00.000Z',
+      id: 3,
+    }
+    const { req, updates } = createReq(preJoinMovieMembership({ excludeFromGoal: true }), doc)
+
+    await recalculateStatsAfterWatchlistChange(
+      hookArgs(req, {
+        doc,
+        previousDoc: { challenge: challenge({ includeRewatches: false }), id: 3 },
+      }),
+    )
+
+    expect(updates.filter((update) => update.collection === 'watchlist-memberships')).toEqual([])
+    expect(statsCompleted(updates)).toBe(0)
+  })
+
+  it('re-derives goal weight without clearing a manual exclusion', async () => {
+    const doc = {
+      challenge: challenge({ tvCountRule: 'tv_by_episode' }),
+      createdAt: '2026-01-01T00:00:00.000Z',
+      id: 3,
+    }
+    const { req, updates } = createReq(
+      {
+        addedAt,
+        countsTowardGoal: false,
+        episodesAtJoin: 0,
+        episodesCountedForList: 4,
+        excludeFromGoal: true,
+        goalWeight: 1,
+        id: 7,
+        libraryItem: {
+          completedAt: null,
+          id: 11,
+          media: { id: 5, mediaType: 'tv', runtime: 40 },
+          progress: { episodesWatched: 4, type: 'tv' },
+          rewatchCount: 0,
+          status: 'watching',
+        },
+        listStatus: 'in_progress',
+      },
+      doc,
+    )
+
+    await recalculateStatsAfterWatchlistChange(
+      hookArgs(req, {
+        doc,
+        previousDoc: { challenge: challenge({ tvCountRule: 'tv_as_series' }), id: 3 },
+      }),
+    )
+
+    const membershipUpdate = updates.find((update) => update.collection === 'watchlist-memberships')
+
+    expect(membershipUpdate?.data).toMatchObject({
+      countsTowardGoal: false,
+      goalWeight: 4,
+      listStatus: 'in_progress',
+    })
+    expect(membershipUpdate?.data).not.toHaveProperty('excludeFromGoal')
+  })
+
   it('drops that rewatch when includeRewatches is turned off', async () => {
     const doc = {
       challenge: challenge({ includeRewatches: false }),

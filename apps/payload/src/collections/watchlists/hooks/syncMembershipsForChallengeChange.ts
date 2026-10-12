@@ -13,9 +13,10 @@ import {
  * Rewrites list-scoped challenge fields after watchlist challenge settings change.
  *
  * Stats recalc reads stored `countsTowardGoal`, `listStatus`, and `goalWeight`, so a
- * change such as `includeRewatches` has to land on memberships first. Skipped
- * memberships stay as the member left them. Skip flags cover these writes only and
- * are cleared before return so the caller can recalculate stats on the same request.
+ * change such as `includeRewatches` has to land on memberships first. `excludeFromGoal`
+ * stays as stored and is folded into `countsTowardGoal`. Skipped memberships stay as
+ * the member left them. Skip flags cover these writes only and are cleared before
+ * return so the caller can recalculate stats on the same request.
  *
  * @param req - Payload request whose transaction the membership writes join
  * @param watchlist - Watchlist whose challenge config just changed
@@ -63,6 +64,8 @@ export async function syncMembershipsForChallengeChange(
       addedAt: membership.addedAt,
       challenge: watchlist.challenge,
       episodesAtJoin,
+      // Not written below, so a manual opt-out survives the rule change.
+      excludeFromGoal: membership.excludeFromGoal,
       libraryItem: {
         completedAt: libraryItem.completedAt,
         progress: libraryItem.progress,

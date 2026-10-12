@@ -32,6 +32,7 @@ function challenge(includeRewatches: boolean) {
 function createHookArgs(options: {
   doc: Record<string, unknown>
   includeRewatches?: boolean
+  membership?: Record<string, unknown>
   previousDoc: Record<string, unknown>
 }) {
   const updates: Array<{
@@ -53,6 +54,7 @@ function createHookArgs(options: {
             goalWeight: 1,
             id: 7,
             listStatus: 'planned',
+            ...options.membership,
             watchlist: {
               challenge: challenge(options.includeRewatches ?? true),
               id: 3,
@@ -139,6 +141,7 @@ describe('syncMembershipsFromLibraryItem', () => {
         }),
       }),
     ])
+    expect(updates[0]?.data).not.toHaveProperty('excludeFromGoal')
     expect(req.context[SKIP_WATCHLIST_STATS_RECALC]).toBeUndefined()
     expect(req.context[SKIP_MEMBERSHIP_SYNC_FROM_LIBRARY]).toBeUndefined()
     expect(recalculateWatchlistsForLibraryItem).toHaveBeenCalledWith(req.payload, 11, req)
@@ -158,6 +161,24 @@ describe('syncMembershipsFromLibraryItem', () => {
       listStatus: 'planned',
     })
     expect(updates[0]?.data).not.toHaveProperty('completedForListAt')
+    expect(updates[0]?.data).not.toHaveProperty('excludeFromGoal')
+  })
+
+  it('keeps a manual exclusion when a rewatch would otherwise count', async () => {
+    const { args, updates } = createHookArgs({
+      doc: watchedMovie(1),
+      membership: { excludeFromGoal: true },
+      previousDoc: watchedMovie(0),
+    })
+
+    await syncMembershipsFromLibraryItem(args)
+
+    expect(updates[0]?.data).toMatchObject({
+      countsTowardGoal: false,
+      listStatus: 'planned',
+    })
+    expect(updates[0]?.data).not.toHaveProperty('completedForListAt')
+    expect(updates[0]?.data).not.toHaveProperty('excludeFromGoal')
   })
 
   it('returns before loading memberships when status, progress, and rewatchCount are unchanged', async () => {

@@ -14,6 +14,10 @@ export type UpdateWatchlistInput = {
   visibility: Watchlist['visibility']
 }
 
+export type UpdateWatchlistMembershipInput = {
+  excludeFromGoal: boolean
+}
+
 /**
  * Watchlist row for the cards grid.
  *
