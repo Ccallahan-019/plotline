@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 
+import { updateWatchlist } from '@/features/watchlists/editor/services/update-watchlist'
+import { parseWatchlistWriteBody } from '@/features/watchlists/editor/services/watchlist-write'
 import { getWatchlistBySlug } from '@/features/watchlists/services/get-watchlists'
-import { updateWatchlist } from '@/features/watchlists/services/update-watchlist'
-import { parseWatchlistWriteBody } from '@/features/watchlists/services/watchlist-write'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 

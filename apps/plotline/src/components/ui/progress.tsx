@@ -4,7 +4,13 @@ import { Progress as ProgressPrimitive } from '@base-ui/react/progress'
 
 import { cn } from '@/lib/utils'
 
-function Progress({ children, className, value, ...props }: ProgressPrimitive.Root.Props) {
+function Progress({
+  children,
+  className,
+  indicatorClassName,
+  value,
+  ...props
+}: { indicatorClassName?: string } & ProgressPrimitive.Root.Props) {
   return (
     <ProgressPrimitive.Root
       className={cn('flex flex-wrap gap-3', className)}
@@ -14,7 +20,7 @@ function Progress({ children, className, value, ...props }: ProgressPrimitive.Ro
     >
       {children}
       <ProgressTrack>
-        <ProgressIndicator />
+        <ProgressIndicator className={indicatorClassName} />
       </ProgressTrack>
     </ProgressPrimitive.Root>
   )

@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { notFound, redirect } from 'next/navigation'
 
-import { WatchlistEditor } from '@/features/watchlists/components/WatchlistEditor'
+import { WatchlistEditor } from '@/features/watchlists/editor/components/WatchlistEditor'
 import { getWatchlistBySlug } from '@/features/watchlists/services/get-watchlists'
 
 type EditWatchlistPageProps = {

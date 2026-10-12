@@ -4,12 +4,7 @@ import { ComponentProps } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 
-const VISIBILITY_LABELS: Record<Watchlist['visibility'], string> = {
-  friends: 'Friends',
-  private: 'Private',
-  public: 'Public',
-  unlisted: 'Unlisted',
-}
+import { formatWatchlistVisibilityLabel } from '../services/format-watchlist-visibility'
 
 const VISIBILITY_ICONS: Record<Watchlist['visibility'], LucideIcon | null> = {
   friends: Users,
@@ -32,7 +27,7 @@ export function WatchlistVisibilityBadge({
   return (
     <Badge className="w-fit" variant={variant}>
       {Icon && <Icon data-icon="inline-start" />}
-      {VISIBILITY_LABELS[visibility]}
+      {formatWatchlistVisibilityLabel(visibility)}
     </Badge>
   )
 }

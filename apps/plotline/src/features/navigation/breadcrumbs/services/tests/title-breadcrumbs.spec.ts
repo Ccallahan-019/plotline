@@ -9,7 +9,7 @@ describe('watchlist breadcrumbs', () => {
     expect(getBreadcrumbs('/dashboard/watchlists/new')).toEqual([
       { href: '/dashboard', kind: 'overview', label: 'Overview' },
       { href: '/dashboard/watchlists', label: 'Watchlists' },
-      { label: 'New watchlist' },
+      { label: 'New Watchlist' },
     ])
   })
 
@@ -17,7 +17,7 @@ describe('watchlist breadcrumbs', () => {
     expect(getBreadcrumbs('/dashboard/watchlists/friday-night/edit')).toEqual([
       { href: '/dashboard', kind: 'overview', label: 'Overview' },
       { href: '/dashboard/watchlists', label: 'Watchlists' },
-      { label: 'Edit watchlist' },
+      { label: 'Edit Watchlist' },
     ])
   })
 

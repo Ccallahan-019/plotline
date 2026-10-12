@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 
-import { createWatchlist } from '@/features/watchlists/services/create-watchlist'
+import type { WatchlistListFilter } from '@/features/watchlists/types'
+
+import { createWatchlist } from '@/features/watchlists/editor/services/create-watchlist'
+import { parseWatchlistWriteBody } from '@/features/watchlists/editor/services/watchlist-write'
 import { getWatchlists } from '@/features/watchlists/services/get-watchlists'
-import { parseWatchlistWriteBody } from '@/features/watchlists/services/watchlist-write'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 
-const VALID_FILTERS = new Set(['challenge', 'custom', 'system'])
+const VALID_FILTERS = new Set<WatchlistListFilter>(['challenge', 'custom', 'list', 'system'])
 
 export async function GET(request: Request) {
   const authResult = await requireClerkUserId()
@@ -18,13 +20,13 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const filter = searchParams.get('filter')
 
-  if (filter && !VALID_FILTERS.has(filter)) {
+  if (filter && !isWatchlistListFilter(filter)) {
     return NextResponse.json({ error: 'Invalid filter' }, { status: 400 })
   }
 
   try {
     const watchlists = await getWatchlists(authResult.clerkUserId, {
-      filter: filter as 'challenge' | 'custom' | 'system' | undefined,
+      filter: isWatchlistListFilter(filter) ? filter : undefined,
     })
 
     return NextResponse.json(watchlists)
@@ -61,4 +63,8 @@ export async function POST(request: Request) {
   } catch (error) {
     return handlePayloadError(error)
   }
+}
+
+function isWatchlistListFilter(value: null | string): value is WatchlistListFilter {
+  return value != null && VALID_FILTERS.has(value as WatchlistListFilter)
 }

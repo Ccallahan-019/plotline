@@ -1,9 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
 import { notFound, redirect } from 'next/navigation'
 
-import { WatchlistDetail } from '@/features/watchlists/components/WatchlistDetail'
+import { WatchlistDetail } from '@/features/watchlists/detail/components/WatchlistDetail'
+import { loadWatchlistDetail } from '@/features/watchlists/detail/services/load-watchlist-detail'
 import { getWatchlistBySlug } from '@/features/watchlists/services/get-watchlists'
-import { loadWatchlistDetail } from '@/features/watchlists/services/load-watchlist-detail'
 
 type ChallengeDetailPageProps = {
   params: Promise<{ slug: string }>

@@ -1,11 +1,17 @@
+import type { WatchlistCardFilter, WatchlistListFilter } from '../types'
+
 export type WatchlistFilters = {
-  filter?: 'challenge' | 'custom' | 'system'
+  filter?: WatchlistListFilter
 }
 
 const removeMembershipMutationKey = ['watchlists', 'remove-membership'] as const
 
 export const watchlistQueryKeys = {
-  cards: () => ['watchlists', { view: 'cards' }] as const,
+  // `filter` keeps the watchlists and challenges indexes in separate caches.
+  cards: (filter?: WatchlistCardFilter) =>
+    filter
+      ? (['watchlists', { filter, view: 'cards' }] as const)
+      : (['watchlists', { view: 'cards' }] as const),
   removeMembership: () => removeMembershipMutationKey,
   watchlist: (slug: string) => ['watchlists', slug] as const,
   watchlistDetailMemberships: (slug: string) => ['watchlists', slug, 'memberships'] as const,

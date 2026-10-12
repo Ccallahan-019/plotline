@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
-import { WatchlistEditor } from '@/features/watchlists/components/WatchlistEditor'
+import { WatchlistEditor } from '@/features/watchlists/editor/components/WatchlistEditor'
 
 export const metadata = {
   title: 'New watchlist',

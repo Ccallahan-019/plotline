@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { reorderWatchlistMemberships } from '@/features/watchlists/services/reorder-watchlist-memberships'
+import { reorderWatchlistMemberships } from '@/features/watchlists/detail/services/reorder-watchlist-memberships'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 

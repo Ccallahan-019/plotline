@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
-import { removeWatchlistMembership } from '@/features/watchlists/services/remove-watchlist-membership'
-import { updateWatchlistMembership } from '@/features/watchlists/services/update-watchlist-membership'
+import { removeWatchlistMembership } from '@/features/watchlists/detail/services/remove-watchlist-membership'
+import { updateWatchlistMembership } from '@/features/watchlists/detail/services/update-watchlist-membership'
 import { handlePayloadError } from '@/lib/api/handle-payload-error'
 import { requireClerkUserId } from '@/lib/api/require-clerk-user-id'
 
