@@ -15,6 +15,7 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
+  FieldTitle,
 } from '@/components/ui/field'
 
 import type { WatchlistFormApi } from '../hooks/use-watchlist-form'
@@ -171,15 +172,17 @@ export function WatchlistChallengeFields({ form, isSubmitting }: WatchlistChalle
 
       <form.AppField name="includeRewatches">
         {(field) => (
-          <Field data-disabled={isSubmitting} orientation="horizontal">
-            <field.SwitchField disabled={isSubmitting} />
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Include Rewatches</FieldLabel>
-              <FieldDescription>
-                Count a later rewatch of a title you finished before joining.
-              </FieldDescription>
-            </FieldContent>
-          </Field>
+          <FieldLabel htmlFor={field.name}>
+            <Field data-disabled={isSubmitting} orientation="horizontal">
+              <FieldContent>
+                <FieldTitle>Include Rewatches</FieldTitle>
+                <FieldDescription>
+                  Count a later rewatch of a title you finished before joining.
+                </FieldDescription>
+              </FieldContent>
+              <field.SwitchField disabled={isSubmitting} />
+            </Field>
+          </FieldLabel>
         )}
       </form.AppField>
     </FieldGroup>

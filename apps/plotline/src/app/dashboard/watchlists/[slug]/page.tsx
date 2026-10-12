@@ -50,6 +50,7 @@ export default async function WatchlistDetailPage({ params }: WatchlistDetailPag
       initialMembershipsError={detail.membershipsError}
       initialWatchlist={detail.watchlist}
       slug={slug}
+      surface="watchlist"
     />
   )
 }

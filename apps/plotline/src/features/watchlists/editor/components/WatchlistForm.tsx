@@ -7,12 +7,14 @@ import type { SubmitEvent } from 'react'
 import type { ToggleGroupFieldItem } from '@/features/forms/components/ToggleGroupField'
 
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
+  FieldTitle,
 } from '@/components/ui/field'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { formatReleaseYear } from '@/features/media-grid/grid/services/media-display-helpers'
@@ -158,13 +160,15 @@ export function WatchlistForm({
               : 'Add a goal, a due date, and counting rules.'
 
             return (
-              <Field data-disabled={challengeSwitchDisabled} orientation="horizontal">
-                <field.SwitchField disabled={challengeSwitchDisabled} />
-                <FieldContent>
-                  <FieldLabel htmlFor={field.name}>Make This a Challenge</FieldLabel>
-                  <FieldDescription>{description}</FieldDescription>
-                </FieldContent>
-              </Field>
+              <FieldLabel htmlFor={field.name}>
+                <Field data-disabled={challengeSwitchDisabled} orientation="horizontal">
+                  <FieldContent>
+                    <FieldTitle>Make This a Challenge</FieldTitle>
+                    <FieldDescription>{description}</FieldDescription>
+                  </FieldContent>
+                  <field.SwitchField disabled={challengeSwitchDisabled} />
+                </Field>
+              </FieldLabel>
             )
           }}
         </form.AppField>
@@ -173,7 +177,11 @@ export function WatchlistForm({
           <form.Subscribe selector={(state) => state.values.challengeEnabled}>
             {(challengeEnabled) => (
               <ShowIf condition={challengeEnabled}>
-                <WatchlistChallengeFields form={form} isSubmitting={isSubmitting} />
+                <Card size="sm">
+                  <CardContent>
+                    <WatchlistChallengeFields form={form} isSubmitting={isSubmitting} />
+                  </CardContent>
+                </Card>
               </ShowIf>
             )}
           </form.Subscribe>

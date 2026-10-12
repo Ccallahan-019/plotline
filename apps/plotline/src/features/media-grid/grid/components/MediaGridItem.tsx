@@ -66,7 +66,7 @@ export function MediaGridItem({
         </Link>
         <ItemDescription>{cardSubtitle}</ItemDescription>
         <ShowIf condition={!!actions}>
-          <ItemActions>{actions}</ItemActions>
+          <ItemActions className="pb-1">{actions}</ItemActions>
         </ShowIf>
       </ItemContent>
     </Item>

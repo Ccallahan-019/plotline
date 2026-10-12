@@ -1,11 +1,7 @@
-import { ChallengePaceTone } from '@plotline/shared/watchlist-stats'
-import { Activity } from 'lucide-react'
-
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { ProgressLabel } from '@/components/ui/progress'
+import { Progress, ProgressLabel } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
+import { ChallengePaceBadge } from '../../components/ChallengePaceBadge'
 import { getChallengeCardView } from '../services/challenge-card'
 import { WatchlistCard } from '../types'
 
@@ -24,35 +20,14 @@ export function ChallengeCardProgress({ card }: ChallengeCardProgressProps) {
         className="gap-2"
         indicatorClassName={cn(destructive && 'bg-destructive')}
         max={100}
+        trackClassName="h-1.5"
         value={view.percentComplete}
       >
         <ProgressLabel>{view.progressLabel}</ProgressLabel>
       </Progress>
       <div className="flex justify-end">
-        <Badge
-          className="h-auto max-w-full whitespace-normal"
-          variant={paceBadgeVariant(view.paceTone)}
-        >
-          <Activity data-icon="inline-start" />
-          {view.paceLabel}
-        </Badge>
+        <ChallengePaceBadge label={view.paceLabel} tone={view.paceTone} />
       </div>
     </div>
   )
-}
-
-function paceBadgeVariant(tone: ChallengePaceTone): 'default' | 'destructive' | 'secondary' {
-  switch (tone) {
-    case 'default':
-      return 'default'
-    case 'destructive':
-      return 'destructive'
-    case 'neutral':
-      return 'secondary'
-    default: {
-      const exhaustive: never = tone
-
-      return exhaustive
-    }
-  }
 }

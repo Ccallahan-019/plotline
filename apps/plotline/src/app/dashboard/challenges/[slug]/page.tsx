@@ -33,6 +33,7 @@ export default async function ChallengeDetailPage({ params }: ChallengeDetailPag
       initialMembershipsError={detail.membershipsError}
       initialWatchlist={detail.watchlist}
       slug={slug}
+      surface="challenge"
     />
   )
 }

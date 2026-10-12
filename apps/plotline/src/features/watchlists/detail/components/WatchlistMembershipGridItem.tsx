@@ -1,6 +1,6 @@
 'use client'
 
-import type { WatchlistMembership } from '@plotline/payload-types'
+import type { Watchlist, WatchlistMembership } from '@plotline/payload-types'
 
 import { AnimatedStatusBadge } from '@/components/utils/AnimatedStatusBadge'
 import { MediaGridItem } from '@/features/media-grid/grid/components/MediaGridItem'
@@ -10,19 +10,24 @@ import {
   getMembershipMedia,
   toMembershipMediaDisplay,
 } from '../services/membership-media'
+import { MembershipCountsControl } from './MembershipCountsControl'
 import { WatchlistMembershipMenu } from './WatchlistMembershipMenu'
 
 type WatchlistMembershipGridItemProps = {
+  challenge: null | Watchlist['challenge']
   membership: WatchlistMembership
   onLogWatch: (membership: WatchlistMembership) => void
   onRemove: (membership: WatchlistMembership) => void
+  showGoalCounts: boolean
   slug: string
 }
 
 export function WatchlistMembershipGridItem({
+  challenge,
   membership,
   onLogWatch,
   onRemove,
+  showGoalCounts,
   slug,
 }: WatchlistMembershipGridItemProps) {
   const media = getMembershipMedia(membership)
@@ -35,6 +40,16 @@ export function WatchlistMembershipGridItem({
 
   return (
     <MediaGridItem
+      actions={
+        showGoalCounts ? (
+          <MembershipCountsControl
+            challenge={challenge}
+            membership={membership}
+            slug={slug}
+            title={media.title}
+          />
+        ) : null
+      }
       media={mediaDisplay}
       posterOverlay={(isHovered) => (
         <div className="absolute inset-1">

@@ -8,9 +8,10 @@ function Progress({
   children,
   className,
   indicatorClassName,
+  trackClassName,
   value,
   ...props
-}: { indicatorClassName?: string } & ProgressPrimitive.Root.Props) {
+}: { indicatorClassName?: string; trackClassName?: string } & ProgressPrimitive.Root.Props) {
   return (
     <ProgressPrimitive.Root
       className={cn('flex flex-wrap gap-3', className)}
@@ -19,7 +20,7 @@ function Progress({
       {...props}
     >
       {children}
-      <ProgressTrack>
+      <ProgressTrack className={trackClassName}>
         <ProgressIndicator className={indicatorClassName} />
       </ProgressTrack>
     </ProgressPrimitive.Root>

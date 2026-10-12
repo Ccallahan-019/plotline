@@ -1,6 +1,6 @@
 'use client'
 
-import type { LibraryItem, Media, WatchlistMembership } from '@plotline/payload-types'
+import type { LibraryItem, Media, Watchlist, WatchlistMembership } from '@plotline/payload-types'
 
 import { useSortable } from '@dnd-kit/react/sortable'
 import Link from 'next/link'
@@ -32,26 +32,31 @@ import {
   getMembershipMedia,
   toMembershipMediaDisplay,
 } from '../services/membership-media'
+import { MembershipCountsControl } from './MembershipCountsControl'
 import { WatchlistMembershipDragButton } from './WatchlistMembershipDragButton'
 import { WatchlistMembershipMenu } from './WatchlistMembershipMenu'
 
 type WatchlistMembershipRowProps = {
+  challenge: null | Watchlist['challenge']
   index: number
   membership: WatchlistMembership
   onLogWatch: (membership: WatchlistMembership) => void
   onRemove: (membership: WatchlistMembership) => void
   reorderDisabled: boolean
   showDragHandle: boolean
+  showGoalCounts: boolean
   slug: string
 }
 
 export function WatchlistMembershipRow({
+  challenge,
   index,
   membership,
   onLogWatch,
   onRemove,
   reorderDisabled,
   showDragHandle,
+  showGoalCounts,
   slug,
 }: WatchlistMembershipRowProps) {
   const media = getMembershipMedia(membership)
@@ -104,6 +109,14 @@ export function WatchlistMembershipRow({
 
         <ItemActions className="ml-auto shrink-0">
           <LibraryItemStatus libraryItem={libraryItem} />
+          <ShowIf condition={showGoalCounts}>
+            <MembershipCountsControl
+              challenge={challenge}
+              membership={membership}
+              slug={slug}
+              title={title}
+            />
+          </ShowIf>
           <WatchlistMembershipMenu
             membership={membership}
             onLogWatch={onLogWatch}
