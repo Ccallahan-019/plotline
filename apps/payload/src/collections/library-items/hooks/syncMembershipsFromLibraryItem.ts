@@ -8,6 +8,7 @@ import {
 
 import { getRelationId } from '../../../utilities/relations'
 import {
+  clearWatchlistSyncSkipFlags,
   SKIP_MEMBERSHIP_SYNC_FROM_LIBRARY,
   SKIP_WATCHLIST_STATS_RECALC,
 } from '../../watchlists/context'
@@ -36,8 +37,10 @@ export const syncMembershipsFromLibraryItem: CollectionAfterChangeHook = async (
   const statusChanged = previousDoc?.status !== doc.status
   const progressChanged =
     JSON.stringify(previousDoc?.progress ?? null) !== JSON.stringify(doc.progress ?? null)
+  // Movie rewatches keep status and progress and only increment rewatchCount.
+  const rewatchCountChanged = (previousDoc?.rewatchCount ?? 0) !== (doc.rewatchCount ?? 0)
 
-  if (!statusChanged && !progressChanged) {
+  if (!statusChanged && !progressChanged && !rewatchCountChanged) {
     return doc
   }
 
@@ -116,6 +119,7 @@ export const syncMembershipsFromLibraryItem: CollectionAfterChangeHook = async (
       libraryItem: {
         completedAt: doc.completedAt,
         progress: doc.progress,
+        rewatchCount: doc.rewatchCount,
         status: doc.status,
       },
       media: {
@@ -159,6 +163,8 @@ export const syncMembershipsFromLibraryItem: CollectionAfterChangeHook = async (
       req,
     })
   }
+
+  clearWatchlistSyncSkipFlags(req.context)
 
   await recalculateWatchlistsForLibraryItem(req.payload, doc.id, req)
 

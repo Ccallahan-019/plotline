@@ -9,6 +9,17 @@ import type {
 
 import { isMembershipEligibleForTvRule } from './applyTvCountRule'
 
+export type MembershipRuleEligibility = {
+  /** Later rewatch of a title whose first completion is strictly before join. */
+  preJoinRewatch: boolean
+  priorEligible: boolean
+  /** `includeRewatches` opened the pre-join rewatch path. */
+  rewatchQualifies: boolean
+  /** TV rule and either the prior-completion rule or a qualifying rewatch. */
+  ruleEligible: boolean
+  tvEligible: boolean
+}
+
 export function computeEpisodesCountedForList(input: {
   addedAt: string
   episodesAtJoin?: null | number
@@ -56,18 +67,32 @@ export function computeMembershipGoalWeight(input: {
   }
 }
 
+/**
+ * Derives list-scoped challenge fields from the library item and watchlist rules.
+ *
+ * `countsTowardGoal` is rule eligibility combined with `excludeFromGoal`. The prior-completion
+ * rule still decides a finish from before join. `includeRewatches` only opens a later rewatch
+ * of that title, and only while challenge mode is on. Callers keep `excludeFromGoal` themselves.
+ *
+ * @param input.addedAt - When the title joined the list
+ * @param input.challenge - Watchlist challenge config; omitted rules use the collection defaults
+ * @param input.episodesAtJoin - Episode baseline; defaults to the library item's current count
+ * @param input.excludeFromGoal - Manual opt-out. `true` forces `countsTowardGoal` off
+ * @param input.libraryItem - Library status, completion time, progress, and rewatch count
+ * @param input.media - Media type and runtime used for TV rules and goal weight
+ * @returns Membership fields ready to persist
+ */
 export function deriveMembershipChallengeFields(input: {
   addedAt: string
   challenge?: null | WatchlistChallengeConfig
   episodesAtJoin?: null | number
+  excludeFromGoal?: boolean | null
   libraryItem: StatsLibraryItem
   media: StatsMedia
 }): Pick<
   StatsMembershipInput,
   'countsTowardGoal' | 'episodesCountedForList' | 'goalWeight' | 'listStatus'
 > {
-  const tvCountRule = input.challenge?.tvCountRule ?? 'tv_as_series'
-  const priorCompletionRule = input.challenge?.priorCompletionRule
   const episodesCountedForList = computeEpisodesCountedForList({
     addedAt: input.addedAt,
     episodesAtJoin: input.episodesAtJoin,
@@ -84,14 +109,9 @@ export function deriveMembershipChallengeFields(input: {
     media: input.media,
   }
 
-  const tvEligible = isMembershipEligibleForTvRule(membership, tvCountRule)
-  const priorEligible = shouldCountPriorCompletion({
-    addedAt: input.addedAt,
-    libraryItem: input.libraryItem,
-    priorCompletionRule,
-  })
+  const { ruleEligible } = resolveMembershipRuleEligibility(input)
 
-  membership.countsTowardGoal = tvEligible && priorEligible
+  membership.countsTowardGoal = ruleEligible && input.excludeFromGoal !== true
   membership.goalWeight = computeMembershipGoalWeight({
     challenge: input.challenge,
     episodesCountedForList,
@@ -99,6 +119,7 @@ export function deriveMembershipChallengeFields(input: {
     media: input.media,
   })
 
+  // A completion that does not count must not stay `completed` for list stats.
   if (membership.listStatus === 'completed' && membership.countsTowardGoal === false) {
     membership.listStatus = 'planned'
   }
@@ -121,6 +142,51 @@ export function mapLibraryStatusToListStatus(
       return 'in_progress'
     default:
       return 'planned'
+  }
+}
+
+/**
+ * Splits TV, prior-completion, and rewatch rules so counts and exclusion copy stay aligned.
+ *
+ * A pre-join rewatch counts only when challenge mode is on and `includeRewatches` is true.
+ * That path does not undo a prior-completion rule that already counts the title, and it does
+ * not apply when challenge mode is off.
+ *
+ * @param input.addedAt - When the title joined the list
+ * @param input.challenge - Watchlist challenge config
+ * @param input.libraryItem - Library status, completion time, and rewatch count
+ * @param input.media - Media type used by the TV counting rule
+ * @returns Which rules pass, and whether the title is eligible before manual exclusion
+ */
+export function resolveMembershipRuleEligibility(input: {
+  addedAt: string
+  challenge?: null | WatchlistChallengeConfig
+  libraryItem: StatsLibraryItem
+  media: StatsMedia
+}): MembershipRuleEligibility {
+  const tvEligible = isMembershipEligibleForTvRule(
+    {
+      addedAt: input.addedAt,
+      libraryItem: input.libraryItem,
+      media: input.media,
+    },
+    input.challenge?.tvCountRule,
+  )
+  const priorEligible = shouldCountPriorCompletion({
+    addedAt: input.addedAt,
+    libraryItem: input.libraryItem,
+    priorCompletionRule: input.challenge?.priorCompletionRule,
+  })
+  const preJoinRewatch = isRewatchOfTitleFinishedBeforeJoin(input.addedAt, input.libraryItem)
+  const rewatchQualifies =
+    input.challenge?.enabled === true && input.challenge.includeRewatches === true && preJoinRewatch
+
+  return {
+    preJoinRewatch,
+    priorEligible,
+    rewatchQualifies,
+    ruleEligible: tvEligible && (priorEligible || rewatchQualifies),
+    tvEligible,
   }
 }
 
@@ -155,6 +221,25 @@ export function shouldCountPriorCompletion(input: {
 
       return completedAt >= addedAt
   }
+}
+
+// First completion is strictly before join, and the library item has been rewatched since.
+function isRewatchOfTitleFinishedBeforeJoin(
+  addedAt: string,
+  libraryItem: StatsLibraryItem,
+): boolean {
+  if ((libraryItem.rewatchCount ?? 0) <= 0) {
+    return false
+  }
+
+  const completedAt = parseTimestamp(libraryItem.completedAt)
+  const joinedAt = parseTimestamp(addedAt)
+
+  if (completedAt == null || joinedAt == null) {
+    return false
+  }
+
+  return completedAt < joinedAt
 }
 
 function parseTimestamp(value: null | string | undefined): null | number {

@@ -59,6 +59,7 @@ export const initializeMembershipChallengeFields: CollectionBeforeValidateHook =
     libraryItem: {
       completedAt: libraryItem.completedAt,
       progress: libraryItem.progress,
+      rewatchCount: libraryItem.rewatchCount,
       status: libraryItem.status,
     },
     media: {
