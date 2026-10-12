@@ -65,7 +65,7 @@ export function useWatchlistForm(options: UseWatchlistFormOptions) {
       const systemList = current.mode === 'edit' && current.watchlist.isSystem === true
       const input = toWatchlistWriteInput(value, { isSystem: systemList })
       const isChallenge = input.challenge.enabled
-      const subject = isChallenge ? 'challenge' : 'watchlist'
+      const subject = isChallenge ? 'Challenge' : 'Watchlist'
 
       try {
         const saved =
@@ -74,7 +74,7 @@ export function useWatchlistForm(options: UseWatchlistFormOptions) {
                 .promise(createWatchlist.mutateAsync(input), {
                   error: {
                     description: `There was an error creating this ${subject}. Please try again.`,
-                    message: `Could not create ${subject}`,
+                    message: `Could Not Create ${subject}`,
                   },
                   loading: `Creating ${subject}...`,
                   success: {
@@ -87,7 +87,7 @@ export function useWatchlistForm(options: UseWatchlistFormOptions) {
                 .promise(updateWatchlist.mutateAsync({ slug: current.watchlist.slug, ...input }), {
                   error: {
                     description: `There was an error saving this ${subject}. Please try again.`,
-                    message: `Could not update ${subject}`,
+                    message: `Could Not Update ${subject}`,
                   },
                   loading: `Saving ${subject}...`,
                   success: {
