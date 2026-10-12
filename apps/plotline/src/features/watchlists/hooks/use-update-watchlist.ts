@@ -4,23 +4,23 @@ import type { Watchlist } from '@plotline/payload-types'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import type { UpdateWatchlistInput } from '../types'
+import type { WatchlistWriteInput } from '../services/watchlist-write'
 
 import { patchWatchlist } from '../services/fetch-watchlists'
 import { watchlistQueryKeys } from '../services/query-keys'
 
 type UpdateWatchlistVariables = {
   slug: string
-} & UpdateWatchlistInput
+} & WatchlistWriteInput
 
 /**
- * Saves a watchlist's name, description, and visibility.
+ * Saves a watchlist's name, description, visibility, cover, and challenge settings.
  *
  * Writes the returned watchlist into the detail cache immediately, then
- * invalidates watchlist queries so cards and pickers pick up the new details.
- * The slug does not change, so the detail route stays put.
+ * invalidates watchlist card and detail queries so both indexes pick up the
+ * new details. The slug does not change, so the detail route stays put.
  *
- * @returns A React Query mutation for `{ slug, name, description, visibility }`
+ * @returns A React Query mutation for the watchlist slug plus `WatchlistWriteInput`
  */
 export function useUpdateWatchlist() {
   const queryClient = useQueryClient()

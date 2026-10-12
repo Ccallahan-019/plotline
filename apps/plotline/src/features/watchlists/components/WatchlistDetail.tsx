@@ -2,14 +2,18 @@
 
 import type { Watchlist, WatchlistMembership } from '@plotline/payload-types'
 
+import { PencilLine } from 'lucide-react'
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 
+import { buttonVariants } from '@/components/ui/button'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
 import { ErrorEmpty } from '@/components/utils/ErrorEmpty'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { TitleBreadcrumbParentProvider } from '@/features/navigation/breadcrumbs/components/TitleBreadcrumbParentProvider'
 import { WatchlistTitleSearchDialog } from '@/features/search/components/title-search/WatchlistTitleSearchDialog'
+import { cn } from '@/lib/utils'
 import { getErrorMessage } from '@/utils/get-error-message'
 
 import { usePendingWatchlistRemoveKeys } from '../hooks/use-pending-watchlist-remove-keys'
@@ -19,7 +23,6 @@ import { buildWatchlistOnListKeys } from '../services/build-watchlist-on-list-ke
 import { formatWatchlistTitleCount } from '../services/format-watchlist-title-count'
 import { omitPendingWatchlistRemoves } from '../services/pending-watchlist-remove'
 import { DEFAULT_WATCHLIST_MEMBERSHIP_SORT, type WatchlistMembershipSort } from '../types'
-import { EditWatchlistDialog } from './EditWatchlistDialog'
 import { WatchlistMembershipList } from './WatchlistMembershipList'
 import { WatchlistMembershipsEmpty } from './WatchlistMembershipsEmpty'
 import { WatchlistMembershipSortSelector } from './WatchlistMembershipSortSelector'
@@ -71,8 +74,12 @@ export function WatchlistDetail({
   const titleCountLabel =
     listedMemberships == null ? null : formatWatchlistTitleCount(listedMemberships.length)
 
+  const parentHref = watchlist.challenge?.enabled
+    ? `/dashboard/challenges/${slug}`
+    : `/dashboard/watchlists/${slug}`
+
   return (
-    <TitleBreadcrumbParentProvider href={`/dashboard/watchlists/${slug}`} label={watchlist.name}>
+    <TitleBreadcrumbParentProvider href={parentHref} label={watchlist.name}>
       <div className="flex flex-col gap-4">
         <Item className="px-0 rounded-none border-b-border">
           <ItemContent>
@@ -91,7 +98,13 @@ export function WatchlistDetail({
           </ItemContent>
 
           <ItemActions>
-            <EditWatchlistDialog slug={slug} watchlist={watchlist} />
+            <Link
+              className={cn(buttonVariants({ variant: 'outline' }))}
+              href={`/dashboard/watchlists/${encodeURIComponent(slug)}/edit`}
+            >
+              <PencilLine data-icon="inline-start" />
+              Edit
+            </Link>
           </ItemActions>
         </Item>
 

@@ -1,31 +1,20 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 
-import {
-  isVisibility,
-  type Visibility,
-  WATCHLIST_DESCRIPTION_MAX_LENGTH,
-  WATCHLIST_NAME_MAX_LENGTH,
-} from '@plotline/shared/constants'
-
 import { findOwnedWatchlistBySlug } from './find-owned-watchlist-by-slug'
 import { parseJsonBody, requireProfileContext, requireServiceAuth } from './helpers'
+import { parseWatchlistWrite } from './parse-watchlist-write'
+import { libraryOwnsMedia, mediaRelationId } from './watchlist-cover-media'
 import { readWatchlistSlug } from './watchlist-route-params'
 
-const PATCH_FIELDS = new Set(['description', 'name', 'visibility'])
-
-type WatchlistDetailsPatch = {
-  description: null | string
-  name: string
-  visibility: Visibility
-}
-
 /**
- * Updates the name, description, and visibility of one owned watchlist.
+ * Updates the details of one owned watchlist.
  *
- * `PATCH /api/watchlists/:slug/details` requires all three fields. The slug
- * stays put so the page URL does not change. Blank descriptions are stored as
- * `null`. Any other field is rejected so owner, slug, and system flags cannot
- * be changed from this route. Missing and unowned lists are both not found.
+ * `PATCH /api/watchlists/:slug/details` requires name, description, visibility,
+ * cover, and challenge settings. The slug stays put so the page URL does not
+ * change. A new cover must be a title in the owner's library; keeping the
+ * current cover does not require that check again. System lists can change
+ * name, description, visibility, and cover, but cannot turn challenge mode on.
+ * Missing and unowned lists are both not found.
  */
 export const updateWatchlistEndpoint: Endpoint = {
   handler: async (req: PayloadRequest) => {
@@ -53,10 +42,10 @@ export const updateWatchlistEndpoint: Endpoint = {
       return body
     }
 
-    const patch = parseWatchlistDetailsPatch(body)
+    const write = parseWatchlistWrite(body)
 
-    if (patch instanceof Response) {
-      return patch
+    if (write instanceof Response) {
+      return write
     }
 
     const watchlist = await findOwnedWatchlistBySlug(req, profileResult.profileId, slug)
@@ -65,9 +54,24 @@ export const updateWatchlistEndpoint: Endpoint = {
       return Response.json({ error: 'Watchlist not found' }, { status: 404 })
     }
 
+    if (watchlist.isSystem === true && write.challenge.enabled) {
+      return Response.json({ error: 'System lists cannot be challenges' }, { status: 400 })
+    }
+
+    if (write.coverMedia != null && write.coverMedia !== mediaRelationId(watchlist.coverMedia)) {
+      const owned = await libraryOwnsMedia(req, profileResult.profileId, write.coverMedia)
+
+      if (!owned) {
+        return Response.json(
+          { error: 'Cover must be a title in your library' },
+          { status: 400 },
+        )
+      }
+    }
+
     const updated = await req.payload.update({
       collection: 'watchlists',
-      data: patch,
+      data: write,
       depth: 1,
       id: watchlist.id,
       overrideAccess: true,
@@ -78,81 +82,4 @@ export const updateWatchlistEndpoint: Endpoint = {
   },
   method: 'patch',
   path: '/:slug/details',
-}
-
-/**
- * Accepts a watchlist details patch of `name`, `description`, and `visibility`.
- *
- * All three fields are required. Names and descriptions are trimmed. A blank
- * description is stored as `null`.
- *
- * @param body - Parsed JSON body
- * @returns Fields to write, or a 400 response
- */
-function parseWatchlistDetailsPatch(body: unknown): Response | WatchlistDetailsPatch {
-  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-    return Response.json({ error: 'Request body must be an object' }, { status: 400 })
-  }
-
-  const record = body as Record<string, unknown>
-  const keys = Object.keys(record)
-
-  if (keys.some((key) => !PATCH_FIELDS.has(key))) {
-    return Response.json(
-      { error: 'Only name, description, and visibility can be updated' },
-      { status: 400 },
-    )
-  }
-
-  if (!keys.includes('name') || !keys.includes('description') || !keys.includes('visibility')) {
-    return Response.json(
-      { error: 'name, description, and visibility are required' },
-      { status: 400 },
-    )
-  }
-
-  if (typeof record.name !== 'string') {
-    return Response.json({ error: 'name must be a string' }, { status: 400 })
-  }
-
-  const name = record.name.trim()
-
-  if (name.length === 0) {
-    return Response.json({ error: 'Enter a name' }, { status: 400 })
-  }
-
-  if (name.length > WATCHLIST_NAME_MAX_LENGTH) {
-    return Response.json(
-      { error: `Name must be ${WATCHLIST_NAME_MAX_LENGTH} characters or fewer` },
-      { status: 400 },
-    )
-  }
-
-  if (record.description !== null && typeof record.description !== 'string') {
-    return Response.json({ error: 'description must be a string or null' }, { status: 400 })
-  }
-
-  const description = typeof record.description === 'string' ? record.description.trim() : ''
-
-  if (description.length > WATCHLIST_DESCRIPTION_MAX_LENGTH) {
-    return Response.json(
-      {
-        error: `Description must be ${WATCHLIST_DESCRIPTION_MAX_LENGTH} characters or fewer`,
-      },
-      { status: 400 },
-    )
-  }
-
-  if (!isVisibility(record.visibility)) {
-    return Response.json(
-      { error: 'visibility must be private, friends, public, or unlisted' },
-      { status: 400 },
-    )
-  }
-
-  return {
-    description: description.length === 0 ? null : description,
-    name,
-    visibility: record.visibility,
-  }
 }

@@ -6,10 +6,10 @@ import { fetchJson } from '@/lib/api/fetch-json'
 import type {
   RemoveWatchlistMembershipResult,
   ReorderWatchlistMembershipsResult,
-  UpdateWatchlistInput,
   UpdateWatchlistMembershipInput,
   WatchlistCard,
 } from '../types'
+import type { WatchlistWriteInput } from './watchlist-write'
 
 export type WatchlistFilters = {
   filter?: 'challenge' | 'custom' | 'system'
@@ -56,8 +56,8 @@ export function fetchWatchlists(filters?: WatchlistFilters): Promise<Watchlist[]
   )
 }
 
-/** Saves the name, description, and visibility of one watchlist. The slug stays the same. */
-export function patchWatchlist(slug: string, input: UpdateWatchlistInput): Promise<Watchlist> {
+/** Saves a watchlist's details. The slug stays the same. */
+export function patchWatchlist(slug: string, input: WatchlistWriteInput): Promise<Watchlist> {
   return fetchJson<Watchlist>(`/api/watchlists/${encodeURIComponent(slug)}`, {
     body: JSON.stringify(input),
     headers: { 'Content-Type': 'application/json' },
@@ -87,6 +87,15 @@ export function patchWatchlistMembershipOrder(
     body: JSON.stringify({ membershipIds }),
     headers: { 'Content-Type': 'application/json' },
     method: 'PATCH',
+  })
+}
+
+/** Creates an owned watchlist. The response includes the generated slug. */
+export function postWatchlist(input: WatchlistWriteInput): Promise<Watchlist> {
+  return fetchJson<Watchlist>('/api/watchlists', {
+    body: JSON.stringify(input),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
   })
 }
 

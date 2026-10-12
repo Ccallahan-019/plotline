@@ -10,7 +10,7 @@ type DateFieldProps = {
 } & Omit<DatePickerProps, 'onChange' | 'value'>
 
 export function DateField({ allowEmpty = false, id, onChange, ...props }: DateFieldProps) {
-  const field = useFieldContext<Date | undefined>()
+  const field = useFieldContext<Date | null | undefined>()
   const isInvalid = field.state.meta.errors.length > 0
   const inputId = id ?? field.name
 
@@ -28,7 +28,7 @@ export function DateField({ allowEmpty = false, id, onChange, ...props }: DateFi
       aria-invalid={isInvalid}
       id={inputId}
       onChange={handleChange}
-      value={field.state.value}
+      value={field.state.value ?? undefined}
       {...props}
     />
   )

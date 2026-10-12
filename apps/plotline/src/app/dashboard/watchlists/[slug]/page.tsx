@@ -40,6 +40,10 @@ export default async function WatchlistDetailPage({ params }: WatchlistDetailPag
     notFound()
   }
 
+  if (detail.watchlist.challenge?.enabled === true) {
+    redirect(`/dashboard/challenges/${encodeURIComponent(slug)}`)
+  }
+
   return (
     <WatchlistDetail
       initialMemberships={detail.memberships}

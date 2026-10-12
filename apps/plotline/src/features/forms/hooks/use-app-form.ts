@@ -9,6 +9,7 @@ import { FormFieldError } from '../components/FormFieldError'
 import { NumberField } from '../components/NumberField'
 import { SelectField } from '../components/SelectField'
 import { SubmitButton } from '../components/SubmitButton'
+import { SwitchField } from '../components/SwitchField'
 import { TextAreaField } from '../components/TextAreaField'
 import { TextField } from '../components/TextField'
 import { ToggleGroupField } from '../components/ToggleGroupField'
@@ -22,6 +23,7 @@ export const { useAppForm, useTypedAppFormContext, withFieldGroup, withForm } = 
     FormFieldError,
     NumberField,
     SelectField,
+    SwitchField,
     TextAreaField,
     TextField,
     ToggleGroupField,

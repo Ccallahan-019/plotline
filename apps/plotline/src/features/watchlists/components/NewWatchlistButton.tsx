@@ -1,21 +1,24 @@
-'use client'
-
 import { Plus } from 'lucide-react'
-import { toast } from 'sonner'
+import Link from 'next/link'
 
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
-export function NewWatchlistButton() {
+type NewWatchlistButtonProps = {
+  challenge?: boolean
+  label?: string
+}
+
+export function NewWatchlistButton({
+  challenge = false,
+  label = 'New Watchlist',
+}: NewWatchlistButtonProps) {
+  const href = challenge ? '/dashboard/watchlists/new?challenge=1' : '/dashboard/watchlists/new'
+
   return (
-    <Button
-      className="shrink-0"
-      onClick={() => {
-        toast.message('Creating a watchlist is coming soon.')
-      }}
-      type="button"
-    >
+    <Link className={cn(buttonVariants(), 'shrink-0')} href={href}>
       <Plus data-icon="inline-start" />
-      New Watchlist
-    </Button>
+      {label}
+    </Link>
   )
 }
