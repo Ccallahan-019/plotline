@@ -5,6 +5,7 @@ import { toTmdbDiscoverFilters } from '@/features/media-grid/filters/services/no
 
 export const searchQueryKeys = {
   tmdbGenres: () => ['tmdb-genres'] as const,
+  tmdbKeywords: (query: string) => ['tmdb-keywords', query] as const,
   tmdbSearch: (
     mode: BrowseMode,
     q: string,

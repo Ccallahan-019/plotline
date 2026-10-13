@@ -1,4 +1,4 @@
-import type { TmdbSearchResponse } from '@plotline/shared/tmdb'
+import type { TmdbKeywordSearchResponse, TmdbSearchResponse } from '@plotline/shared/tmdb'
 
 import type { MediaFilters } from '@/features/media-grid/filters/types'
 import type {
@@ -48,6 +48,18 @@ export function fetchTmdbBrowse(
 
 export function fetchTmdbGenres(): Promise<TmdbGenresResponse> {
   return fetchJson<TmdbGenresResponse>('/api/tmdb/genres')
+}
+
+/**
+ * Loads the first page of TMDB keywords for a typeahead query.
+ *
+ * @param query - Keyword text sent as `q`; the route rejects fewer than 2 characters
+ * @returns The TMDB keyword page, with `id` and `name` on each result
+ */
+export function fetchTmdbKeywords(query: string): Promise<TmdbKeywordSearchResponse> {
+  return fetchJson<TmdbKeywordSearchResponse>(
+    `/api/tmdb/keywords${buildSearchParams({ q: query })}`,
+  )
 }
 
 export function fetchTmdbSearch(

@@ -120,6 +120,21 @@ export const tmdbGenreListSchema = z.object({
 export type TmdbGenre = z.infer<typeof genreSchema>
 export type TmdbGenreList = z.infer<typeof tmdbGenreListSchema>
 
+const tmdbKeywordSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+})
+
+export const tmdbKeywordSearchResponseSchema = z.object({
+  page: z.number(),
+  results: z.array(tmdbKeywordSchema),
+  total_pages: z.number(),
+  total_results: z.number(),
+})
+
+export type TmdbKeyword = z.infer<typeof tmdbKeywordSchema>
+export type TmdbKeywordSearchResponse = z.infer<typeof tmdbKeywordSearchResponseSchema>
+
 const watchProviderSchema = z.object({
   display_priority: z.number().optional(),
   logo_path: z.string().nullable().optional(),
