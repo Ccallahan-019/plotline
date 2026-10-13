@@ -9,9 +9,11 @@ import { LogWatchPopoverShell } from './LogWatchPopoverShell'
 
 type LogWatchPopoverProps = {
   libraryItem: LibraryItem
+  /** Visible button text. Continue watching passes `Log S3 E9` or `Log as watched`. */
+  triggerLabel?: string
 }
 
-export function LogWatchPopover({ libraryItem }: LogWatchPopoverProps) {
+export function LogWatchPopover({ libraryItem, triggerLabel }: LogWatchPopoverProps) {
   const media = getMediaFromLibraryItem(libraryItem)
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -30,6 +32,7 @@ export function LogWatchPopover({ libraryItem }: LogWatchPopoverProps) {
       onDialogOpenChange={setDialogOpen}
       onPopoverOpenChange={setPopoverOpen}
       popoverOpen={popoverOpen}
+      triggerLabel={triggerLabel}
     />
   )
 }

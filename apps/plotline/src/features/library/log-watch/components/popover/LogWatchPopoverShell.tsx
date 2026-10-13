@@ -19,6 +19,7 @@ type LogWatchPopoverShellProps = {
   onDialogOpenChange: (open: boolean) => void
   onPopoverOpenChange: (open: boolean) => void
   popoverOpen: boolean
+  triggerLabel?: string
 }
 
 export function LogWatchPopoverShell({
@@ -28,6 +29,7 @@ export function LogWatchPopoverShell({
   onDialogOpenChange,
   onPopoverOpenChange,
   popoverOpen,
+  triggerLabel,
 }: LogWatchPopoverShellProps) {
   // The popover stays mounted on every library card. Fetch episode coverage only while
   // TV log-watch is open so the dialog can label episodes that are already watched.
@@ -82,6 +84,7 @@ export function LogWatchPopoverShell({
         media={media}
         onPopoverOpenChange={handlePopoverOpenChange}
         popoverOpen={popoverOpen}
+        triggerLabel={triggerLabel}
       >
         <LogWatchQuickForm
           form={form}
