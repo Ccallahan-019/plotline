@@ -94,6 +94,12 @@ export const breadcrumbRouteMap = (() => {
     registerSectionRoutes(map, section)
   }
 
+  map.set('/dashboard/watchlists/new', {
+    label: 'New Watchlist',
+    section: 'Watchlists',
+    sectionHref: '/dashboard/watchlists',
+  })
+
   return map
 })()
 
@@ -106,10 +112,22 @@ export const dynamicBreadcrumbRoutes: {
   pendingLabel?: boolean
 }[] = [
   {
+    formatLabel: () => 'Edit Watchlist',
+    parentHref: '/dashboard/watchlists',
+    parentLabel: 'Watchlists',
+    pattern: /^\/dashboard\/watchlists\/([^/]+)\/edit$/,
+  },
+  {
     formatLabel: formatSlugLabel,
     parentHref: '/dashboard/watchlists',
     parentLabel: 'My Watchlists',
     pattern: /^\/dashboard\/watchlists\/([^/]+)$/,
+  },
+  {
+    formatLabel: formatSlugLabel,
+    parentHref: '/dashboard/challenges',
+    parentLabel: 'Challenges',
+    pattern: /^\/dashboard\/challenges\/([^/]+)$/,
   },
   {
     formatLabel: (value) => value,

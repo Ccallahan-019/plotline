@@ -3,8 +3,12 @@ import type { Watchlist } from '@plotline/payload-types'
 import { fetchAllPages } from '@/lib/payload/fetch-all-pages'
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
 
+import type { WatchlistListFilter } from '../types'
+
+import { toWatchlistFilterSearchParams } from './watchlist-list-filter'
+
 export type WatchlistQueryFilters = {
-  filter?: 'challenge' | 'custom' | 'system'
+  filter?: WatchlistListFilter
 }
 
 /**
@@ -40,7 +44,7 @@ export async function getWatchlistBySlug(
  *
  * Follows Payload paging until all lists are loaded, so a profile with more
  * than one page of lists is not truncated. The optional filter narrows to
- * system, custom or challenge lists.
+ * system, custom, challenge, or non-challenge lists.
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
  * @param filters - Optional list-kind filter
@@ -51,15 +55,7 @@ export async function getWatchlists(
   clerkUserId: string,
   filters?: WatchlistQueryFilters,
 ): Promise<Watchlist[]> {
-  const filterParams: Record<string, number | string> = {}
-
-  if (filters?.filter === 'system') {
-    filterParams['where[isSystem][equals]'] = 'true'
-  } else if (filters?.filter === 'custom') {
-    filterParams['where[isSystem][equals]'] = 'false'
-  } else if (filters?.filter === 'challenge') {
-    filterParams['where[challenge.enabled][equals]'] = 'true'
-  }
+  const filterParams = toWatchlistFilterSearchParams(filters?.filter)
 
   // `id` breaks `sortOrder` ties so offset paging cannot skip or repeat a list.
   return fetchAllPages<Watchlist>(

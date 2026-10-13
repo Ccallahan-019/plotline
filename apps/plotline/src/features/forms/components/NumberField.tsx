@@ -15,7 +15,7 @@ import { useFieldContext } from '../contexts/form-contexts'
 
 type NumberFieldProps = Omit<React.ComponentProps<typeof Input>, 'defaultValue' | 'type' | 'value'>
 
-export function NumberField({ id, onBlur, onChange, ...props }: NumberFieldProps) {
+export function NumberField({ disabled, id, onBlur, onChange, ...props }: NumberFieldProps) {
   const field = useFieldContext<null | number>()
   const isInvalid = field.state.meta.errors.length > 0
   const inputId = id ?? field.name
@@ -51,6 +51,7 @@ export function NumberField({ id, onBlur, onChange, ...props }: NumberFieldProps
     <InputGroup>
       <InputGroupInput
         aria-invalid={isInvalid}
+        disabled={disabled}
         id={inputId}
         name={field.name}
         onBlur={handleBlur}
@@ -61,7 +62,13 @@ export function NumberField({ id, onBlur, onChange, ...props }: NumberFieldProps
       />
       <ShowIf condition={hasValue}>
         <InputGroupAddon align="inline-end">
-          <InputGroupButton onClick={handleClear} size="icon-xs" type="button" variant="ghost">
+          <InputGroupButton
+            disabled={disabled}
+            onClick={handleClear}
+            size="icon-xs"
+            type="button"
+            variant="ghost"
+          >
             <X />
           </InputGroupButton>
         </InputGroupAddon>

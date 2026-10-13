@@ -3,6 +3,7 @@ import type { CollectionAfterChangeHook } from 'payload'
 import { recalculateWatchlistStatsById } from '@/utilities/recalculateWatchlistStatsById'
 
 import { SKIP_WATCHLIST_STATS_RECALC } from '../context'
+import { syncMembershipsForChallengeChange } from './syncMembershipsForChallengeChange'
 
 export const recalculateStatsAfterWatchlistChange: CollectionAfterChangeHook = async ({
   context,
@@ -24,6 +25,7 @@ export const recalculateStatsAfterWatchlistChange: CollectionAfterChangeHook = a
     return doc
   }
 
+  await syncMembershipsForChallengeChange(req, doc)
   await recalculateWatchlistStatsById(req.payload, doc.id, req)
 
   return doc

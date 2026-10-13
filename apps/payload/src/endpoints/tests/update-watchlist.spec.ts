@@ -21,20 +21,44 @@ vi.mock('../helpers', async (importOriginal) => {
 })
 
 const validBody = {
+  challenge: { enabled: false },
+  coverMedia: null,
   description: '  Friday queue  ',
   name: '  Queue  ',
   visibility: 'friends',
 }
 
+const savedDetails = {
+  challenge: { enabled: false },
+  coverMedia: null,
+  description: 'Friday queue',
+  name: 'Queue',
+  visibility: 'friends',
+}
+
 function createReq(options: {
   body?: unknown
+  coverInLibrary?: boolean
+  isSystem?: boolean
   json?: () => Promise<unknown>
   owned?: boolean
   slug?: string
+  storedCoverMedia?: null | number
 }) {
-  const find = vi.fn(async () => ({
-    docs: options.owned === false ? [] : [{ id: 7, owner: 22, slug: 'watchlist' }],
-  }))
+  const watchlist = {
+    coverMedia: options.storedCoverMedia ?? null,
+    id: 7,
+    isSystem: options.isSystem === true,
+    owner: 22,
+    slug: 'watchlist',
+  }
+  const find = vi.fn(async ({ collection }: { collection: string }) => {
+    if (collection === 'library-items') {
+      return { docs: options.coverInLibrary === false ? [] : [{ id: 1 }] }
+    }
+
+    return { docs: options.owned === false ? [] : [watchlist] }
+  })
   const update = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
     id: 7,
     slug: 'watchlist',
@@ -82,20 +106,14 @@ describe('updateWatchlistEndpoint', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
-      description: 'Friday queue',
+      ...savedDetails,
       id: 7,
-      name: 'Queue',
       slug: 'watchlist',
-      visibility: 'friends',
     })
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'watchlists',
-        data: {
-          description: 'Friday queue',
-          name: 'Queue',
-          visibility: 'friends',
-        },
+        data: savedDetails,
         depth: 1,
         id: 7,
         overrideAccess: true,
@@ -105,7 +123,7 @@ describe('updateWatchlistEndpoint', () => {
 
   it('stores a blank description as null', async () => {
     const { req, update } = createReq({
-      body: { description: '   ', name: 'Queue', visibility: 'private' },
+      body: { ...validBody, description: '   ', name: 'Queue', visibility: 'private' },
     })
 
     const response = await readResponse(req)
@@ -114,12 +132,152 @@ describe('updateWatchlistEndpoint', () => {
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: {
+          ...savedDetails,
           description: null,
           name: 'Queue',
           visibility: 'private',
         },
       }),
     )
+  })
+
+  it('saves an enabled count challenge and stores the due date as UTC midnight', async () => {
+    const { req, update } = createReq({
+      body: {
+        ...validBody,
+        challenge: {
+          dueDate: '2026-12-31',
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: null,
+          goalType: 'count',
+          includeRewatches: false,
+          priorCompletionRule: 'exclude_if_already_completed',
+          startDate: null,
+          tvCountRule: 'tv_as_series',
+        },
+      },
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(200)
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          challenge: expect.objectContaining({
+            dueDate: '2026-12-31T00:00:00.000Z',
+            enabled: true,
+            goalCount: 52,
+            goalRuntimeMinutes: null,
+          }),
+        }),
+      }),
+    )
+  })
+
+  it('rejects an enabled challenge without the active goal', async () => {
+    const { req, update } = createReq({
+      body: {
+        ...validBody,
+        challenge: {
+          dueDate: '2026-12-31',
+          enabled: true,
+          goalCount: null,
+          goalRuntimeMinutes: null,
+          goalType: 'count',
+          includeRewatches: false,
+          priorCompletionRule: 'exclude_if_already_completed',
+          startDate: null,
+          tvCountRule: 'tv_as_series',
+        },
+      },
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: 'Challenge goalCount must be greater than zero',
+    })
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('rejects a runtime challenge that also sends a count goal', async () => {
+    const { req, update } = createReq({
+      body: {
+        ...validBody,
+        challenge: {
+          dueDate: '2026-12-31',
+          enabled: true,
+          goalCount: 10,
+          goalRuntimeMinutes: 6000,
+          goalType: 'runtime_minutes',
+          includeRewatches: false,
+          priorCompletionRule: 'count_all_on_join',
+          startDate: '2026-01-01',
+          tvCountRule: 'movies_only',
+        },
+      },
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(400)
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('rejects turning a system list into a challenge', async () => {
+    const { req, update } = createReq({
+      body: {
+        ...validBody,
+        challenge: {
+          dueDate: '2026-12-31',
+          enabled: true,
+          goalCount: 10,
+          goalRuntimeMinutes: null,
+          goalType: 'count',
+          includeRewatches: false,
+          priorCompletionRule: 'exclude_if_already_completed',
+          startDate: null,
+          tvCountRule: 'tv_as_series',
+        },
+      },
+      isSystem: true,
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: 'System lists cannot be challenges' })
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('rejects a cover that is not in the library', async () => {
+    const { req, update } = createReq({
+      body: { ...validBody, coverMedia: 9 },
+      coverInLibrary: false,
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: 'Cover must be a title in your library' })
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('keeps the current cover without checking the library again', async () => {
+    const { find, req, update } = createReq({
+      body: { ...validBody, coverMedia: 9 },
+      coverInLibrary: false,
+      storedCoverMedia: 9,
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(200)
+    expect(update).toHaveBeenCalled()
+    expect(find).not.toHaveBeenCalledWith(expect.objectContaining({ collection: 'library-items' }))
   })
 
   it('rejects a missing field', async () => {
@@ -131,7 +289,7 @@ describe('updateWatchlistEndpoint', () => {
 
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({
-      error: 'name, description, and visibility are required',
+      error: 'name, description, visibility, coverMedia, and challenge are required',
     })
     expect(update).not.toHaveBeenCalled()
   })
@@ -145,14 +303,14 @@ describe('updateWatchlistEndpoint', () => {
 
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({
-      error: 'Only name, description, and visibility can be updated',
+      error: 'Only name, description, visibility, coverMedia, and challenge can be saved',
     })
     expect(update).not.toHaveBeenCalled()
   })
 
   it('rejects a blank name', async () => {
     const { req, update } = createReq({
-      body: { description: null, name: '   ', visibility: 'private' },
+      body: { ...validBody, description: null, name: '   ', visibility: 'private' },
     })
 
     const response = await readResponse(req)
@@ -165,6 +323,7 @@ describe('updateWatchlistEndpoint', () => {
   it('rejects a name that is too long', async () => {
     const { req, update } = createReq({
       body: {
+        ...validBody,
         description: null,
         name: 'a'.repeat(WATCHLIST_NAME_MAX_LENGTH + 1),
         visibility: 'private',
@@ -180,6 +339,7 @@ describe('updateWatchlistEndpoint', () => {
   it('rejects a description that is too long', async () => {
     const { req, update } = createReq({
       body: {
+        ...validBody,
         description: 'a'.repeat(WATCHLIST_DESCRIPTION_MAX_LENGTH + 1),
         name: 'Queue',
         visibility: 'private',
@@ -194,7 +354,7 @@ describe('updateWatchlistEndpoint', () => {
 
   it('rejects an unknown visibility', async () => {
     const { req, update } = createReq({
-      body: { description: null, name: 'Queue', visibility: 'secret' },
+      body: { ...validBody, description: null, name: 'Queue', visibility: 'secret' },
     })
 
     const response = await readResponse(req)

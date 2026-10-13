@@ -4,6 +4,32 @@ import { applyBreadcrumbOverride, resolveTitleBreadcrumbLabel } from '../apply-b
 import { getBreadcrumbs } from '../get-breadcrumbs'
 import { parseTitleBreadcrumbParent } from '../title-breadcrumb-parent'
 
+describe('watchlist breadcrumbs', () => {
+  it('labels the new watchlist page under Watchlists', () => {
+    expect(getBreadcrumbs('/dashboard/watchlists/new')).toEqual([
+      { href: '/dashboard', kind: 'overview', label: 'Overview' },
+      { href: '/dashboard/watchlists', label: 'Watchlists' },
+      { label: 'New Watchlist' },
+    ])
+  })
+
+  it('labels the edit page under Watchlists', () => {
+    expect(getBreadcrumbs('/dashboard/watchlists/friday-night/edit')).toEqual([
+      { href: '/dashboard', kind: 'overview', label: 'Overview' },
+      { href: '/dashboard/watchlists', label: 'Watchlists' },
+      { label: 'Edit Watchlist' },
+    ])
+  })
+
+  it('puts a challenge under Challenges', () => {
+    expect(getBreadcrumbs('/dashboard/challenges/friday-night')).toEqual([
+      { href: '/dashboard', kind: 'overview', label: 'Overview' },
+      { href: '/dashboard/challenges', label: 'Challenges' },
+      { label: 'Friday Night' },
+    ])
+  })
+})
+
 describe('title breadcrumbs', () => {
   it('keeps a skeleton under Library until the page supplies the name', () => {
     expect(getBreadcrumbs('/dashboard/title/movie/550')).toEqual([

@@ -61,6 +61,7 @@ describe('initializeMembershipChallengeFields', () => {
       countsTowardGoal: true,
       episodesAtJoin: 0,
       episodesCountedForList: 0,
+      excludeFromGoal: false,
       goalWeight: 1,
       listStatus: 'planned',
     })
@@ -71,6 +72,22 @@ describe('initializeMembershipChallengeFields', () => {
     expect(findByID).toHaveBeenCalledWith(
       expect.objectContaining({ collection: 'library-items', depth: 1, id: 11, req }),
     )
+  })
+
+  it('keeps a manual exclusion on create and turns counts off', async () => {
+    const { req } = createReq()
+
+    await expect(
+      initializeMembershipChallengeFields({
+        data: { addedAt, excludeFromGoal: true, libraryItem: 11, watchlist: 3 },
+        operation: 'create',
+        req,
+      } as unknown as Parameters<typeof initializeMembershipChallengeFields>[0]),
+    ).resolves.toMatchObject({
+      countsTowardGoal: false,
+      excludeFromGoal: true,
+      listStatus: 'planned',
+    })
   })
 
   it('returns the original data when the library item lookup misses', async () => {

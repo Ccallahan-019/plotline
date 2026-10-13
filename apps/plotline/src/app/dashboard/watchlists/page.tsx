@@ -2,9 +2,9 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
-import { NewWatchlistButton } from '@/features/watchlists/components/NewWatchlistButton'
-import { WatchlistsGrid } from '@/features/watchlists/components/WatchlistsGrid'
-import { getInitialWatchlistCards } from '@/features/watchlists/services/get-initial-watchlist-cards'
+import { NewWatchlistButton } from '@/features/watchlists/cards/components/NewWatchlistButton'
+import { WatchlistsGrid } from '@/features/watchlists/cards/components/WatchlistsGrid'
+import { getInitialWatchlistCards } from '@/features/watchlists/cards/services/get-initial-watchlist-cards'
 
 export const metadata = {
   title: 'Watchlists',
@@ -17,7 +17,7 @@ export default async function WatchlistsPage() {
     redirect('/sign-in')
   }
 
-  const { initialError, initialWatchlistCards } = await getInitialWatchlistCards(userId)
+  const { initialError, initialWatchlistCards } = await getInitialWatchlistCards(userId, 'list')
 
   return (
     <div className="flex flex-col">
@@ -34,7 +34,11 @@ export default async function WatchlistsPage() {
         </ItemActions>
       </Item>
 
-      <WatchlistsGrid initialData={initialWatchlistCards} initialError={initialError} />
+      <WatchlistsGrid
+        filter="list"
+        initialData={initialWatchlistCards}
+        initialError={initialError}
+      />
     </div>
   )
 }

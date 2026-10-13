@@ -8,9 +8,11 @@ import {
 } from '@plotline/shared/constants'
 import { JSONSchema4 } from 'json-schema'
 
+import { createWatchlistEndpoint } from '../../endpoints/create-watchlist'
 import { removeWatchlistMembershipEndpoint } from '../../endpoints/remove-watchlist-membership'
 import { reorderWatchlistMembershipsEndpoint } from '../../endpoints/reorder-watchlist-memberships'
 import { updateWatchlistEndpoint } from '../../endpoints/update-watchlist'
+import { updateWatchlistMembershipEndpoint } from '../../endpoints/update-watchlist-membership'
 import { watchlistsAccess } from './access'
 import { preventSystemWatchlistDelete } from './hooks/preventSystemWatchlistDelete'
 import { recalculateStatsAfterWatchlistChange } from './hooks/recalculateStatsOnChange'
@@ -25,9 +27,11 @@ export const Watchlists: CollectionConfig = {
   },
   // Paths are relative to this collection. Root `/watchlists/...` endpoints are not matched.
   endpoints: [
+    createWatchlistEndpoint,
     reorderWatchlistMembershipsEndpoint,
     removeWatchlistMembershipEndpoint,
     updateWatchlistEndpoint,
+    updateWatchlistMembershipEndpoint,
   ],
   fields: [
     {

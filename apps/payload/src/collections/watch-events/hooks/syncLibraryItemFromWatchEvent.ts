@@ -90,17 +90,31 @@ export const syncLibraryItemFromWatchEvent: CollectionAfterChangeHook<WatchEvent
 }
 
 // Classifies a TV episode against existing coverage (excluding this event), then builds the patch.
+// Events without an episode only need the library item.
 async function buildLockedProgressUpdate(
   req: PayloadRequest,
   doc: WatchEvent,
   libraryItemId: number,
 ): Promise<WatchEventLibraryItemProgressUpdate> {
+  // Series-level and movie events never read watched episodes, so skip paging every watch event.
+  if (!hasTvEpisodeContext(doc.tvContext)) {
+    const libraryItem = await req.payload.findByID({
+      collection: 'library-items',
+      depth: 0,
+      id: libraryItemId,
+      overrideAccess: true,
+      req,
+    })
+
+    return buildWatchEventLibraryItemProgressUpdate(doc, libraryItem)
+  }
+
   const rewatchContext = await loadLogWatchRewatchContext(req, libraryItemId, {
     excludeEventId: doc.id,
   })
   const { libraryItem } = rewatchContext
 
-  if (libraryItem.progress.type !== 'tv' || !hasTvEpisodeContext(doc.tvContext)) {
+  if (libraryItem.progress.type !== 'tv') {
     return buildWatchEventLibraryItemProgressUpdate(doc, libraryItem)
   }
 

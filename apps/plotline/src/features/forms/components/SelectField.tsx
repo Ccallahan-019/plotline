@@ -21,6 +21,7 @@ export type SelectFieldItem<T extends number | string = string> = {
 
 type SelectFieldProps<T extends number | string> = {
   align?: ComponentProps<typeof SelectContent>['align']
+  alignItemWithTrigger?: ComponentProps<typeof SelectContent>['alignItemWithTrigger']
   allowEmpty?: boolean
   'aria-label'?: string
   className?: string
@@ -36,6 +37,7 @@ type SelectFieldProps<T extends number | string> = {
 
 export function SelectField<T extends number | string>({
   align = 'start',
+  alignItemWithTrigger = false,
   allowEmpty = false,
   'aria-label': ariaLabel,
   className,
@@ -94,7 +96,11 @@ export function SelectField<T extends number | string>({
       >
         <span className="min-w-0 flex-1 truncate text-left">{triggerContent}</span>
       </SelectTrigger>
-      <SelectContent align={align} className="min-w-fit">
+      <SelectContent
+        align={align}
+        alignItemWithTrigger={alignItemWithTrigger}
+        className="min-w-fit"
+      >
         <SelectGroup>
           {items.map((item) => (
             <SelectItem disabled={item.disabled} key={String(item.value)} value={item.value}>

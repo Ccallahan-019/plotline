@@ -46,10 +46,7 @@ export function ToggleGroupField<T extends string>({
 
   return (
     <ToggleGroup
-      className={cn(
-        'grid w-full gap-2 grid-cols-[repeat(auto-fill,minmax(min(100%,7rem),1fr))]',
-        className,
-      )}
+      className={cn('w-full', className)}
       onBlur={(event) => {
         field.handleBlur()
         onBlur?.(event)

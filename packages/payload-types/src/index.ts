@@ -327,6 +327,10 @@ export interface WatchlistMembership {
   listStatus?: ('planned' | 'in_progress' | 'completed' | 'skipped') | null;
   completedForListAt?: string | null;
   countsTowardGoal?: boolean | null;
+  /**
+   * Manual opt-out from the challenge goal. Library sync and challenge rule changes keep this value and fold it into countsTowardGoal.
+   */
+  excludeFromGoal?: boolean | null;
   goalWeight?: number | null;
   episodesCountedForList?: number | null;
   /**
@@ -651,6 +655,7 @@ export interface WatchlistMembershipsSelect<T extends boolean = true> {
   listStatus?: T;
   completedForListAt?: T;
   countsTowardGoal?: T;
+  excludeFromGoal?: T;
   goalWeight?: T;
   episodesCountedForList?: T;
   episodesAtJoin?: T;
