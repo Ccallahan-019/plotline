@@ -52,6 +52,12 @@ export const watchlistFormSchema = z
         message: 'Enter a due date',
         path: ['dueDate'],
       })
+    } else if (startsAfterDue(values.startDate, values.dueDate)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Start date must not be after the due date',
+        path: ['startDate'],
+      })
     }
 
     if (values.goalType === 'count') {
@@ -178,6 +184,13 @@ export function toWatchlistWriteInput(
   }
 }
 
+/**
+ * Helper text under the editor heading.
+ *
+ * @param mode - `create` for a new list, `edit` for an existing one
+ * @param challengeEnabled - Whether the challenge switch is on, which changes the wording
+ * @returns One sentence describing what the form saves
+ */
 export function watchlistFormDescription(
   mode: 'create' | 'edit',
   challengeEnabled: boolean,
@@ -191,6 +204,13 @@ export function watchlistFormDescription(
       : "Change the watchlist's name, visibility, cover, and challenge settings."
 }
 
+/**
+ * Label for the form's submit button.
+ *
+ * @param mode - `create` for a new list, `edit` for an existing one
+ * @param challengeEnabled - Whether the challenge switch is on, which swaps "Watchlist" for "Challenge"
+ * @returns The button text
+ */
 export function watchlistFormSubmitLabel(
   mode: 'create' | 'edit',
   challengeEnabled: boolean,
@@ -204,6 +224,13 @@ export function watchlistFormSubmitLabel(
       : 'Save Watchlist'
 }
 
+/**
+ * Heading for the editor page.
+ *
+ * @param mode - `create` for a new list, `edit` for an existing one
+ * @param challengeEnabled - Whether the challenge switch is on, which swaps "Watchlist" for "Challenge"
+ * @returns The page title
+ */
 export function watchlistFormTitle(mode: 'create' | 'edit', challengeEnabled: boolean): string {
   return mode === 'create'
     ? challengeEnabled
@@ -305,6 +332,14 @@ function readCoverMediaId(coverMedia: undefined | Watchlist['coverMedia']): null
   }
 
   return typeof coverMedia === 'number' ? coverMedia : coverMedia.id
+}
+
+// True when both days are set and the start is a later calendar day than the due date.
+function startsAfterDue(startDate: Date | null | undefined, dueDate: Date | null | undefined) {
+  const start = toCalendarDateString(startDate)
+  const due = toCalendarDateString(dueDate)
+
+  return start != null && due != null && start > due
 }
 
 // `YYYY-MM-DD` from the date picker, using the local calendar day.

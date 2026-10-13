@@ -1,11 +1,13 @@
-import { Watchlist, WatchlistMembership } from '@plotline/payload-types'
+import type { Watchlist, WatchlistMembership } from '@plotline/payload-types'
+
 import { useMemo, useState } from 'react'
 
 import { getErrorMessage } from '@/utils/get-error-message'
 
+import type { WatchlistDetailSurface } from '../components/WatchlistDetail'
+
 import { useWatchlist } from '../../hooks/use-watchlist'
 import { formatWatchlistTitleCount } from '../../services/format-watchlist-title-count'
-import { WatchlistDetailSurface } from '../components/WatchlistDetail'
 import { buildWatchlistOnListKeys } from '../services/build-watchlist-on-list-keys'
 import { omitPendingWatchlistRemoves } from '../services/pending-watchlist-remove'
 import { DEFAULT_WATCHLIST_MEMBERSHIP_SORT, WatchlistMembershipSort } from '../types'
@@ -21,6 +23,22 @@ type UseWatchlistDetailProps = {
   surface: WatchlistDetailSurface
 }
 
+/**
+ * State and derived values for the watchlist and challenge detail page.
+ *
+ * Runs on the client once the server has prefetched the watchlist and its memberships.
+ * Both queries start from that data, then stay live. The hook also owns the local sort,
+ * the title-search dialog state and the row/grid layout. In-flight removes stay out of
+ * the title count and stay in the on-list keys, so search cannot re-add a title whose
+ * DELETE has not settled.
+ *
+ * @param props.initialMemberships - Memberships from the server prefetch, or `null` if it failed
+ * @param props.initialMembershipsError - Prefetch error message shown until memberships load
+ * @param props.initialWatchlist - Watchlist from the server prefetch
+ * @param props.slug - Watchlist slug used by the queries and mutations
+ * @param props.surface - `challenge` shows goal progress and Counts controls
+ * @returns The watchlist, memberships, load state, layout, sort and search state, and the parent href
+ */
 export function useWatchlistDetail({
   initialMemberships,
   initialMembershipsError,

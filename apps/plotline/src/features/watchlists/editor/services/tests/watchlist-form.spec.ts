@@ -232,4 +232,30 @@ describe('watchlist form', () => {
 
     expect(result.success).toBe(false)
   })
+
+  it('rejects a start date after the due date', () => {
+    const result = watchlistFormSchema.safeParse(
+      formValues({
+        challengeEnabled: true,
+        dueDate: new Date(2026, 9, 1),
+        goalCount: 10,
+        startDate: new Date(2026, 11, 1),
+      }),
+    )
+
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts a start date on the due date', () => {
+    const result = watchlistFormSchema.safeParse(
+      formValues({
+        challengeEnabled: true,
+        dueDate: new Date(2026, 9, 1),
+        goalCount: 10,
+        startDate: new Date(2026, 9, 1),
+      }),
+    )
+
+    expect(result.success).toBe(true)
+  })
 })

@@ -45,6 +45,7 @@ export function LogWatchPlatformFieldContent({
   return (
     <ToggleGroupField
       allowDeselect
+      className="grid w-full gap-2 grid-cols-[repeat(auto-fill,minmax(min(100%,7rem),1fr))]"
       disabled={disabled}
       itemClassName="data-[state=on]:ring-1 data-[state=on]:ring-ring h-auto px-2 py-1.5"
       items={items}

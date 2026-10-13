@@ -2,6 +2,7 @@ import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { withLibraryItemRowLock } from '../../collections/watch-events/utils/withLibraryItemRowLock'
 import { Watchlists } from '../../collections/watchlists'
 import { SKIP_WATCHLIST_STATS_RECALC } from '../../collections/watchlists/context'
 import { recalculateWatchlistStatsById } from '../../utilities/recalculateWatchlistStatsById'
@@ -21,6 +22,12 @@ vi.mock('../helpers', async (importOriginal) => {
 
 vi.mock('../../utilities/runInPayloadTransaction', () => ({
   runInPayloadTransaction: vi.fn(async (_req: unknown, fn: () => Promise<unknown>) => fn()),
+}))
+
+vi.mock('../../collections/watch-events/utils/withLibraryItemRowLock', () => ({
+  withLibraryItemRowLock: vi.fn(
+    async (_req: unknown, _libraryItemId: unknown, fn: () => Promise<unknown>) => fn(),
+  ),
 }))
 
 vi.mock('../../utilities/recalculateWatchlistStatsById', () => ({
@@ -53,7 +60,13 @@ function createReq(options: {
 }) {
   const updates: Array<{ context?: Record<string, unknown>; data: Record<string, unknown> }> = []
   const update = vi.fn(
-    async ({ context, data }: { context?: Record<string, unknown>; data: Record<string, unknown> }) => {
+    async ({
+      context,
+      data,
+    }: {
+      context?: Record<string, unknown>
+      data: Record<string, unknown>
+    }) => {
       if (context) {
         req.context = { ...req.context, ...context }
       }
@@ -66,7 +79,10 @@ function createReq(options: {
   const find = vi.fn(async ({ collection }: { collection: string }) => {
     if (collection === 'watchlists') {
       return {
-        docs: options.owned === false ? [] : [{ challenge: challenge(), id: 7, owner: 22, slug: 'watchlist' }],
+        docs:
+          options.owned === false
+            ? []
+            : [{ challenge: challenge(), id: 7, owner: 22, slug: 'watchlist' }],
       }
     }
 
@@ -175,6 +191,14 @@ describe('updateWatchlistMembershipEndpoint', () => {
     )
     expect(recalculateWatchlistStatsById).toHaveBeenCalledWith(req.payload, 7, req)
     expect(runInPayloadTransaction).toHaveBeenCalled()
+  })
+
+  it('reads and writes under the library item row lock', async () => {
+    const { req } = createReq({ body: { excludeFromGoal: true } })
+
+    await readResponse(req)
+
+    expect(withLibraryItemRowLock).toHaveBeenCalledWith(req, 11, expect.any(Function))
   })
 
   it('turns counts back on and recomputes the row when the rules allow it', async () => {

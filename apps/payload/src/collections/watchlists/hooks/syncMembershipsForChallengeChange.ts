@@ -28,8 +28,9 @@ export async function syncMembershipsForChallengeChange(
   const memberships = await req.payload.find({
     collection: 'watchlist-memberships',
     depth: 2,
-    limit: 1000,
+    limit: 0,
     overrideAccess: true,
+    pagination: false,
     req,
     where: {
       watchlist: {

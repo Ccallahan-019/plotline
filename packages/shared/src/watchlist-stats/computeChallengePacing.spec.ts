@@ -24,4 +24,27 @@ describe('computeChallengePacing', () => {
       status: 'active',
     })
   })
+  it('reports overdue after the due day even with no progress', () => {
+    const pacing = computeChallengePacing({
+      challenge: { dueDate: '2026-10-31', enabled: true, startDate: '2026-10-01' },
+      completed: 0,
+      inProgress: 0,
+      referenceDate: new Date('2026-11-02T10:00:00.000Z'),
+      remaining: 20,
+    })
+
+    expect(pacing.status).toBe('overdue')
+  })
+
+  it('keeps the due day itself open', () => {
+    const pacing = computeChallengePacing({
+      challenge: { dueDate: '2026-10-31', enabled: true, startDate: '2026-10-01' },
+      completed: 5,
+      inProgress: 0,
+      referenceDate: new Date('2026-10-31T10:00:00.000Z'),
+      remaining: 15,
+    })
+
+    expect(pacing.status).toBe('active')
+  })
 })

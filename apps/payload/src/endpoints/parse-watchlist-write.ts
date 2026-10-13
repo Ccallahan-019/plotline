@@ -217,11 +217,13 @@ function readChallenge(value: unknown): Response | WatchlistChallengeWrite {
     return startDate
   }
 
+  // Both are `YYYY-MM-DDT00:00:00.000Z`, so string order is calendar order.
+  if (startDate != null && startDate > dueDate) {
+    return Response.json({ error: 'startDate must not be after dueDate' }, { status: 400 })
+  }
+
   if (!isOneOf(CHALLENGE_GOAL_TYPES, value.goalType)) {
-    return Response.json(
-      { error: 'goalType must be count or runtime_minutes' },
-      { status: 400 },
-    )
+    return Response.json({ error: 'goalType must be count or runtime_minutes' }, { status: 400 })
   }
 
   if (!isOneOf(TV_COUNT_RULES, value.tvCountRule)) {
@@ -264,10 +266,7 @@ function readCoverMedia(value: unknown): null | number | Response {
     return value
   }
 
-  return Response.json(
-    { error: 'coverMedia must be a library title id or null' },
-    { status: 400 },
-  )
+  return Response.json({ error: 'coverMedia must be a library title id or null' }, { status: 400 })
 }
 
 // Blank descriptions are stored as null. A non-string is rejected.
@@ -302,10 +301,7 @@ function readGoals(
 ): { goalCount: null | number; goalRuntimeMinutes: null | number } | Response {
   if (goalType === 'count') {
     if (goalRuntimeMinutes !== null) {
-      return Response.json(
-        { error: 'Only the active goal can be set' },
-        { status: 400 },
-      )
+      return Response.json({ error: 'Only the active goal can be set' }, { status: 400 })
     }
 
     if (!isPositiveWholeNumber(goalCount)) {

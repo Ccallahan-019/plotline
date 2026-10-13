@@ -113,7 +113,7 @@ export function deriveMembershipChallengeFields(input: {
 
   membership.countsTowardGoal = ruleEligible && input.excludeFromGoal !== true
   membership.goalWeight = computeMembershipGoalWeight({
-    challenge: input.challenge,
+    challenge: input.challenge?.enabled === true ? input.challenge : undefined,
     episodesCountedForList,
     libraryItem: input.libraryItem,
     media: input.media,
@@ -164,22 +164,23 @@ export function resolveMembershipRuleEligibility(input: {
   libraryItem: StatsLibraryItem
   media: StatsMedia
 }): MembershipRuleEligibility {
+  // A disabled challenge keeps its stored rule fields, so they must not apply.
+  const challenge = input.challenge?.enabled === true ? input.challenge : undefined
   const tvEligible = isMembershipEligibleForTvRule(
     {
       addedAt: input.addedAt,
       libraryItem: input.libraryItem,
       media: input.media,
     },
-    input.challenge?.tvCountRule,
+    challenge?.tvCountRule,
   )
   const priorEligible = shouldCountPriorCompletion({
     addedAt: input.addedAt,
     libraryItem: input.libraryItem,
-    priorCompletionRule: input.challenge?.priorCompletionRule,
+    priorCompletionRule: challenge?.priorCompletionRule,
   })
   const preJoinRewatch = isRewatchOfTitleFinishedBeforeJoin(input.addedAt, input.libraryItem)
-  const rewatchQualifies =
-    input.challenge?.enabled === true && input.challenge.includeRewatches === true && preJoinRewatch
+  const rewatchQualifies = challenge?.includeRewatches === true && preJoinRewatch
 
   return {
     preJoinRewatch,

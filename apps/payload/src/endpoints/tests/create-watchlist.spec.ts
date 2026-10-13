@@ -160,4 +160,29 @@ describe('createWatchlistEndpoint', () => {
     })
     expect(create).not.toHaveBeenCalled()
   })
+
+  it('rejects a start date after the due date', async () => {
+    const { create, req } = createReq({
+      body: {
+        ...validBody,
+        challenge: {
+          dueDate: '2026-10-01',
+          enabled: true,
+          goalCount: 10,
+          goalRuntimeMinutes: null,
+          goalType: 'count',
+          includeRewatches: false,
+          priorCompletionRule: 'exclude_if_already_completed',
+          startDate: '2026-12-01',
+          tvCountRule: 'tv_as_series',
+        },
+      },
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: 'startDate must not be after dueDate' })
+    expect(create).not.toHaveBeenCalled()
+  })
 })

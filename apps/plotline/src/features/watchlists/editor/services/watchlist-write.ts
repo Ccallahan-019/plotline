@@ -33,6 +33,14 @@ const enabledChallengeSchema = z
   })
   .strict()
   .superRefine((challenge, ctx) => {
+    if (challenge.startDate != null && challenge.startDate > challenge.dueDate) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Start date must not be after the due date',
+        path: ['startDate'],
+      })
+    }
+
     if (challenge.goalType === 'count') {
       if (challenge.goalRuntimeMinutes != null) {
         ctx.addIssue({
@@ -72,10 +80,7 @@ const enabledChallengeSchema = z
 
 export const watchlistWriteSchema = z
   .object({
-    challenge: z.discriminatedUnion('enabled', [
-      disabledChallengeSchema,
-      enabledChallengeSchema,
-    ]),
+    challenge: z.discriminatedUnion('enabled', [disabledChallengeSchema, enabledChallengeSchema]),
     coverMedia: z.number().int().positive().nullable(),
     description: z.string().max(WATCHLIST_DESCRIPTION_MAX_LENGTH).nullable(),
     name: z

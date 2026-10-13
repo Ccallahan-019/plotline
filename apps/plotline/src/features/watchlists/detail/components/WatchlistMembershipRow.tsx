@@ -108,15 +108,17 @@ export function WatchlistMembershipRow({
         </ItemContent>
 
         <ItemActions className="ml-auto shrink-0">
-          <LibraryItemStatus libraryItem={libraryItem} />
-          <ShowIf condition={showGoalCounts}>
-            <MembershipCountsControl
-              challenge={challenge}
-              membership={membership}
-              slug={slug}
-              title={title}
-            />
-          </ShowIf>
+          <div className="flex items-center gap-3">
+            <LibraryItemStatus libraryItem={libraryItem} />
+            <ShowIf condition={showGoalCounts}>
+              <MembershipCountsControl
+                challenge={challenge}
+                membership={membership}
+                slug={slug}
+                title={title}
+              />
+            </ShowIf>
+          </div>
           <WatchlistMembershipMenu
             membership={membership}
             onLogWatch={onLogWatch}

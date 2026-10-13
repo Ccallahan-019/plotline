@@ -7,11 +7,13 @@ import {
   type WatchlistChallengeConfig,
 } from '@plotline/shared/watchlist-stats'
 
+import { withLibraryItemRowLock } from '../collections/watch-events/utils/withLibraryItemRowLock'
 import {
   clearWatchlistSyncSkipFlags,
   SKIP_WATCHLIST_STATS_RECALC,
 } from '../collections/watchlists/context'
 import { recalculateWatchlistStatsById } from '../utilities/recalculateWatchlistStatsById'
+import { getRelationId } from '../utilities/relations'
 import { runInPayloadTransaction } from '../utilities/runInPayloadTransaction'
 import { findOwnedWatchlistBySlug } from './find-owned-watchlist-by-slug'
 import { parseJsonBody, requireProfileContext, requireServiceAuth } from './helpers'
@@ -31,7 +33,8 @@ type ExcludeFromGoalPatch = {
  * Turning counts on (`excludeFromGoal: false`) is rejected when the challenge
  * rules already exclude the title. Turning counts off is always allowed.
  * `excludeFromGoal` is what later library sync and challenge re-derives keep.
- * Stats are recalculated once after the row write.
+ * Stats are recalculated once after the row write. The reads and the write run in one
+ * transaction under the library item's row lock, the same lock log-watch takes.
  *
  * The path is relative to the `watchlists` collection. A root path starting
  * with `/watchlists` is never reached, because Payload routes that prefix to
@@ -81,104 +84,131 @@ export const updateWatchlistMembershipEndpoint: Endpoint = {
       return Response.json({ error: 'Watchlist not found' }, { status: 404 })
     }
 
-    const memberships = await req.payload.find({
-      collection: 'watchlist-memberships',
-      depth: 2,
-      limit: 1,
-      overrideAccess: true,
-      req,
-      where: {
-        and: [{ id: { equals: membershipId } }, { watchlist: { equals: watchlist.id } }],
-      },
-    })
-    const membership = memberships.docs[0]
+    const challenge = watchlist.challenge as null | undefined | WatchlistChallengeConfig
 
-    if (!membership) {
+    const lookup = await findWatchlistMembership(req, watchlist.id, membershipId, 0)
+
+    if (!lookup) {
       return Response.json({ error: 'Membership not found' }, { status: 404 })
     }
 
-    const libraryItem = await resolveLibraryItem(req, membership.libraryItem)
+    const libraryItemId = getRelationId(lookup.libraryItem)
 
-    if (!libraryItem) {
+    if (libraryItemId == null) {
       return Response.json({ error: 'Membership library item is missing' }, { status: 400 })
     }
-
-    const media = await resolveMedia(req, libraryItem.media)
-
-    if (!media) {
-      return Response.json({ error: 'Membership library item is missing' }, { status: 400 })
-    }
-
-    const challenge = watchlist.challenge as null | undefined | WatchlistChallengeConfig
-    const libraryStats = {
-      completedAt: libraryItem.completedAt,
-      progress: libraryItem.progress,
-      rewatchCount: libraryItem.rewatchCount,
-      status: libraryItem.status,
-    }
-    const mediaStats = {
-      mediaType: media.mediaType,
-      runtime: media.runtime,
-      tvMeta: media.tvMeta,
-    }
-
-    if (!patch.excludeFromGoal) {
-      const exclusion = getChallengeExclusion({
-        addedAt: membership.addedAt,
-        challenge,
-        libraryItem: libraryStats,
-        media: mediaStats,
-      })
-
-      if (exclusion.note) {
-        return Response.json({ error: exclusion.note }, { status: 400 })
-      }
-    }
-
-    const episodesWatched = libraryItem.progress?.episodesWatched ?? 0
-    const episodesAtJoin =
-      membership.episodesAtJoin ??
-      Math.max(0, episodesWatched - (membership.episodesCountedForList ?? 0))
-    const derived = deriveMembershipChallengeFields({
-      addedAt: membership.addedAt,
-      challenge,
-      episodesAtJoin,
-      excludeFromGoal: patch.excludeFromGoal,
-      libraryItem: libraryStats,
-      media: mediaStats,
-    })
 
     req.context ??= {}
 
-    const updated = await runInPayloadTransaction(req, async () => {
-      const doc = await req.payload.update({
-        collection: 'watchlist-memberships',
-        context: {
-          [SKIP_WATCHLIST_STATS_RECALC]: true,
-        },
-        data: membershipChallengeUpdate({
-          derived,
+    // Reads and the write share one transaction under the library item's row lock, so a
+    // concurrent log-watch or status change cannot land between deriving and storing.
+    const result = await runInPayloadTransaction(req, () =>
+      withLibraryItemRowLock(req, libraryItemId, async () => {
+        const membership = await findWatchlistMembership(req, watchlist.id, membershipId, 2)
+
+        if (!membership) {
+          return Response.json({ error: 'Membership not found' }, { status: 404 })
+        }
+
+        const libraryItem = await resolveLibraryItem(req, membership.libraryItem)
+        const media = libraryItem ? await resolveMedia(req, libraryItem.media) : null
+
+        if (!libraryItem || !media) {
+          return Response.json({ error: 'Membership library item is missing' }, { status: 400 })
+        }
+
+        const libraryStats = {
+          completedAt: libraryItem.completedAt,
+          progress: libraryItem.progress,
+          rewatchCount: libraryItem.rewatchCount,
+          status: libraryItem.status,
+        }
+        const mediaStats = {
+          mediaType: media.mediaType,
+          runtime: media.runtime,
+          tvMeta: media.tvMeta,
+        }
+
+        if (!patch.excludeFromGoal) {
+          const exclusion = getChallengeExclusion({
+            addedAt: membership.addedAt,
+            challenge,
+            libraryItem: libraryStats,
+            media: mediaStats,
+          })
+
+          if (exclusion.note) {
+            return Response.json({ error: exclusion.note }, { status: 400 })
+          }
+        }
+
+        const episodesWatched = libraryItem.progress?.episodesWatched ?? 0
+        const episodesAtJoin =
+          membership.episodesAtJoin ??
+          Math.max(0, episodesWatched - (membership.episodesCountedForList ?? 0))
+        const derived = deriveMembershipChallengeFields({
+          addedAt: membership.addedAt,
+          challenge,
           episodesAtJoin,
           excludeFromGoal: patch.excludeFromGoal,
-          libraryItem,
-          membership,
-        }),
-        depth: 0,
-        id: membership.id,
-        overrideAccess: true,
-        req,
-      })
+          libraryItem: libraryStats,
+          media: mediaStats,
+        })
 
-      clearWatchlistSyncSkipFlags(req.context)
-      await recalculateWatchlistStatsById(req.payload, watchlist.id, req)
+        const doc = await req.payload.update({
+          collection: 'watchlist-memberships',
+          context: {
+            [SKIP_WATCHLIST_STATS_RECALC]: true,
+          },
+          data: membershipChallengeUpdate({
+            derived,
+            episodesAtJoin,
+            excludeFromGoal: patch.excludeFromGoal,
+            libraryItem,
+            membership,
+          }),
+          depth: 0,
+          id: membership.id,
+          overrideAccess: true,
+          req,
+        })
 
-      return doc
-    })
+        clearWatchlistSyncSkipFlags(req.context)
+        await recalculateWatchlistStatsById(req.payload, watchlist.id, req)
 
-    return Response.json(updated)
+        return doc
+      }),
+    )
+
+    if (result instanceof Response) {
+      return result
+    }
+
+    return Response.json(result)
   },
   method: 'patch',
   path: '/:slug/memberships/:membershipId',
+}
+
+// One membership of the watchlist, or `undefined` when it is not on that list.
+async function findWatchlistMembership(
+  req: PayloadRequest,
+  watchlistId: number,
+  membershipId: number,
+  depth: 0 | 2,
+): Promise<undefined | WatchlistMembership> {
+  const result = await req.payload.find({
+    collection: 'watchlist-memberships',
+    depth,
+    limit: 1,
+    overrideAccess: true,
+    req,
+    where: {
+      and: [{ id: { equals: membershipId } }, { watchlist: { equals: watchlistId } }],
+    },
+  })
+
+  return result.docs[0]
 }
 
 /**

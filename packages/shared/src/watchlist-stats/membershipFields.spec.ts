@@ -265,3 +265,27 @@ describe('getChallengeExclusion', () => {
     ).toEqual({ badge: null, note: 'Already completed — excluded per challenge rules' })
   })
 })
+
+describe('disabled challenge', () => {
+  it('ignores stored TV and goal rules once challenge mode is off', () => {
+    expect(
+      deriveMembershipChallengeFields({
+        addedAt,
+        challenge: challenge({ enabled: false, tvCountRule: 'movies_only' }),
+        libraryItem: libraryItem(),
+        media: series,
+      }),
+    ).toMatchObject({ countsTowardGoal: true, goalWeight: 1, listStatus: 'completed' })
+  })
+
+  it('does not report a series as excluded when challenge mode is off', () => {
+    expect(
+      getChallengeExclusion({
+        addedAt,
+        challenge: challenge({ enabled: false, tvCountRule: 'movies_only' }),
+        libraryItem: libraryItem(),
+        media: series,
+      }),
+    ).toEqual({ badge: null, note: null })
+  })
+})
