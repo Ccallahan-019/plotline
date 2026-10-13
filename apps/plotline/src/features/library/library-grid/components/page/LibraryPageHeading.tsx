@@ -1,31 +1,34 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { useFilters } from '@/features/media-grid/filters/providers/FiltersProvider'
+import { LibraryTitleSearchDialog } from '@/features/search/components/title-search/LibraryTitleSearchDialog'
 
 import { useLibraryBrowse } from '../../providers/LibraryBrowseProvider'
+import { useLibraryTitleSearch } from '../../providers/LibraryTitleSearchProvider'
 
 export function LibraryPageHeading() {
   const { totalResults } = useLibraryBrowse()
+  const { open, setOpen } = useLibraryTitleSearch()
   const { appliedFilters } = useFilters()
 
   const hasFilters = Object.keys(appliedFilters).length > 0
   const headingText = hasFilters ? 'Filtered Results' : 'All Titles'
   const subtitleText = hasFilters
-    ? `${totalResults} titles listed`
+    ? `${totalResults} titles listed from your library`
     : `${totalResults} titles in your library`
 
   return (
-    <div className="flex flex-col gap-1">
-      <Badge className="uppercase text-muted-foreground" variant="secondary">
-        Library
-      </Badge>
+    <Item className="px-0">
+      <ItemContent>
+        <ItemTitle className="text-2xl">{headingText}</ItemTitle>
 
-      <div className="flex flex-col">
-        <h1 className="text-2xl font-bold">{headingText}</h1>
+        <ItemDescription>{subtitleText}</ItemDescription>
+      </ItemContent>
 
-        <p className="text-sm text-muted-foreground">{subtitleText}</p>
-      </div>
-    </div>
+      <ItemActions>
+        <LibraryTitleSearchDialog onOpenChange={setOpen} open={open} />
+      </ItemActions>
+    </Item>
   )
 }

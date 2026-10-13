@@ -82,6 +82,14 @@ const tvDetailsSchema = z.object({
   overview: z.string().nullable().optional(),
   popularity: z.number().optional(),
   poster_path: z.string().nullable().optional(),
+  seasons: z
+    .array(
+      z.object({
+        episode_count: z.number().nullable().optional(),
+        season_number: z.number().nullable().optional(),
+      }),
+    )
+    .optional(),
   status: z.string().optional(),
   vote_average: z.number().optional(),
 })
@@ -89,6 +97,21 @@ const tvDetailsSchema = z.object({
 export const tmdbTvDetailsSchema = tvDetailsSchema
 
 export type TmdbTvDetails = z.infer<typeof tmdbTvDetailsSchema>
+
+const tvSeasonEpisodeSchema = z.object({
+  air_date: z.string().nullable().optional(),
+  episode_number: z.number(),
+  name: z.string().nullable(),
+  runtime: z.number().nullable().optional(),
+})
+
+export const tmdbTvSeasonDetailsSchema = z.object({
+  episodes: z.array(tvSeasonEpisodeSchema),
+  season_number: z.number(),
+})
+
+export type TmdbTvSeasonDetails = z.infer<typeof tmdbTvSeasonDetailsSchema>
+export type TmdbTvSeasonEpisode = z.infer<typeof tvSeasonEpisodeSchema>
 
 export const tmdbGenreListSchema = z.object({
   genres: z.array(genreSchema),
@@ -110,3 +133,163 @@ export const tmdbWatchProviderListSchema = z.object({
 
 export type TmdbWatchProvider = z.infer<typeof watchProviderSchema>
 export type TmdbWatchProviderList = z.infer<typeof tmdbWatchProviderListSchema>
+
+// Unknown keys are stripped so a new TMDB offer field does not fail the request.
+const tmdbTitleWatchProviderCountrySchema = z.object({
+  ads: z.array(watchProviderSchema).optional(),
+  buy: z.array(watchProviderSchema).optional(),
+  flatrate: z.array(watchProviderSchema).optional(),
+  free: z.array(watchProviderSchema).optional(),
+  link: z.string().nullable().optional(),
+  rent: z.array(watchProviderSchema).optional(),
+})
+
+export const tmdbTitleWatchProvidersSchema = z.object({
+  id: z.number(),
+  results: z.record(z.string(), tmdbTitleWatchProviderCountrySchema),
+})
+
+export type TmdbTitleWatchProviderCountry = z.infer<typeof tmdbTitleWatchProviderCountrySchema>
+export type TmdbTitleWatchProviders = z.infer<typeof tmdbTitleWatchProvidersSchema>
+
+const tmdbCastMemberSchema = z.object({
+  character: z.string().nullable().optional(),
+  id: z.number(),
+  name: z.string(),
+  profile_path: z.string().nullable().optional(),
+})
+
+const tmdbCrewMemberSchema = z.object({
+  id: z.number(),
+  job: z.string().optional(),
+  name: z.string(),
+  profile_path: z.string().nullable().optional(),
+})
+
+const tmdbCreditsSchema = z.object({
+  cast: z.array(tmdbCastMemberSchema).optional(),
+  crew: z.array(tmdbCrewMemberSchema).optional(),
+})
+
+const tmdbAggregateCastMemberSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  order: z.number().optional(),
+  profile_path: z.string().nullable().optional(),
+  roles: z
+    .array(
+      z.object({
+        character: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
+})
+
+const tmdbAggregateCrewMemberSchema = z.object({
+  id: z.number(),
+  jobs: z
+    .array(
+      z.object({
+        job: z.string().optional(),
+      }),
+    )
+    .optional(),
+  name: z.string(),
+  profile_path: z.string().nullable().optional(),
+})
+
+const tmdbAggregateCreditsSchema = z.object({
+  cast: z.array(tmdbAggregateCastMemberSchema).optional(),
+  crew: z.array(tmdbAggregateCrewMemberSchema).optional(),
+})
+
+const tmdbReleaseDatesSchema = z.object({
+  results: z.array(
+    z.object({
+      iso_3166_1: z.string(),
+      release_dates: z.array(
+        z.object({
+          certification: z.string().optional(),
+          type: z.number().optional(),
+        }),
+      ),
+    }),
+  ),
+})
+
+const tmdbContentRatingsSchema = z.object({
+  results: z.array(
+    z.object({
+      iso_3166_1: z.string(),
+      rating: z.string().optional(),
+    }),
+  ),
+})
+
+const tmdbTitleSeasonSchema = z.object({
+  air_date: z.string().nullable().optional(),
+  episode_count: z.number().nullable().optional(),
+  name: z.string().nullable().optional(),
+  poster_path: z.string().nullable().optional(),
+  season_number: z.number().nullable().optional(),
+})
+
+export const tmdbMovieTitleDetailsSchema = tmdbMovieDetailsSchema.extend({
+  credits: tmdbCreditsSchema.optional(),
+  original_language: z.string().optional(),
+  release_dates: tmdbReleaseDatesSchema.optional(),
+  vote_count: z.number().optional(),
+})
+
+export const tmdbTvTitleDetailsSchema = tmdbTvDetailsSchema.extend({
+  aggregate_credits: tmdbAggregateCreditsSchema.optional(),
+  content_ratings: tmdbContentRatingsSchema.optional(),
+  created_by: z
+    .array(
+      z.object({
+        id: z.number().optional(),
+        name: z.string(),
+      }),
+    )
+    .optional(),
+  credits: tmdbCreditsSchema.optional(),
+  networks: z
+    .array(
+      z.object({
+        id: z.number().optional(),
+        name: z.string(),
+      }),
+    )
+    .optional(),
+  original_language: z.string().optional(),
+  seasons: z.array(tmdbTitleSeasonSchema).optional(),
+  vote_count: z.number().optional(),
+})
+
+export type TmdbMovieTitleDetails = z.infer<typeof tmdbMovieTitleDetailsSchema>
+export type TmdbTvTitleDetails = z.infer<typeof tmdbTvTitleDetailsSchema>
+
+const tmdbReviewAuthorSchema = z.object({
+  avatar_path: z.string().nullable().optional(),
+  name: z.string().optional(),
+  rating: z.number().nullable().optional(),
+  username: z.string().optional(),
+})
+
+const tmdbReviewSchema = z.object({
+  author: z.string().optional(),
+  author_details: tmdbReviewAuthorSchema.optional(),
+  content: z.string().nullable().optional(),
+  created_at: z.string().optional(),
+  id: z.string(),
+})
+
+export const tmdbReviewsResponseSchema = z.object({
+  page: z.number(),
+  results: z.array(tmdbReviewSchema),
+  total_pages: z.number(),
+  total_results: z.number(),
+})
+
+export type TmdbReview = z.infer<typeof tmdbReviewSchema>
+export type TmdbReviewsResponse = z.infer<typeof tmdbReviewsResponseSchema>

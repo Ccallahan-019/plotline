@@ -12,6 +12,7 @@ import {
   ItemTitle,
 } from '@/components/ui/item'
 import { ShowIf } from '@/components/utils/ShowIf'
+import { useTitleBreadcrumbLinkProps } from '@/features/navigation/breadcrumbs/components/TitleBreadcrumbParentProvider'
 import { useHover } from '@/hooks/use-hover'
 import { cn } from '@/lib/utils'
 
@@ -39,6 +40,7 @@ export function MediaGridItem({
   subtitle,
 }: MediaGridItemProps) {
   const [ref, isHovered] = useHover<HTMLDivElement>()
+  const titleLinkProps = useTitleBreadcrumbLinkProps()
 
   if (!media) {
     return null
@@ -59,12 +61,12 @@ export function MediaGridItem({
       </ItemHeader>
 
       <ItemContent>
-        <Link className="block w-full" href={titleHref}>
+        <Link className="block w-full" href={titleHref} {...titleLinkProps}>
           <ItemTitle>{media.title}</ItemTitle>
         </Link>
         <ItemDescription>{cardSubtitle}</ItemDescription>
         <ShowIf condition={!!actions}>
-          <ItemActions>{actions}</ItemActions>
+          <ItemActions className="pb-1">{actions}</ItemActions>
         </ShowIf>
       </ItemContent>
     </Item>

@@ -1,27 +1,30 @@
 import { Watchlist } from '@plotline/payload-types'
 import { useMemo } from 'react'
 
-import { useComboboxAnchor } from '@/components/ui/combobox'
 import { useWatchlists } from '@/features/watchlists/hooks/use-watchlists'
 
 import { toWatchlistComboboxItem } from '../services/to-watchlist-combobox-item'
-import { WatchlistComboboxItem } from '../types'
 
 export const EMPTY_WATCHLISTS: Watchlist[] = []
 export const EMPTY_DISABLED_WATCHLIST_IDS = new Set<number>()
 
 type UseWatchlistFieldProps = {
   disabledWatchlistIds?: Set<number>
-  onChange: (watchlistIds: number[]) => void
-  selectedWatchlistIds: number[]
 }
 
+/**
+ * Loads the current user's watchlists as combobox items for the add-to-library form.
+ *
+ * Items in `disabledWatchlistIds` are marked disabled. Empty-state copy depends on
+ * whether watchlists are still loading, remaining lists exist, or the title is already
+ * on every list.
+ *
+ * @param options.disabledWatchlistIds - Watchlist ids that cannot be selected (already added)
+ * @returns Combobox `items` and `emptyContent` for the watchlist field
+ */
 export function useWatchlistField({
   disabledWatchlistIds = EMPTY_DISABLED_WATCHLIST_IDS,
-  onChange,
-  selectedWatchlistIds,
 }: UseWatchlistFieldProps) {
-  const anchor = useComboboxAnchor()
   const { data: watchlistsData, isLoading } = useWatchlists()
   const watchlists = watchlistsData ?? EMPTY_WATCHLISTS
 
@@ -30,18 +33,7 @@ export function useWatchlistField({
     [disabledWatchlistIds, watchlists],
   )
 
-  const selectedItems = useMemo(
-    () => items.filter((item) => selectedWatchlistIds.includes(item.watchlistId)),
-    [items, selectedWatchlistIds],
-  )
-
   const hasSelectableWatchlists = items.some((item) => !item.disabled)
-
-  const placeholder = selectedItems.length > 0 ? '' : 'Select watchlists'
-
-  const handleValueChange = (nextValue: WatchlistComboboxItem[]) => {
-    onChange(nextValue.filter((item) => !item.disabled).map((item) => item.watchlistId))
-  }
 
   const emptyContent = isLoading
     ? 'Loading watchlists…'
@@ -50,11 +42,7 @@ export function useWatchlistField({
       : 'Already on all watchlists'
 
   return {
-    anchor,
     emptyContent,
-    handleValueChange,
     items,
-    placeholder,
-    selectedItems,
   }
 }

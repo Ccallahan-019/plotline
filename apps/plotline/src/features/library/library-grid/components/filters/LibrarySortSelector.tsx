@@ -19,7 +19,7 @@ export function LibrarySortSelector() {
 
   return (
     <Select onValueChange={handleChange} value={sort}>
-      <SelectTrigger aria-label="Sort library" className="min-w-[180px]">
+      <SelectTrigger aria-label="Sort library" className="min-w-45">
         Sort: {getLibrarySortLabel(sort)}
       </SelectTrigger>
       <SelectContent align="end" alignItemWithTrigger={false} className="p-1">

@@ -3,7 +3,8 @@ import type { TmdbSearchResultItem } from '@plotline/shared/tmdb'
 
 import { MediaDisplay } from '../../types'
 
-const TMDB_POSTER_BASE = 'https://image.tmdb.org/t/p/w342'
+const TMDB_POSTER_BASE = 'https://image.tmdb.org/t/p'
+const DEFAULT_POSTER_SIZE = 'w342'
 
 export function formatEpisodeCount(episodeCount?: null | number): null | string {
   if (!episodeCount) {
@@ -34,6 +35,25 @@ export function formatRuntime(runtime?: null | number): null | string {
   return `${hours}h ${minutes}m`
 }
 
+export function formatSeasonCount(seasonCount?: null | number): null | string {
+  if (!seasonCount) {
+    return null
+  }
+
+  return seasonCount === 1 ? '1 season' : `${seasonCount} seasons`
+}
+
+export function formatTvDurationLabel(
+  seasonCount?: null | number,
+  episodeCount?: null | number,
+): null | string {
+  const parts = [formatSeasonCount(seasonCount), formatEpisodeCount(episodeCount)].filter(
+    (part): part is string => part != null,
+  )
+
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
 export function getMediaFromLibraryItem(item: LibraryItem): Media | null {
   return typeof item.media === 'object' ? item.media : null
 }
@@ -42,12 +62,22 @@ export function getMediaId(media: Media | number): number {
   return typeof media === 'object' ? media.id : media
 }
 
-export function getPosterUrl(posterPath?: null | string): string | undefined {
+/**
+ * Builds a TMDB poster URL.
+ *
+ * @param posterPath - TMDB file path, or empty when the title has no poster
+ * @param size - TMDB width segment. Defaults to `w342`, which is enough for thumbnails
+ * @returns An absolute poster URL, or `undefined` when `posterPath` is missing
+ */
+export function getPosterUrl(
+  posterPath?: null | string,
+  size = DEFAULT_POSTER_SIZE,
+): string | undefined {
   if (!posterPath) {
     return undefined
   }
 
-  return `${TMDB_POSTER_BASE}${posterPath}`
+  return `${TMDB_POSTER_BASE}/${size}${posterPath}`
 }
 
 export function getTitleHref(media: MediaDisplay): string {
@@ -79,6 +109,8 @@ export function toMediaDisplayFromMedia(media: Media): MediaDisplay {
       releaseDate: media.releaseDate,
       runtime: media.runtime,
       title: media.title,
+      tmdbId: media.tmdbId,
+      voteAverage: media.voteAverage ?? undefined,
     }
   }
 
@@ -89,7 +121,10 @@ export function toMediaDisplayFromMedia(media: Media): MediaDisplay {
     posterPath: media.posterPath,
     releaseDate: media.releaseDate,
     runtime: media.runtime,
+    seasonCount: media.tvMeta?.seasonCount,
     title: media.title,
+    tmdbId: media.tmdbId,
+    voteAverage: media.voteAverage ?? undefined,
   }
 }
 

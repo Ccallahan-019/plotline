@@ -1,6 +1,6 @@
 'use client'
 
-import { formatNumber } from '@plotline/shared/utils/formatNumber'
+import { formatNumber } from '@plotline/shared/utils'
 
 import { ShowIf } from '@/components/utils/ShowIf'
 

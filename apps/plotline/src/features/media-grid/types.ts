@@ -18,4 +18,5 @@ type MovieDisplay = {
 type TvDisplay = {
   episodeCount?: null | number
   mediaType: 'tv'
+  seasonCount?: null | number
 } & MediaDisplayBase

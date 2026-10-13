@@ -1,6 +1,6 @@
 import type { CollectionBeforeChangeHook } from 'payload'
 
-import { getDecadeFromReleaseDate } from '@plotline/shared/utils/dates'
+import { getDecadeFromReleaseDate } from '@plotline/shared/utils'
 
 export const deriveDecadeAndSearchKeywords: CollectionBeforeChangeHook = ({ data }) => {
   if (!data) {

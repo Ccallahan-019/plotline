@@ -2,7 +2,6 @@
 
 import type { LibraryItem } from '@plotline/payload-types'
 
-import { Button } from '@/components/ui/button'
 import { FieldGroup } from '@/components/ui/field'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { MediaDisplay } from '@/features/media-grid/types'
@@ -19,17 +18,7 @@ type AddToLibraryFormProps = {
 }
 
 export function AddToLibraryForm({ existingLibraryItem, media, onSuccess }: AddToLibraryFormProps) {
-  const {
-    disabledWatchlistIds,
-    fieldErrors,
-    isInLibrary,
-    isSubmitting,
-    setNote,
-    setStatus,
-    setWatchlistIds,
-    submit,
-    values,
-  } = useAddToLibraryForm({
+  const { disabledWatchlistIds, form, isInLibrary, isSubmitting } = useAddToLibraryForm({
     existingLibraryItem,
     media,
     onSuccess,
@@ -37,10 +26,8 @@ export function AddToLibraryForm({ existingLibraryItem, media, onSuccess }: AddT
 
   const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
-    void submit()
+    void form.handleSubmit()
   }
-
-  const buttonContent = isSubmitting ? 'Adding…' : 'Add to Library'
 
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -48,31 +35,19 @@ export function AddToLibraryForm({ existingLibraryItem, media, onSuccess }: AddT
         <AddToLibraryWatchlistField
           disabled={isSubmitting}
           disabledWatchlistIds={disabledWatchlistIds}
-          error={fieldErrors.watchlists}
-          onChange={setWatchlistIds}
-          selectedWatchlistIds={values.watchlistIds}
+          form={form}
         />
 
         <ShowIf condition={!isInLibrary}>
-          <AddToLibraryStatusField
-            disabled={isSubmitting}
-            error={fieldErrors.status}
-            onChange={setStatus}
-            value={values.status}
-          />
+          <AddToLibraryStatusField disabled={isSubmitting} form={form} />
         </ShowIf>
 
-        <AddToLibraryNotesField
-          disabled={isSubmitting}
-          error={fieldErrors.note}
-          onChange={setNote}
-          value={values.note}
-        />
+        <AddToLibraryNotesField disabled={isSubmitting} form={form} />
       </FieldGroup>
 
-      <Button disabled={isSubmitting} type="submit">
-        {buttonContent}
-      </Button>
+      <form.AppForm>
+        <form.SubmitButton loadingLabel="Adding…">Add to Library</form.SubmitButton>
+      </form.AppForm>
     </form>
   )
 }

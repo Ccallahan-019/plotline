@@ -17,6 +17,8 @@ export interface ComputeWatchlistStatsInput {
 export interface StatsLibraryItem {
   completedAt?: null | string
   progress?: null | StatsLibraryItemProgress
+  /** Times this title was rewatched. Movies increment it; TV leaves it unset. */
+  rewatchCount?: null | number
   status: MediaStatus
 }
 

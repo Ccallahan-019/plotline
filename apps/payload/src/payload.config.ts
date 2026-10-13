@@ -1,4 +1,4 @@
-import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -12,12 +12,15 @@ import { Users } from './collections/users'
 import { WatchEvents } from './collections/watch-events'
 import { WatchlistMemberships } from './collections/watchlist-memberships'
 import { Watchlists } from './collections/watchlists'
-import {
-  addToListEndpoint,
-  logWatchEndpoint,
-  recalculateWatchlistStatsEndpoint,
-  tmdbUpsertEndpoint,
-} from './endpoints'
+import { addToListEndpoint } from './endpoints/add-to-list'
+import { createLibraryItemEndpoint } from './endpoints/create-library-item'
+import { logWatchEndpoint } from './endpoints/log-watch/log-watch'
+import { logWatchBatchEndpoint } from './endpoints/log-watch/log-watch-batch'
+import { recalculateWatchlistStatsEndpoint } from './endpoints/recalculate-watchlist-stats'
+import { removeLibraryItemEndpoint } from './endpoints/remove-library-item'
+import { tmdbUpsertEndpoint } from './endpoints/tmdb-upsert'
+import { updateLibraryItemEndpoint } from './endpoints/update-library-item'
+import { watchedEpisodesEndpoint } from './endpoints/watched-episodes'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -45,7 +48,7 @@ export default buildConfig({
     headers: ['Authorization', 'Content-Type', 'x-clerk-user-id'],
     origins: [plotlineUrl],
   },
-  db: vercelPostgresAdapter({
+  db: postgresAdapter({
     pool: {
       connectionString: process.env.POSTGRES_URL ?? '',
     },
@@ -54,7 +57,12 @@ export default buildConfig({
   endpoints: [
     tmdbUpsertEndpoint,
     addToListEndpoint,
+    createLibraryItemEndpoint,
+    updateLibraryItemEndpoint,
+    removeLibraryItemEndpoint,
     logWatchEndpoint,
+    logWatchBatchEndpoint,
+    watchedEpisodesEndpoint,
     recalculateWatchlistStatsEndpoint,
   ],
   secret: process.env.PAYLOAD_SECRET || '',

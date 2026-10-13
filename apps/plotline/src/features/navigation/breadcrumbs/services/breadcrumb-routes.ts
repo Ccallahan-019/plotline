@@ -94,6 +94,12 @@ export const breadcrumbRouteMap = (() => {
     registerSectionRoutes(map, section)
   }
 
+  map.set('/dashboard/watchlists/new', {
+    label: 'New Watchlist',
+    section: 'Watchlists',
+    sectionHref: '/dashboard/watchlists',
+  })
+
   return map
 })()
 
@@ -102,18 +108,39 @@ export const dynamicBreadcrumbRoutes: {
   parentHref: string
   parentLabel: string
   pattern: RegExp
+  /** When set, the last crumb stays a skeleton until the page publishes a label. */
+  pendingLabel?: boolean
 }[] = [
+  {
+    formatLabel: () => 'Edit Watchlist',
+    parentHref: '/dashboard/watchlists',
+    parentLabel: 'Watchlists',
+    pattern: /^\/dashboard\/watchlists\/([^/]+)\/edit$/,
+  },
   {
     formatLabel: formatSlugLabel,
     parentHref: '/dashboard/watchlists',
-    parentLabel: 'Watchlists',
+    parentLabel: 'My Watchlists',
     pattern: /^\/dashboard\/watchlists\/([^/]+)$/,
+  },
+  {
+    formatLabel: formatSlugLabel,
+    parentHref: '/dashboard/challenges',
+    parentLabel: 'Challenges',
+    pattern: /^\/dashboard\/challenges\/([^/]+)$/,
   },
   {
     formatLabel: (value) => value,
     parentHref: '/dashboard/stats',
     parentLabel: 'Summary',
     pattern: /^\/dashboard\/stats\/year\/(\d+)$/,
+  },
+  {
+    formatLabel: () => '',
+    parentHref: '/dashboard/library',
+    parentLabel: 'Library',
+    pattern: /^\/dashboard\/title\/(?:movie|tv)\/(\d+)$/,
+    pendingLabel: true,
   },
 ]
 

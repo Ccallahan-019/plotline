@@ -1,36 +1,8 @@
 import type { Media } from '@plotline/payload-types'
-import type { MediaReleaseStatus, MediaType } from '@plotline/shared/constants/media'
+import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 import type { PayloadRequest } from 'payload'
 
-export type UpsertMediaFromTmdbInput = {
-  backdropPath?: null | string
-  externalIds?: {
-    imdbId?: null | string
-    tvdbId?: null | number
-  }
-  genres?: Array<{ id: number; name: string }>
-  mediaType: MediaType
-  metadataSyncedAt?: null | string
-  originalTitle?: null | string
-  overview?: null | string
-  popularity?: null | number
-  posterPath?: null | string
-  releaseDate?: null | string
-  runtime?: null | number
-  status?: MediaReleaseStatus | null
-  tagline?: null | string
-  title: string
-  tmdbId: number
-  tvMeta?: {
-    episodeCount?: null | number
-    inProduction?: boolean | null
-    nextEpisodeDate?: null | string
-    nextEpisodeNumber?: null | number
-    nextEpisodeSeason?: null | number
-    seasonCount?: null | number
-  }
-  voteAverage?: null | number
-}
+export type UpsertMediaFromTmdbInput = TmdbUpsertMediaInput
 
 export async function upsertMediaFromTmdb(
   req: PayloadRequest,

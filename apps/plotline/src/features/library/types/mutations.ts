@@ -4,32 +4,17 @@ import type {
   Watchlist,
   WatchlistMembership,
 } from '@plotline/payload-types'
-import type {
-  MediaStatus,
-  MediaType,
-  StreamingPlatform,
-  WatchEventType,
-} from '@plotline/shared/constants/media'
+import type { MediaReleaseStatus, MediaStatus, StreamingPlatform } from '@plotline/shared/constants'
+import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 
 export type AddToListInput = {
   /** Payload media ID — use when media already exists in the system. */
   mediaId?: number | string
-  mediaType?: MediaType
   note?: string
-  overview?: null | string
-  posterPath?: null | string
-  releaseDate?: null | string
-  runtime?: null | number
   status?: MediaStatus
-  title?: string
-  tmdbId?: number
-  tvMeta?: {
-    episodeCount?: null | number
-  }
-  voteAverage?: null | number
   watchlistId?: number | string
   watchlistSlug?: string
-}
+} & AddToListMediaFields
 
 export type AddToListResult = {
   libraryItem: LibraryItem
@@ -46,20 +31,39 @@ export type AddToListsFormInput = {
 }
 
 /** TMDB metadata passed when upserting media server-side during add-to-list. */
-export type AddToListTmdbMediaInput = Pick<
-  AddToListInput,
-  'overview' | 'posterPath' | 'releaseDate' | 'runtime' | 'tvMeta' | 'voteAverage'
-> &
+export type AddToListTmdbMediaInput = AddToListMediaFields &
   Required<Pick<AddToListInput, 'mediaType' | 'title' | 'tmdbId'>>
 
-export type LogWatchInput = {
-  eventType: WatchEventType
-  isRewatch?: boolean
+/** Catalog media and optional library status for creating a library item. */
+export type CreateLibraryItemInput = Omit<AddToListInput, 'note' | 'watchlistId' | 'watchlistSlug'>
+
+export type CreateLibraryItemResult = {
+  libraryItem: LibraryItem
+}
+
+export type LogWatchBatchInput = {
+  episodes: Array<{
+    episode: number
+    season: number
+  }>
   libraryItemStatus?: MediaStatus
   mediaId: number | string
   platform?: StreamingPlatform
   platformOther?: string
-  runtimeMinutes?: number
+  visibility?: 'friends' | 'private' | 'public'
+  watchedAt?: string
+}
+
+export type LogWatchBatchResult = {
+  libraryItem: LibraryItem
+  watchEvents: WatchEvent[]
+}
+
+export type LogWatchInput = {
+  libraryItemStatus?: MediaStatus
+  mediaId: number | string
+  platform?: StreamingPlatform
+  platformOther?: string
   tvContext?: {
     episode?: number
     season?: number
@@ -72,6 +76,25 @@ export type LogWatchResult = {
   libraryItem: LibraryItem
   watchEvent: WatchEvent
 }
+
+export type RemoveLibraryItemResult = {
+  id: number
+}
+
+/** Status and notes the library-item update route is allowed to forward. */
+export type UpdateLibraryItemInput = {
+  personalNotes?: null | string
+  status?: MediaStatus
+}
+
+export type UpdateLibraryItemResult = {
+  libraryItem: LibraryItem
+}
+
+type AddToListMediaFields = {
+  /** Media release lifecycle status — distinct from library item `status`. */
+  releaseStatus?: MediaReleaseStatus | null
+} & Partial<Omit<TmdbUpsertMediaInput, 'metadataSyncedAt' | 'status'>>
 
 export function buildAddToListInputs({
   media,

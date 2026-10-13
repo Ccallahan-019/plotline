@@ -57,10 +57,11 @@ export function computeChallengePacing(input: {
 
   if (input.remaining === 0) {
     status = 'completed'
+  } else if (isAfterCalendarDay(referenceDate, dueDate)) {
+    // Past the due day, even with no progress. The due day itself is still open.
+    status = 'overdue'
   } else if (input.completed === 0 && input.inProgress === 0) {
     status = 'not_started'
-  } else if (daysRemaining === 0 && input.remaining > 0) {
-    status = 'overdue'
   } else {
     status = 'active'
   }
@@ -89,4 +90,11 @@ function diffCalendarDays(start: Date, end: Date): number {
   const endUtc = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate())
 
   return Math.max(0, Math.round((endUtc - startUtc) / (1000 * 60 * 60 * 24)))
+}
+
+function isAfterCalendarDay(date: Date, other: Date): boolean {
+  const dateUtc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  const otherUtc = Date.UTC(other.getUTCFullYear(), other.getUTCMonth(), other.getUTCDate())
+
+  return dateUtc > otherUtc
 }

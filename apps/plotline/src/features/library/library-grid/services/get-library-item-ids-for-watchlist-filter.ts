@@ -1,5 +1,6 @@
 import type { WatchlistMembership } from '@plotline/payload-types'
 
+import { appendInFilter } from '@/lib/payload/append-in-filter'
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
 
 export type WatchlistFilterIdsResult = {
@@ -26,9 +27,7 @@ export async function getLibraryItemIdsForWatchlistFilter(
   }
 
   if (filters.watchlistIds?.length) {
-    filters.watchlistIds.forEach((watchlistId, index) => {
-      searchParams[`where[watchlist][in][${index}]`] = watchlistId
-    })
+    appendInFilter(searchParams, 'watchlist', filters.watchlistIds)
   }
 
   const result = await payloadFetch<PayloadPaginatedDocs<WatchlistMembership>>(

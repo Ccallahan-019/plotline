@@ -5,8 +5,9 @@ import { Geist, IBM_Plex_Sans } from 'next/font/google'
 
 import './globals.css'
 
+import { SonnerToaster } from '@/components/global/SonnerToaster'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { Toaster } from '@/components/ui/sonner'
+import { BreadcrumbOverrideProvider } from '@/features/navigation/breadcrumbs/components/BreadcrumbOverrideProvider'
 import { TopLoader } from '@/features/navigation/global/TopLoader'
 import { Header } from '@/features/navigation/header/Header'
 import { AppSidebar } from '@/features/navigation/side-nav/components/Sidebar'
@@ -47,16 +48,18 @@ export default function RootLayout({
           <TopLoader />
           <ThemeProvider>
             <QueryProvider>
-              <SidebarProvider>
-                <SignedIn>
-                  <AppSidebar />
-                </SignedIn>
-                <main className="flex flex-1 flex-col">
-                  <Header />
-                  {children}
-                </main>
-              </SidebarProvider>
-              <Toaster richColors />
+              <BreadcrumbOverrideProvider>
+                <SidebarProvider>
+                  <SignedIn>
+                    <AppSidebar />
+                  </SignedIn>
+                  <main className="flex min-w-0 flex-1 flex-col">
+                    <Header />
+                    {children}
+                  </main>
+                </SidebarProvider>
+              </BreadcrumbOverrideProvider>
+              <SonnerToaster />
             </QueryProvider>
           </ThemeProvider>
         </body>

@@ -29,25 +29,18 @@ export function CollapsibleSidebarMenuItem({
   const [open, setOpen] = useState(false)
 
   return (
-    <Collapsible onOpenChange={setOpen} open={open}>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          render={
-            <CollapsibleTrigger className="flex w-full items-center gap-2 overflow-hidden">
-              {icon}
-              <span className="truncate group-data-[collapsible=icon]:hidden">{label}</span>
-              <ChevronDown
-                className={cn(
-                  'ml-auto size-4 shrink-0 transition-transform duration-200',
-                  'group-data-[collapsible=icon]:hidden',
-                  open && 'rotate-180',
-                )}
-              />
-            </CollapsibleTrigger>
-          }
-          tooltip={label}
+    <Collapsible onOpenChange={setOpen} open={open} render={<SidebarMenuItem />}>
+      <SidebarMenuButton render={<CollapsibleTrigger />} tooltip={label}>
+        {icon}
+        <span className="truncate group-data-[collapsible=icon]:hidden">{label}</span>
+        <ChevronDown
+          className={cn(
+            'ml-auto size-4 shrink-0 transition-transform duration-200',
+            'group-data-[collapsible=icon]:hidden',
+            open && 'rotate-180',
+          )}
         />
-      </SidebarMenuItem>
+      </SidebarMenuButton>
 
       <CollapsibleContent keepMounted>
         <SidebarMenuSub>

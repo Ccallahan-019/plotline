@@ -8,7 +8,5 @@ import { LibrarySortSelector } from './LibrarySortSelector'
 export function LibraryFilterBar() {
   const { setPage } = useLibraryBrowse()
 
-  return (
-    <FilterBar endActions={<LibrarySortSelector />} onApply={() => setPage(1)} />
-  )
+  return <FilterBar endActions={<LibrarySortSelector />} onApply={() => setPage(1)} />
 }

@@ -9,7 +9,6 @@ import {
   Library,
   ListChecks,
   MonitorPlay,
-  Plus,
   Sparkles,
   SquareChartGantt,
   StarHalf,
@@ -54,43 +53,18 @@ export const dashboardItems: SidebarMenuItem[] = [
 
 export const watchlistsChallengesItems: SidebarMenuItem[] = [
   {
+    href: '/dashboard/watchlists',
     icon: <ListChecks />,
     id: 'watchlists',
-    items: [
-      { href: '/dashboard/watchlists', label: 'All Watchlists' },
-      { href: '/dashboard/watchlists/watchlist', label: 'Watchlist' },
-      {
-        href: '/dashboard/watchlists/currently-watching',
-        label: 'Currently Watching',
-      },
-      { href: '/dashboard/watchlists/custom', label: 'Custom Lists' },
-      {
-        href: '/dashboard/watchlists/new',
-        icon: <Plus size={14} stroke="currentColor" />,
-        label: 'Create New',
-      },
-    ],
     label: 'My Watchlists',
-    type: 'collapsible',
+    type: 'standard',
   },
   {
+    href: '/dashboard/challenges',
     icon: <Swords />,
     id: 'challenges',
-    items: [
-      { href: '/dashboard/challenges/active', label: 'Active Challenges' },
-      {
-        href: '/dashboard/challenges/completed',
-        label: 'Completed Challenges',
-      },
-      { href: '/dashboard/challenges/overdue', label: 'Overdue' },
-      {
-        href: '/dashboard/challenges/new',
-        icon: <Plus size={14} stroke="currentColor" />,
-        label: 'Create New',
-      },
-    ],
-    label: 'Challenges',
-    type: 'collapsible',
+    label: 'My Challenges',
+    type: 'standard',
   },
 ]
 

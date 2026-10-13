@@ -1,6 +1,3 @@
-export type WatchlistComboboxItem = {
-  disabled?: boolean
-  id: string
-  label: string
-  watchlistId: number
-}
+import type { ComboboxFieldItem } from '@/features/forms/components/ComboboxField'
+
+export type WatchlistComboboxItem = ComboboxFieldItem<number>

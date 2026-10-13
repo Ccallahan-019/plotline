@@ -1,9 +1,10 @@
 import type { CollectionConfig } from 'payload'
 
-import { LIST_STATUSES } from '@plotline/shared/constants/watchlist-challenge'
+import { LIST_STATUSES } from '@plotline/shared/constants'
 
 import { watchlistMembershipsAccess } from './access'
 import { initializeMembershipChallengeFields } from './hooks/initializeMembershipChallengeFields'
+import { initializeMembershipSortOrder } from './hooks/initializeMembershipSortOrder'
 import { recalculateStatsAfterMembershipChange } from './hooks/recalculateWatchlistStats'
 import { validateWatchlistLibraryItemOwnership } from './hooks/validateWatchlistLibraryItemOwnership'
 
@@ -56,6 +57,15 @@ export const WatchlistMemberships: CollectionConfig = {
       type: 'checkbox',
     },
     {
+      admin: {
+        description:
+          'Manual opt-out from the challenge goal. Library sync and challenge rule changes keep this value and fold it into countsTowardGoal.',
+      },
+      defaultValue: false,
+      name: 'excludeFromGoal',
+      type: 'checkbox',
+    },
+    {
       name: 'goalWeight',
       type: 'number',
     },
@@ -74,7 +84,11 @@ export const WatchlistMemberships: CollectionConfig = {
   ],
   hooks: {
     afterChange: [recalculateStatsAfterMembershipChange],
-    beforeValidate: [validateWatchlistLibraryItemOwnership, initializeMembershipChallengeFields],
+    beforeValidate: [
+      validateWatchlistLibraryItemOwnership,
+      initializeMembershipChallengeFields,
+      initializeMembershipSortOrder,
+    ],
   },
   indexes: [
     {

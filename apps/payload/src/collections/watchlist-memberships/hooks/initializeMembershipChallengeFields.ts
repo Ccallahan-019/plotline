@@ -21,18 +21,21 @@ export const initializeMembershipChallengeFields: CollectionBeforeValidateHook =
     return data
   }
 
+  // Same transaction as the caller, so a library item created in this request is visible.
   const [watchlist, libraryItem] = await Promise.all([
     req.payload.findByID({
       collection: 'watchlists',
       depth: 0,
       id: watchlistId,
       overrideAccess: true,
+      req,
     }),
     req.payload.findByID({
       collection: 'library-items',
       depth: 1,
       id: libraryItemId,
       overrideAccess: true,
+      req,
     }),
   ])
 
@@ -49,13 +52,17 @@ export const initializeMembershipChallengeFields: CollectionBeforeValidateHook =
 
   const addedAt = data.addedAt ?? new Date().toISOString()
   const episodesAtJoin = libraryItem.progress?.episodesWatched ?? 0
+  // Create can opt out up front. Later syncs read this value and do not clear it.
+  const excludeFromGoal = data.excludeFromGoal === true
   const derived = deriveMembershipChallengeFields({
     addedAt,
     challenge: watchlist.challenge as null | undefined | WatchlistChallengeConfig,
     episodesAtJoin,
+    excludeFromGoal,
     libraryItem: {
       completedAt: libraryItem.completedAt,
       progress: libraryItem.progress,
+      rewatchCount: libraryItem.rewatchCount,
       status: libraryItem.status,
     },
     media: {
@@ -71,6 +78,7 @@ export const initializeMembershipChallengeFields: CollectionBeforeValidateHook =
     countsTowardGoal: derived.countsTowardGoal,
     episodesAtJoin,
     episodesCountedForList: derived.episodesCountedForList,
+    excludeFromGoal,
     goalWeight: derived.goalWeight,
     listStatus: derived.listStatus,
     ...(derived.listStatus === 'completed'

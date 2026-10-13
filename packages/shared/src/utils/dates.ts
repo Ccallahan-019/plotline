@@ -25,6 +25,26 @@ export function daysUntilRelease(
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
 }
 
+export function formatDate(
+  date: Date | null | string | undefined,
+  locale = 'en-US',
+): null | string {
+  if (!date) {
+    return null
+  }
+
+  if (typeof date === 'string') {
+    date = new Date(date)
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+    year: 'numeric',
+  }).format(date)
+}
+
 export function formatReleaseDateForCalendar(
   value: null | string | undefined,
   locale = 'en-US',
@@ -92,14 +112,37 @@ export function isWithinReleaseWindow(
   return days >= 0 && days <= windowDays
 }
 
+/**
+ * Calendar day as UTC midnight.
+ *
+ * Accepts `YYYY-MM-DD` and an ISO timestamp. Only the date prefix is used, so a
+ * Payload date stored as `2026-10-31T00:00:00.000Z` stays 31 October instead of
+ * becoming an invalid date.
+ *
+ * @param value - Calendar day or timestamp. Blank values are ignored
+ * @returns UTC midnight for that calendar day, or `null` when it is not a real date
+ */
 export function parseReleaseDate(value: null | string | undefined): Date | null {
   if (!value) {
     return null
   }
 
-  const date = new Date(`${value}T00:00:00.000Z`)
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim())
 
-  if (Number.isNaN(date.getTime())) {
+  if (!match) {
+    return null
+  }
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(Date.UTC(year, month - 1, day))
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
     return null
   }
 

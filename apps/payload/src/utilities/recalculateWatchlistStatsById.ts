@@ -29,11 +29,14 @@ export async function recalculateWatchlistStatsById(
     return
   }
 
+  // Challenge sync rewrites every membership. A 1000-row page would undercount
+  // statsCache totals and pacing on lists larger than one page.
   const memberships = await payload.find({
     collection: 'watchlist-memberships',
     depth: 2,
-    limit: 1000,
+    limit: 0,
     overrideAccess: true,
+    pagination: false,
     req,
     where: {
       watchlist: {

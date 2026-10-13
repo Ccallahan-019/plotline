@@ -17,18 +17,21 @@ export const validateWatchlistLibraryItemOwnership: CollectionBeforeValidateHook
     return data
   }
 
+  // Same transaction as the caller, so a library item created in this request is visible.
   const [watchlist, libraryItem] = await Promise.all([
     req.payload.findByID({
       collection: 'watchlists',
       depth: 0,
       id: watchlistId,
       overrideAccess: true,
+      req,
     }),
     req.payload.findByID({
       collection: 'library-items',
       depth: 0,
       id: libraryItemId,
       overrideAccess: true,
+      req,
     }),
   ])
 

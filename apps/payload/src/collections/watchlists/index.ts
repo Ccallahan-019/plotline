@@ -1,13 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
-import { VISIBILITIES } from '@plotline/shared/constants/media'
 import {
   CHALLENGE_GOAL_TYPES,
   PRIOR_COMPLETION_RULES,
   TV_COUNT_RULES,
-} from '@plotline/shared/constants/watchlist-challenge'
+  VISIBILITIES,
+} from '@plotline/shared/constants'
 import { JSONSchema4 } from 'json-schema'
 
+import { createWatchlistEndpoint } from '../../endpoints/create-watchlist'
+import { removeWatchlistMembershipEndpoint } from '../../endpoints/remove-watchlist-membership'
+import { reorderWatchlistMembershipsEndpoint } from '../../endpoints/reorder-watchlist-memberships'
+import { updateWatchlistEndpoint } from '../../endpoints/update-watchlist'
+import { updateWatchlistMembershipEndpoint } from '../../endpoints/update-watchlist-membership'
 import { watchlistsAccess } from './access'
 import { preventSystemWatchlistDelete } from './hooks/preventSystemWatchlistDelete'
 import { recalculateStatsAfterWatchlistChange } from './hooks/recalculateStatsOnChange'
@@ -20,6 +25,14 @@ export const Watchlists: CollectionConfig = {
     defaultColumns: ['name', 'owner', 'visibility', 'isSystem'],
     useAsTitle: 'name',
   },
+  // Paths are relative to this collection. Root `/watchlists/...` endpoints are not matched.
+  endpoints: [
+    createWatchlistEndpoint,
+    reorderWatchlistMembershipsEndpoint,
+    removeWatchlistMembershipEndpoint,
+    updateWatchlistEndpoint,
+    updateWatchlistMembershipEndpoint,
+  ],
   fields: [
     {
       index: true,

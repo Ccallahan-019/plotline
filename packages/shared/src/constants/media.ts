@@ -7,6 +7,11 @@ export const MEDIA_STATUSES = ['planned', 'watching', 'completed', 'dropped', 'o
 
 export type MediaStatus = (typeof MEDIA_STATUSES)[number]
 
+/** Narrows an unknown value to one of the library `MEDIA_STATUSES`. */
+export function isMediaStatus(value: unknown): value is MediaStatus {
+  return MEDIA_STATUSES.some((status) => status === value)
+}
+
 export const MEDIA_TYPES = ['movie', 'tv'] as const
 
 export type MediaType = (typeof MEDIA_TYPES)[number]
@@ -26,19 +31,14 @@ export const VISIBILITIES = ['private', 'friends', 'public', 'unlisted'] as cons
 
 export type Visibility = (typeof VISIBILITIES)[number]
 
-export const STREAMING_PLATFORMS = [
-  'netflix',
-  'disney_plus',
-  'hulu',
-  'max',
-  'apple_tv',
-  'amazon',
-  'theater',
-  'physical',
-  'other',
-] as const
+export const WATCHLIST_DESCRIPTION_MAX_LENGTH = 500
 
-export type StreamingPlatform = (typeof STREAMING_PLATFORMS)[number]
+export const WATCHLIST_NAME_MAX_LENGTH = 120
+
+/** Narrows an unknown value to one of `VISIBILITIES`. */
+export function isVisibility(value: unknown): value is Visibility {
+  return VISIBILITIES.some((visibility) => visibility === value)
+}
 
 export const MEDIA_RELEASE_STATUSES = [
   'released',

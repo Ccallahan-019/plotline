@@ -1,4 +1,4 @@
-import type { MediaType } from '@plotline/shared/constants/media'
+import type { MediaType } from '@plotline/shared/constants'
 
 import type { FilterDefinition, FilterFieldRenderProps, FilterRenderContext } from '../types'
 
