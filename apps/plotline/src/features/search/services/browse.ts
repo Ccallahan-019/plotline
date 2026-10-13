@@ -35,6 +35,15 @@ export async function browseTmdb(
   return discoverByMediaType(client, mediaType, filters, sort, page, watchRegion)
 }
 
+/**
+ * Builds TMDB discover query params from parsed search filters.
+ * Keywords use comma-separated `with_keywords` so a title must include every selected keyword.
+ *
+ * @param filters - Parsed discover filters; keyword names are already reduced to ids
+ * @param mediaType - Movie or TV, which selects the release-date param names
+ * @param watchRegion - Region sent when watch providers are set
+ * @returns Discover query params without sort
+ */
 function buildDiscoverParams(
   filters: SearchFilters,
   mediaType: SearchMediaType,
@@ -44,6 +53,10 @@ function buildDiscoverParams(
 
   if (filters.genreIds?.length) {
     params.with_genres = filters.genreIds.join('|')
+  }
+
+  if (filters.keywordIds?.length) {
+    params.with_keywords = filters.keywordIds.join(',')
   }
 
   if (filters.providerIds?.length) {

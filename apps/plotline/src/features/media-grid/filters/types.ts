@@ -54,6 +54,8 @@ export type FilterValidationErrors = Record<string, null | string>
  */
 export type MediaFilters = {
   genreIds?: number[]
+  /** Selected TMDB keywords. Names stay here so badges can label chips after typeahead results change. */
+  keywords?: { id: number; name: string }[]
   mediaTypes?: MediaType[]
   onWatchlist?: boolean
   providerIds?: number[]

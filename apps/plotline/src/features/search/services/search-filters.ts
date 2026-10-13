@@ -25,10 +25,25 @@ export function parseMediaType(value: null | string): SearchMediaType {
   return value === 'tv' ? 'tv' : 'movie'
 }
 
+/**
+ * Reads discover filters from the search request query string.
+ * `keywordIds` is parsed like genre ids: comma-separated numbers, with non-numeric values dropped.
+ *
+ * @param searchParams - Request search params
+ * @returns Filters passed to TMDB discover
+ */
 export function parseSearchFilters(searchParams: URLSearchParams): SearchFilters {
   const genreIdsRaw = searchParams.get('genreIds')
   const genreIds = genreIdsRaw
     ? genreIdsRaw
+        .split(',')
+        .map((value) => Number(value.trim()))
+        .filter((value) => !Number.isNaN(value))
+    : undefined
+
+  const keywordIdsRaw = searchParams.get('keywordIds')
+  const keywordIds = keywordIdsRaw
+    ? keywordIdsRaw
         .split(',')
         .map((value) => Number(value.trim()))
         .filter((value) => !Number.isNaN(value))
@@ -44,6 +59,7 @@ export function parseSearchFilters(searchParams: URLSearchParams): SearchFilters
 
   return {
     genreIds: genreIds?.length ? genreIds : undefined,
+    keywordIds: keywordIds?.length ? keywordIds : undefined,
     providerIds: providerIds?.length ? providerIds : undefined,
     ratingMax: parseOptionalNumber(searchParams.get('ratingMax')),
     ratingMin: parseOptionalNumber(searchParams.get('ratingMin')),

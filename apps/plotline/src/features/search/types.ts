@@ -6,7 +6,10 @@ export type SearchMediaType = 'movie' | 'tv'
 
 export const DEFAULT_SEARCH_MEDIA_TYPE: SearchMediaType = 'movie'
 
-export type SearchFilters = Pick<
+export type SearchFilters = {
+  /** TMDB keyword ids. Names are not sent; discover ANDs these with `with_keywords`. */
+  keywordIds?: number[]
+} & Pick<
   MediaFilters,
   | 'genreIds'
   | 'providerIds'
