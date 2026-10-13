@@ -5,6 +5,8 @@ import { toTmdbDiscoverFilters } from '@/features/media-grid/filters/services/no
 
 export const searchQueryKeys = {
   tmdbGenres: () => ['tmdb-genres'] as const,
+  // TMDB keyword search is case-insensitive, so case variants share one cache entry.
+  tmdbKeywords: (query: string) => ['tmdb-keywords', query.toLowerCase()] as const,
   tmdbSearch: (
     mode: BrowseMode,
     q: string,

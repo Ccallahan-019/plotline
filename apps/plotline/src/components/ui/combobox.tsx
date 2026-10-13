@@ -108,7 +108,8 @@ function ComboboxContent({
         align={align}
         alignOffset={alignOffset}
         anchor={anchor}
-        className="isolate z-50"
+        // Above sheets and dialogs (z-50) so options in a portaled popup stay clickable.
+        className="isolate z-60"
         side={side}
         sideOffset={sideOffset}
       >

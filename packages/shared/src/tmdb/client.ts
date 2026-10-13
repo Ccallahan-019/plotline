@@ -3,6 +3,8 @@ import type { MediaType } from '../constants/media'
 import {
   type TmdbGenreList,
   tmdbGenreListSchema,
+  type TmdbKeywordSearchResponse,
+  tmdbKeywordSearchResponseSchema,
   type TmdbMovieDetails,
   tmdbMovieDetailsSchema,
   type TmdbMovieTitleDetails,
@@ -151,6 +153,13 @@ export class TmdbClient {
   async getTvWatchProviders(watchRegion: string): Promise<TmdbWatchProviderList> {
     return this.fetchValidated('/watch/providers/tv', tmdbWatchProviderListSchema, {
       watch_region: watchRegion,
+    })
+  }
+
+  async searchKeywords(query: string, page = 1): Promise<TmdbKeywordSearchResponse> {
+    return this.fetchValidated('/search/keyword', tmdbKeywordSearchResponseSchema, {
+      page: String(page),
+      query,
     })
   }
 

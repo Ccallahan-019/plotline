@@ -1,3 +1,5 @@
+import type { SearchFilters } from '@/features/search/types'
+
 import type { LibraryItemSource } from '../constants'
 import type { MediaFilters } from '../types'
 
@@ -15,6 +17,13 @@ export function hasActiveFilters(filters: MediaFilters): boolean {
   return Object.keys(normalizeMediaFilters(filters)).length > 0
 }
 
+/**
+ * Drops empty lists and default ranges, and sorts list filters so Apply and query keys stay stable.
+ * Non-empty keywords are kept in selection order so badges match what the user picked.
+ *
+ * @param filters - Draft or applied media filters
+ * @returns Filters with only active, canonical values
+ */
 export function normalizeMediaFilters(filters: MediaFilters): MediaFilters {
   const { max: defaultYearMax, min: defaultYearMin } = getDefaultYearRange()
   const { max: defaultRuntimeMax, min: defaultRuntimeMin } = getDefaultRuntimeRange()
@@ -42,6 +51,10 @@ export function normalizeMediaFilters(filters: MediaFilters): MediaFilters {
 
   if (filters.genreIds?.length) {
     normalized.genreIds = [...filters.genreIds].sort((left, right) => left - right)
+  }
+
+  if (filters.keywords?.length) {
+    normalized.keywords = [...filters.keywords]
   }
 
   if (filters.providerIds?.length) {
@@ -87,23 +100,22 @@ export function toPayloadLibraryFilters(filters: MediaFilters): PayloadLibraryFi
   }
 }
 
-export function toTmdbDiscoverFilters(
-  filters: MediaFilters,
-): Pick<
-  MediaFilters,
-  | 'genreIds'
-  | 'providerIds'
-  | 'ratingMax'
-  | 'ratingMin'
-  | 'runtimeMax'
-  | 'runtimeMin'
-  | 'yearMax'
-  | 'yearMin'
-> {
+/**
+ * Maps client media filters to the discover request shape.
+ * Selected keywords become ids sorted ascending, so the browse query key is stable regardless of
+ * selection order; names stay off the key and the request.
+ *
+ * @param filters - Client media filters, including keyword names
+ * @returns Discover filters for the browse query key and `/api/tmdb/search`
+ */
+export function toTmdbDiscoverFilters(filters: MediaFilters): SearchFilters {
   const normalized = normalizeMediaFilters(filters)
 
   return {
     genreIds: normalized.genreIds,
+    keywordIds: normalized.keywords
+      ?.map((keyword) => keyword.id)
+      .sort((left, right) => left - right),
     providerIds: normalized.providerIds,
     ratingMax: normalized.ratingMax,
     ratingMin: normalized.ratingMin,

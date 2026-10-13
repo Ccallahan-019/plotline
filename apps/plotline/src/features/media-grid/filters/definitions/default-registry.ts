@@ -1,6 +1,7 @@
 import type { FilterDefinition } from '../types'
 
 import { genreFilterDefinition } from './genre-filter'
+import { keywordFilterDefinition } from './keyword-filter'
 import { mediaTypeFilterDefinition } from './media-type-filter'
 import { providerFilterDefinition } from './provider-filter'
 import { ratingFilterDefinition } from './rating-filter'
@@ -31,6 +32,7 @@ export const LIBRARY_FILTER_DEFINITIONS: FilterDefinition[] = [
 
 export const TMDB_FILTER_DEFINITIONS: FilterDefinition[] = [
   genreFilterDefinition,
+  keywordFilterDefinition,
   releaseYearFilterDefinition,
   ratingFilterDefinition,
   providerFilterDefinition,
