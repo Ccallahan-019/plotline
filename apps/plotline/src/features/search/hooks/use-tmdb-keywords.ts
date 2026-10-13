@@ -52,6 +52,8 @@ export function useTmdbKeywords(query: string, options?: UseTmdbKeywordsOptions)
     enabled,
     queryFn: () => fetchTmdbKeywords(debouncedQuery),
     queryKey: searchQueryKeys.tmdbKeywords(debouncedQuery),
+    // Failures are mostly deterministic (bad config, auth), so surface them instead of retrying.
+    retry: false,
   })
 
   return {

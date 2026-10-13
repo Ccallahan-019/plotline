@@ -2,7 +2,7 @@
 
 import type { TmdbKeyword } from '@plotline/shared/tmdb'
 
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 
 import {
   Combobox,
@@ -36,14 +36,14 @@ function getKeywordBadgeLabel(keywords: readonly { name: string }[]): string {
 
 function getKeywordEmptyMessage(state: KeywordListState): string {
   switch (state) {
+    // 'results' never renders this message (the popup lists the rows); it shares the text for exhaustiveness.
     case 'empty':
+    case 'results':
       return 'No matches'
     case 'error':
       return 'Could not load keywords.'
     case 'loading':
       return 'Searching…'
-    case 'results':
-      return 'No matches'
     case 'too-short':
       return 'Type at least 2 characters'
     default: {
@@ -95,6 +95,7 @@ function getKeywordListState(snapshot: {
 
 function KeywordFilterField({ draftFilters, setDraftFilters }: FilterFieldRenderProps) {
   const [query, setQuery] = useState('')
+  const inputId = useId()
   const anchor = useComboboxAnchor()
   const selected = draftFilters.keywords ?? EMPTY_KEYWORDS
   const keywordsQuery = useTmdbKeywords(query)
@@ -119,14 +120,7 @@ function KeywordFilterField({ draftFilters, setDraftFilters }: FilterFieldRender
     () => mergeKeywordOptions(searchResults, selected),
     [searchResults, selected],
   )
-  // Popup lists typeahead hits only. Selected keywords stay on `items` so chips
-  // keep their labels after the result set changes.
-  const filteredItems = searchResults
   const placeholder = selected.length > 0 ? '' : 'Search keywords'
-
-  const handleInputValueChange = (nextQuery: string) => {
-    setQuery(nextQuery)
-  }
 
   const handleValueChange = (nextKeywords: TmdbKeyword[]) => {
     setDraftFilters({
@@ -137,17 +131,19 @@ function KeywordFilterField({ draftFilters, setDraftFilters }: FilterFieldRender
 
   return (
     <Field>
-      <FieldLabel className="mb-2 font-semibold" htmlFor="keyword-filter">
+      <FieldLabel className="mb-2 font-semibold" htmlFor={inputId}>
         Keywords
       </FieldLabel>
       <Combobox<TmdbKeyword, true>
-        filteredItems={filteredItems}
+        // Popup lists typeahead hits only. Selected keywords stay on `items` so chips
+        // keep their labels after the result set changes.
+        filteredItems={searchResults}
         inputValue={query}
         isItemEqualToValue={(left, right) => left?.id === right?.id}
         items={items}
         itemToStringLabel={(item) => item?.name ?? ''}
         multiple
-        onInputValueChange={handleInputValueChange}
+        onInputValueChange={setQuery}
         onOpenChange={keepKeywordPopupOpenOnItemPress}
         onValueChange={handleValueChange}
         value={selected}
@@ -155,15 +151,12 @@ function KeywordFilterField({ draftFilters, setDraftFilters }: FilterFieldRender
         <ComboboxChips className="w-full" ref={anchor}>
           <ComboboxValue>
             {(value: TmdbKeyword[]) =>
-              value.map((keyword) => (
-                <ComboboxChip key={keyword.id}>{keyword.name}</ComboboxChip>
-              ))
+              value.map((keyword) => <ComboboxChip key={keyword.id}>{keyword.name}</ComboboxChip>)
             }
           </ComboboxValue>
-          <ComboboxChipsInput id="keyword-filter" placeholder={placeholder} />
+          <ComboboxChipsInput id={inputId} placeholder={placeholder} />
         </ComboboxChips>
-        {/* Portaled above the filter sheet so keyword options stay clickable. */}
-        <ComboboxContent anchor={anchor} positionerClassName="z-[60]">
+        <ComboboxContent anchor={anchor}>
           <ComboboxEmpty>{getKeywordEmptyMessage(listState)}</ComboboxEmpty>
           <ComboboxList>
             {(keyword: TmdbKeyword) => (
