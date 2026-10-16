@@ -19,8 +19,9 @@ export type ChallengeCardView = {
  *
  * Progress copy uses the card variant (`31 of 52 titles`, or hours). Pace comes
  * from `statsCache`. A missing cache stays "Not started" with an empty bar so a
- * new challenge is not marked complete. `paceTone` is `destructive` when the
- * challenge is behind or overdue; that tone is the progress bar color.
+ * new challenge is not marked complete. `paceTone` is `ahead` when the daily rate
+ * is faster than required, and `destructive` when the challenge is behind or overdue.
+ * The destructive tone is the progress bar color.
  *
  * @param card - Challenge settings and stats already copied onto the card
  * @returns Labels and percent for the card's progress block

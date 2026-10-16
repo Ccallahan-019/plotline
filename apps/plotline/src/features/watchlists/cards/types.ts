@@ -7,11 +7,15 @@ export type { WatchlistCardFilter } from '../types'
  *
  * `titleCount` is the membership count, not a challenge goal. `previews` holds
  * the first three titles in list order; a null `posterPath` is an empty frame.
- * `challenge` and `statsCache` are copied from the watchlist so a challenge card
- * can render pace and progress. Each is null when the document omits it.
+ * `coverPath` is a TMDB image path for the card backdrop: the cover title's
+ * poster, its backdrop when the poster is missing, or the first preview poster.
+ * It is null when none of those images exist. `challenge` and `statsCache` are
+ * copied from the watchlist so a challenge card can render pace and progress.
+ * Each is null when the document omits it.
  */
 export type WatchlistCard = {
   challenge: NonNullable<Watchlist['challenge']> | null
+  coverPath: null | string
   createdAt: string
   description: null | string
   id: number

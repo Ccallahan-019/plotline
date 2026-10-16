@@ -62,10 +62,7 @@ export const updateWatchlistEndpoint: Endpoint = {
       const owned = await libraryOwnsMedia(req, profileResult.profileId, write.coverMedia)
 
       if (!owned) {
-        return Response.json(
-          { error: 'Cover must be a title in your library' },
-          { status: 400 },
-        )
+        return Response.json({ error: 'Cover must be a title in your library' }, { status: 400 })
       }
     }
 

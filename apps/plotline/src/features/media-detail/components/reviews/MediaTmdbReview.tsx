@@ -1,5 +1,6 @@
 import { UserRound } from 'lucide-react'
 
+import { RatingStars } from '@/components/ratings/RatingStars'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -15,7 +16,6 @@ import { ShowIf } from '@/components/utils/ShowIf'
 import type { TmdbCommunityReview } from '../../types'
 
 import { formatWatchActivityDate } from '../../services/format-media-title'
-import { RatingStars } from '../ratings/RatingStars'
 import { TmdbReviewBody } from './TmdbReviewBody'
 
 type MediaTmdbReviewProps = {

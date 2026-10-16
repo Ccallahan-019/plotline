@@ -1,10 +1,6 @@
 import type { WatchEventType } from '@plotline/shared/constants'
 
-import type {
-  DashboardHeatmapDay,
-  DashboardSummary,
-  DashboardTitlesPerMonth,
-} from '../types'
+import type { DashboardHeatmapDay, DashboardSummary, DashboardTitlesPerMonth } from '../types'
 
 import {
   addCalendarDays,
@@ -268,8 +264,7 @@ function longestStreak(dayKeys: Iterable<string>): number {
       continue
     }
 
-    const continues =
-      previous != null && calendarDateKey(addCalendarDays(previous, 1)) === key
+    const continues = previous != null && calendarDateKey(addCalendarDays(previous, 1)) === key
     run = continues ? run + 1 : 1
     best = Math.max(best, run)
     previous = date

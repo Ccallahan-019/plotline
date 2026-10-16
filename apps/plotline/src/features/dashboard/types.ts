@@ -161,10 +161,18 @@ export type DashboardTitlesPerMonth = {
 }
 
 export type TrendingTitle = {
+  /** TMDB backdrop path. Null when the title has no still. */
+  backdropPath: null | string
   mediaType: MediaType
+  /** Synopsis from TMDB. Null when the title has no overview. */
+  overview: null | string
   posterPath: null | string
+  /** Four-digit release year. Null when TMDB sent no usable date. */
+  releaseYear: null | string
   title: string
   tmdbId: number
+  /** TMDB vote average. Null when the title has no score. */
+  voteAverage: null | number
 }
 
 /** Short mixed weekly trending list. Not invalidated with dashboard writes. */

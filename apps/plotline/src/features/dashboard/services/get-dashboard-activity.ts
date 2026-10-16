@@ -1,11 +1,7 @@
 import type { DashboardActivityPage } from '../types'
 
 import { buildActivityRows, selectActivityPage } from './activity'
-import {
-  loadChallengeWatchlists,
-  loadReviews,
-  loadWatchEvents,
-} from './load-dashboard-sources'
+import { loadChallengeWatchlists, loadReviews, loadWatchEvents } from './load-dashboard-sources'
 import { DashboardQueryError, type ParsedDashboardActivityQuery } from './parse-dashboard-query'
 
 /**

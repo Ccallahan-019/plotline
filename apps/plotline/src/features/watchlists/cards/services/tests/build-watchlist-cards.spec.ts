@@ -6,6 +6,7 @@ import type { WatchlistCard } from '../../types'
 
 import {
   buildWatchlistCards,
+  collectCoverMediaIds,
   collectPreviewLibraryItemIds,
   sortWatchlistCards,
 } from '../build-watchlist-cards'
@@ -220,6 +221,90 @@ describe('buildWatchlistCards', () => {
     expect(cards[1]?.previews).toEqual([{ posterPath: '/other.jpg', title: 'Other' }])
     expect(cards[1]?.titleCount).toBe(1)
   })
+
+  it('prefers the cover poster, then its backdrop, then the first preview poster', () => {
+    const cards = buildWatchlistCards({
+      coverMedia: [
+        media({
+          backdropPath: '/from-id-backdrop.jpg',
+          id: 9,
+          posterPath: '/from-id-poster.jpg',
+          title: 'By id',
+        }),
+      ],
+      libraryItems: [
+        libraryItem({
+          id: 1,
+          media: media({ id: 1, posterPath: '/preview.jpg', title: 'Preview' }),
+        }),
+      ],
+      memberships: [
+        membership({ id: 1, libraryItem: 1, watchlist: 4 }),
+        membership({ id: 2, libraryItem: 1, watchlist: 6 }),
+      ],
+      watchlists: [
+        watchlist({
+          coverMedia: media({
+            backdropPath: '/ignored-backdrop.jpg',
+            id: 7,
+            posterPath: '/cover-poster.jpg',
+            title: 'Poster',
+          }),
+          id: 1,
+          name: 'Poster',
+          slug: 'poster',
+        }),
+        watchlist({
+          coverMedia: media({
+            backdropPath: '/cover-backdrop.jpg',
+            id: 8,
+            posterPath: '   ',
+            title: 'Backdrop',
+          }),
+          id: 2,
+          name: 'Backdrop',
+          slug: 'backdrop',
+        }),
+        watchlist({ coverMedia: 9, id: 3, name: 'By id', slug: 'by-id' }),
+        watchlist({ id: 4, name: 'Preview', slug: 'preview' }),
+        watchlist({ coverMedia: 404, id: 5, name: 'Missing', slug: 'missing' }),
+        watchlist({
+          coverMedia: media({ backdropPath: '  ', id: 10, posterPath: '', title: 'Blank' }),
+          id: 6,
+          name: 'Blank cover',
+          slug: 'blank',
+        }),
+      ],
+    })
+
+    expect(cards.map((item) => item.coverPath)).toEqual([
+      '/cover-poster.jpg',
+      '/cover-backdrop.jpg',
+      '/from-id-poster.jpg',
+      '/preview.jpg',
+      null,
+      '/preview.jpg',
+    ])
+  })
+})
+
+describe('collectCoverMediaIds', () => {
+  it('returns unique numeric cover ids and skips populated covers', () => {
+    expect(
+      collectCoverMediaIds([
+        watchlist({ coverMedia: 4, id: 1, name: 'A', slug: 'a' }),
+        watchlist({ coverMedia: 4, id: 2, name: 'B', slug: 'b' }),
+        watchlist({ coverMedia: null, id: 3, name: 'C', slug: 'c' }),
+        watchlist({
+          coverMedia: media({ id: 8, title: 'Populated' }),
+          id: 4,
+          name: 'D',
+          slug: 'd',
+        }),
+        watchlist({ coverMedia: 5, id: 5, name: 'E', slug: 'e' }),
+      ]),
+    ).toEqual([4, 5])
+  })
 })
 
 describe('collectPreviewLibraryItemIds', () => {
@@ -292,6 +377,7 @@ function card(
 ): WatchlistCard {
   return {
     challenge: null,
+    coverPath: null,
     createdAt: '2026-01-01T00:00:00.000Z',
     description: null,
     previews: [],

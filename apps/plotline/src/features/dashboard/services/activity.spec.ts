@@ -40,7 +40,7 @@ describe('buildActivityRows', () => {
 
     expect(rows.map((row) => [row.label, row.detail, row.filterKind])).toEqual([
       ['Watched', null, 'watched'],
-      ['Watched', 'S2 E4', 'watched'],
+      ['Watched', 'S2 · E4', 'watched'],
       ['Dropped', null, 'watched'],
       ['On hold', null, 'watched'],
     ])
@@ -214,7 +214,13 @@ describe('selectActivityPage', () => {
     const now = new Date('2026-10-14T18:00:00.000Z')
     const first = selectActivityPage(
       rows,
-      { kind: 'watched', limit: 2, mediaType: 'movie', range: { days: 30, type: 'rolling' }, timeZone: TIME_ZONE },
+      {
+        kind: 'watched',
+        limit: 2,
+        mediaType: 'movie',
+        range: { days: 30, type: 'rolling' },
+        timeZone: TIME_ZONE,
+      },
       now,
     )
 
@@ -314,7 +320,11 @@ describe('groupActivityRows', () => {
 
   it('keeps Sunday as yesterday when today is Monday', () => {
     const groups = groupActivityRows(
-      [labeled('2026-10-12T12:00:00.000Z'), labeled('2026-10-11T12:00:00.000Z'), labeled('2026-10-10T12:00:00.000Z')],
+      [
+        labeled('2026-10-12T12:00:00.000Z'),
+        labeled('2026-10-11T12:00:00.000Z'),
+        labeled('2026-10-10T12:00:00.000Z'),
+      ],
       new Date('2026-10-12T18:00:00.000Z'),
       TIME_ZONE,
     )
@@ -414,7 +424,9 @@ function series(id: number, title: string) {
   return { id, mediaType: 'tv' as const, title, tmdbId: id }
 }
 
-function watch(overrides: Partial<ActivityEventInput> & Pick<ActivityEventInput, 'id'>): ActivityEventInput {
+function watch(
+  overrides: Partial<ActivityEventInput> & Pick<ActivityEventInput, 'id'>,
+): ActivityEventInput {
   return {
     eventType: 'completed',
     media: movie(overrides.id, `Film ${overrides.id}`),

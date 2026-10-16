@@ -30,16 +30,16 @@ describe('getChallengeDetailView', () => {
       }),
     )
 
-    expect(view.progressLabel).toBe('31 / 52 Titles')
+    expect(view.progressLabel).toBe('31 / 52 titles')
     expect(view.progressCompleted).toBe('31')
-    expect(view.progressGoal).toBe(' / 52 Titles')
+    expect(view.progressGoal).toBe(' / 52 titles')
     expect(view.paceLabel).toBe('Ahead of pace · 10 days left')
-    expect(view.paceTone).toBe('default')
+    expect(view.paceTone).toBe('ahead')
     expect(view.percentComplete).toBe(60)
     expect(view.meta).toEqual([
       { label: 'Goal type', value: 'Count' },
       { label: 'Due date', value: 'Dec 31, 2026' },
-      { label: 'TV counting', value: 'By Episode' },
+      { label: 'TV counting', value: 'By episode' },
       { label: 'Rewatches', value: 'Excluded' },
     ])
   })
@@ -67,8 +67,8 @@ describe('getChallengeDetailView', () => {
       }),
     )
 
-    expect(films.progressLabel).toBe('31 / 52 Films')
-    expect(films.progressGoal).toBe(' / 52 Films')
+    expect(films.progressLabel).toBe('31 / 52 films')
+    expect(films.progressGoal).toBe(' / 52 films')
     expect(hours.progressLabel).toBe('38 / 100 hrs')
     expect(hours.progressCompleted).toBe('38')
     expect(hours.progressGoal).toBe(' / 100 hrs')
@@ -142,7 +142,7 @@ describe('getChallengeDetailView', () => {
     expect(view.paceLabel).toBe('Not started')
     expect(view.paceTone).toBe('neutral')
     expect(view.percentComplete).toBe(0)
-    expect(view.progressLabel).toBe('0 / 52 Titles')
+    expect(view.progressLabel).toBe('0 / 52 titles')
   })
 
   it('marks a slow or overdue pace as destructive', () => {

@@ -225,7 +225,7 @@ describe('formatMembershipMediaLabel', () => {
 
 describe('formatAddedToListLabel', () => {
   it('prefixes a parsed date', () => {
-    expect(formatAddedToListLabel('2026-03-04T15:00:00.000Z')).toMatch(/^Added to list /)
+    expect(formatAddedToListLabel('2026-03-04T15:00:00.000Z')).toMatch(/^Added /)
   })
 
   it('returns null when the date cannot be parsed', () => {

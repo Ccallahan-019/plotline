@@ -27,15 +27,32 @@ export type ChallengePaceRateLabel = {
   value: string
 }
 
+type ChallengePaceSource = {
+  challenge?: null | Watchlist['challenge']
+  statsCache?: null | Watchlist['statsCache']
+}
+
 type PaceUnit = 'films' | 'hrs' | 'titles'
+
+/**
+ * Daily rate still needed to finish the challenge by its due date.
+ *
+ * Runtime goals show hours. Count goals show films or titles. A missing rate is an em dash.
+ *
+ * @param watchlist - Challenge settings plus cached pacing
+ * @returns Copy such as `~ 1.5 titles / day`
+ */
+export function formatRequiredChallengePace(watchlist: ChallengePaceSource): string {
+  return formatDailyPace(watchlist.statsCache?.requiredPerDay, getPaceUnit(watchlist))
+}
 
 /**
  * Progress hero for a challenge detail page.
  *
  * Copy uses the detail variant (`31 / 52 titles`, or hours). Pace and the bar
  * come from `statsCache`. A missing cache stays "Not started" with an empty bar
- * so a new challenge is not marked complete. `paceTone` is `destructive` when
- * the challenge is behind or overdue.
+ * so a new challenge is not marked complete. `paceTone` is `ahead` when the daily
+ * rate is faster than required, and `destructive` when the challenge is behind or overdue.
  *
  * @param watchlist - Challenge settings and stats on the watchlist document
  * @returns Labels, tone, percent, meta rows, and daily pace rates for the progress card
@@ -68,13 +85,32 @@ export function getChallengeDetailView(
   }
 }
 
+/**
+ * Required daily rate in the units pace copy displays.
+ *
+ * Runtime cache values are minutes per day and come back as hours. Count goals
+ * come back unchanged. A missing or non-finite rate is omitted.
+ *
+ * @param watchlist - Challenge settings plus cached pacing
+ * @returns Hours for a runtime goal, otherwise the cached count rate
+ */
+export function requiredPerDayInDisplayUnits(watchlist: ChallengePaceSource): number | undefined {
+  const amountPerDay = watchlist.statsCache?.requiredPerDay
+
+  if (amountPerDay == null || !Number.isFinite(amountPerDay)) {
+    return undefined
+  }
+
+  return toDisplayAmountPerDay(amountPerDay, getPaceUnit(watchlist))
+}
+
 // `~10.2 hrs / day`. Runtime cache values are minutes per day.
 function formatDailyPace(amountPerDay: number | undefined, unit: PaceUnit): string {
   if (amountPerDay == null || !Number.isFinite(amountPerDay)) {
     return '—'
   }
 
-  const display = unit === 'hrs' ? amountPerDay / 60 : amountPerDay
+  const display = toDisplayAmountPerDay(amountPerDay, unit)
   const rounded = Math.round(display * 10) / 10
   const formatted = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 1,
@@ -91,9 +127,7 @@ function formatDailyPace(amountPerDay: number | undefined, unit: PaceUnit): stri
  * @param watchlist - Challenge settings plus cached pacing
  * @returns Original and required daily rates, or an em dash when a rate cannot be computed
  */
-function getChallengePaceRates(
-  watchlist: Pick<Watchlist, 'challenge' | 'statsCache'>,
-): ChallengePaceRateLabel[] {
+function getChallengePaceRates(watchlist: ChallengePaceSource): ChallengePaceRateLabel[] {
   const unit = getPaceUnit(watchlist)
   const stats = watchlist.statsCache
   const daysTotal = stats?.daysTotal
@@ -103,15 +137,12 @@ function getChallengePaceRates(
 
   return [
     { label: 'Original pace', value: formatDailyPace(originalPerDay, unit) },
-    { label: 'Required pace', value: formatDailyPace(stats?.requiredPerDay, unit) },
+    { label: 'Required pace', value: formatRequiredChallengePace(watchlist) },
   ]
 }
 
 // Goal size in the same units the cache uses for per-day rates (minutes or titles).
-function getGoalUnits(
-  watchlist: Pick<Watchlist, 'challenge' | 'statsCache'>,
-  unit: PaceUnit,
-): number | undefined {
+function getGoalUnits(watchlist: ChallengePaceSource, unit: PaceUnit): number | undefined {
   const challenge = watchlist.challenge
   const stats = watchlist.statsCache
 
@@ -123,7 +154,7 @@ function getGoalUnits(
 }
 
 // Runtime rates display as hours. Count rates follow the progress copy: films or titles.
-function getPaceUnit(watchlist: Pick<Watchlist, 'challenge' | 'statsCache'>): PaceUnit {
+function getPaceUnit(watchlist: ChallengePaceSource): PaceUnit {
   const challenge = watchlist.challenge
 
   if (challenge?.goalType === 'runtime_minutes') {
@@ -155,6 +186,11 @@ function splitDetailProgressLabel(label: string): { completed: string; goal: str
   }
 
   return { completed: label.slice(0, index), goal: label.slice(index) }
+}
+
+// Runtime cache values are minutes per day. Count rates are already titles or films.
+function toDisplayAmountPerDay(amountPerDay: number, unit: PaceUnit): number {
+  return unit === 'hrs' ? amountPerDay / 60 : amountPerDay
 }
 
 // Remaining must be non-zero when the cache is missing, or pace reports Complete.

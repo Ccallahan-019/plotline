@@ -59,7 +59,7 @@ describe('selectRecommendationSeeds', () => {
 })
 
 describe('selectRecommendationPosters', () => {
-  it('drops library titles and stops at two posters in seed order', () => {
+  it('drops library titles and stops at four posters in seed order', () => {
     const posters = selectRecommendationPosters({
       libraryKeys: libraryMediaKeys([
         { media: { mediaType: 'movie', title: 'Owned', tmdbId: 680 } },
@@ -71,11 +71,13 @@ describe('selectRecommendationPosters', () => {
             { id: 680, title: 'Owned' },
             { id: 13, title: 'First' },
             { id: 14, title: 'Second' },
+            { id: 15, title: 'Third' },
+            { id: 16, title: 'Fourth' },
           ],
         },
         {
           mediaType: 'tv',
-          results: [{ id: 1396, name: 'Third' }],
+          results: [{ id: 1396, name: 'Fifth' }],
         },
       ],
       seeds: [{ mediaType: 'movie', tmdbId: 550 }],
@@ -84,6 +86,8 @@ describe('selectRecommendationPosters', () => {
     expect(posters).toEqual([
       { mediaType: 'movie', posterPath: null, title: 'First', tmdbId: 13 },
       { mediaType: 'movie', posterPath: null, title: 'Second', tmdbId: 14 },
+      { mediaType: 'movie', posterPath: null, title: 'Third', tmdbId: 15 },
+      { mediaType: 'movie', posterPath: null, title: 'Fourth', tmdbId: 16 },
     ])
   })
 
@@ -91,7 +95,13 @@ describe('selectRecommendationPosters', () => {
     const posters = selectRecommendationPosters({
       libraryKeys: new Set(['movie:550']),
       pages: [
-        { mediaType: 'movie', results: [{ id: 550, title: 'Seed' }, { id: 13, title: 'First' }] },
+        {
+          mediaType: 'movie',
+          results: [
+            { id: 550, title: 'Seed' },
+            { id: 13, title: 'First' },
+          ],
+        },
         { mediaType: 'tv', results: [{ id: 1396, name: 'Next' }] },
       ],
       seeds: [

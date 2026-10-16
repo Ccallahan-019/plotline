@@ -12,10 +12,7 @@ import { mixTrendingTitles } from './trending'
  * @throws When either TMDB trending call fails
  */
 export async function getTrendingTitles(client: TmdbClient): Promise<TrendingTitles> {
-  const [movies, shows] = await Promise.all([
-    client.getTrending('movie'),
-    client.getTrending('tv'),
-  ])
+  const [movies, shows] = await Promise.all([client.getTrending('movie'), client.getTrending('tv')])
 
   return { items: mixTrendingTitles(movies.results, shows.results) }
 }

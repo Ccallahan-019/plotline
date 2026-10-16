@@ -11,7 +11,28 @@ import { formatReleaseYear } from '@/features/media-grid/grid/services/media-dis
 export function formatAddedToListLabel(addedAt: string): null | string {
   const addedLabel = formatAddedToListDate(addedAt)
 
-  return addedLabel ? `Added to list ${addedLabel}` : null
+  return addedLabel ? `Added ${addedLabel}` : null
+}
+
+/**
+ * Metadata line under a membership title.
+ *
+ * Joins the media label and the added date with a middle dot. Returns `null`
+ * when both parts are missing so the row can skip an empty description.
+ *
+ * @param mediaLabel - Year and Film/Series, or `null`
+ * @param addedLabel - Added date, or `null`
+ * @returns The joined line, or `null` when there is nothing to show
+ */
+export function formatMembershipDescription(
+  mediaLabel: null | string,
+  addedLabel: null | string,
+): null | string {
+  const description = [mediaLabel, addedLabel]
+    .filter((label): label is string => label != null && label.length > 0)
+    .join(' · ')
+
+  return description.length > 0 ? description : null
 }
 
 /**

@@ -1,11 +1,10 @@
 import { Link2Off } from 'lucide-react'
 
+import { RatingBadge } from '@/components/ratings/RatingsBadge'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Empty, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { cn } from '@/lib/utils'
-
-import { RatingBadge } from './RatingBadge'
 
 type MediaGridPosterEmptyProps = {
   className?: string

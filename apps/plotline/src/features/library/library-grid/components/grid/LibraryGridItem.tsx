@@ -30,12 +30,12 @@ export function LibraryGridItem({ item }: LibraryGridItemProps) {
           <div className="flex flex-col gap-2 justify-between h-full">
             <AnimatedStatusBadge
               animationKey={item.id.toString()}
-              className="shadow-sm h-7 rounded-md"
+              className="shadow-sm h-6.5 rounded-md"
               status={item.status}
               triggerAnimation={isHovered}
             />
             <div className="flex justify-end gap-2">
-              <LogWatchPopover libraryItem={item} />
+              <LogWatchPopover libraryItem={item} triggerLabel={null} triggerSize="icon" />
               <LibraryItemDrawer item={item} />
             </div>
           </div>

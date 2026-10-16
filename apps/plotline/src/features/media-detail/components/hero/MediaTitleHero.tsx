@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import type { MediaTitlePageData } from '../../types'
 
 import { formatMediaTitleMetaLine, getTvWatchProgress } from '../../services/format-media-title'
-import { mediaImageUrl } from '../../services/media-image-url'
+import { mediaImageUrl, titleBackdropUrl } from '../../services/media-image-url'
 import { MediaTitleActions } from './MediaTitleActions'
 import { MediaTitleBackButton } from './MediaTitleBackButton'
 import { MediaTitleHeroBackdrop } from './MediaTitleHeroBackdrop'
@@ -19,7 +19,7 @@ type MediaTitleHeroProps = {
 }
 
 export function MediaTitleHero({ data }: MediaTitleHeroProps) {
-  const backdropUrl = mediaImageUrl(data.media.backdropPath, 'w1280')
+  const backdropUrl = titleBackdropUrl(data.media.backdropPath)
   const posterUrl = mediaImageUrl(data.media.posterPath, 'w342')
   const metaLine = formatMediaTitleMetaLine({
     certification: data.certification,

@@ -1,5 +1,5 @@
 import { Watchlist } from '@plotline/payload-types'
-import { Globe, Lock, LucideIcon, Users } from 'lucide-react'
+import { Globe, LucideIcon, ShieldUser, Users } from 'lucide-react'
 import { ComponentProps } from 'react'
 
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +8,7 @@ import { formatWatchlistVisibilityLabel } from '../services/format-watchlist-vis
 
 const VISIBILITY_ICONS: Record<Watchlist['visibility'], LucideIcon | null> = {
   friends: Users,
-  private: Lock,
+  private: ShieldUser,
   public: Globe,
   unlisted: null,
 }

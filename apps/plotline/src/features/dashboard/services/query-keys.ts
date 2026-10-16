@@ -1,11 +1,16 @@
 import type { LibraryItemsQuery } from '@/features/library/library-grid/types'
 
-import type { DashboardActivityFilters, DashboardSummaryFilters } from '../types'
+import type {
+  DashboardActivityFilters,
+  DashboardActivityKind,
+  DashboardActivityMediaType,
+  DashboardSummaryFilters,
+} from '../types'
 
 export const DASHBOARD_ACTIVITY_DEFAULT_KIND = 'all' as const
 export const DASHBOARD_ACTIVITY_DEFAULT_LIMIT = 20
 export const DASHBOARD_ACTIVITY_DEFAULT_MEDIA_TYPE = 'all' as const
-export const DASHBOARD_ACTIVITY_DEFAULT_RANGE = '30d'
+export const DASHBOARD_ACTIVITY_DEFAULT_RANGE = '30d' as const
 
 /**
  * Library query for continue watching and the overview queue.
@@ -42,6 +47,29 @@ export const dashboardQueryKeys = {
 
 export const trendingQueryKeys = {
   week: () => ['tmdb', 'trending', 'week'] as const,
+}
+
+/**
+ * True when the feed is still on all activity, all media, and the last 30 days.
+ *
+ * An empty page in that state means there is no recent activity. Any other
+ * combination means the empty page is a filter miss.
+ *
+ * @param filter.kind - Selected activity kind
+ * @param filter.mediaType - Selected media type
+ * @param filter.range - Selected time range
+ * @returns Whether every filter is still the feed default
+ */
+export function isDefaultActivityFeedFilter(filter: {
+  kind: DashboardActivityKind
+  mediaType: DashboardActivityMediaType
+  range: string
+}): boolean {
+  return (
+    filter.kind === DASHBOARD_ACTIVITY_DEFAULT_KIND &&
+    filter.mediaType === DASHBOARD_ACTIVITY_DEFAULT_MEDIA_TYPE &&
+    filter.range === DASHBOARD_ACTIVITY_DEFAULT_RANGE
+  )
 }
 
 /**

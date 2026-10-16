@@ -1,4 +1,4 @@
-import type { LibraryItem, Watchlist, WatchlistMembership } from '@plotline/payload-types'
+import type { LibraryItem, Media, Watchlist, WatchlistMembership } from '@plotline/payload-types'
 
 import type { WatchlistCard, WatchlistCardPreview, WatchlistCardSort } from '../types'
 
@@ -7,6 +7,8 @@ import { DEFAULT_WATCHLIST_CARD_SORT } from '../types'
 export const WATCHLIST_CARD_PREVIEW_LIMIT = 3
 
 export type BuildWatchlistCardsInput = {
+  /** Cover documents for watchlists whose `coverMedia` is still an id. */
+  coverMedia?: readonly Media[]
   libraryItems: readonly LibraryItem[]
   memberships: readonly WatchlistMembership[]
   /** Full membership count per watchlist id. Falls back to the supplied memberships when absent. */
@@ -21,10 +23,13 @@ export type BuildWatchlistCardsInput = {
  * only the first few per watchlist. `titleCount` comes from `titleCounts` when
  * given, otherwise from the supplied memberships. `previews` is the first three
  * titles; a missing library item or poster stays in its slot with a null poster.
- * `challenge` and `statsCache` are copied through so challenge cards can render
- * pace and progress; a missing group or cache is null. Card order follows
- * `watchlists`, not name.
+ * `coverPath` is the cover title's poster, then its backdrop, then the first
+ * preview poster, and null when none of those images exist. `challenge` and
+ * `statsCache` are copied through so challenge cards can render pace and
+ * progress; a missing group or cache is null. Card order follows `watchlists`,
+ * not name.
  *
+ * @param input.coverMedia - Cover documents when a watchlist stores `coverMedia` as an id
  * @param input.libraryItems - Preview titles fetched at depth 1. Posters are read from these, not from membership relations
  * @param input.memberships - Memberships for the loaded watchlists, in list order
  * @param input.titleCounts - Full membership count per watchlist id, when `memberships` is truncated
@@ -32,12 +37,14 @@ export type BuildWatchlistCardsInput = {
  * @returns One card per watchlist
  */
 export function buildWatchlistCards({
+  coverMedia = [],
   libraryItems,
   memberships,
   titleCounts,
   watchlists,
 }: BuildWatchlistCardsInput): WatchlistCard[] {
   const grouped = membershipsByWatchlistId(memberships)
+  const coversById = indexMedia(coverMedia)
   const itemsById = indexLibraryItems(libraryItems)
 
   return watchlists.map((watchlist) => {
@@ -50,6 +57,7 @@ export function buildWatchlistCards({
 
     return {
       challenge: watchlist.challenge ?? null,
+      coverPath: toCoverPath(watchlist, coversById, previews),
       createdAt: watchlist.createdAt,
       description: toCardDescription(watchlist.description),
       id: watchlist.id,
@@ -62,6 +70,35 @@ export function buildWatchlistCards({
       visibility: watchlist.visibility,
     }
   })
+}
+
+/**
+ * Media ids for watchlist covers that are not already populated.
+ *
+ * Populated cover documents are skipped because the card builder can read
+ * their image paths directly.
+ *
+ * @param watchlists - Watchlists whose covers may be ids or documents
+ * @returns Unique media ids, in first-seen order
+ */
+export function collectCoverMediaIds(
+  watchlists: readonly Pick<Watchlist, 'coverMedia'>[],
+): number[] {
+  const ids: number[] = []
+  const seen = new Set<number>()
+
+  for (const watchlist of watchlists) {
+    const cover = watchlist.coverMedia
+
+    if (typeof cover !== 'number' || seen.has(cover)) {
+      continue
+    }
+
+    seen.add(cover)
+    ids.push(cover)
+  }
+
+  return ids
 }
 
 /**
@@ -147,12 +184,36 @@ function compareWatchlistCards(
   }
 }
 
+// First preview poster, used when the watchlist has no cover image.
+function firstPreviewPath(previews: readonly WatchlistCardPreview[]): null | string {
+  for (const preview of previews) {
+    const posterPath = preview.posterPath
+
+    if (posterPath) {
+      return posterPath
+    }
+  }
+
+  return null
+}
+
 // Last item wins if the same id appears twice.
 function indexLibraryItems(libraryItems: readonly LibraryItem[]): Map<number, LibraryItem> {
   const indexed = new Map<number, LibraryItem>()
 
   for (const libraryItem of libraryItems) {
     indexed.set(libraryItem.id, libraryItem)
+  }
+
+  return indexed
+}
+
+// Last document wins if the same id appears twice.
+function indexMedia(media: readonly Media[]): Map<number, Media> {
+  const indexed = new Map<number, Media>()
+
+  for (const item of media) {
+    indexed.set(item.id, item)
   }
 
   return indexed
@@ -183,6 +244,22 @@ function relationshipId(value: { id: number } | number): number {
   return typeof value === 'number' ? value : value.id
 }
 
+// A populated cover is used as-is. An id is resolved from the fetched documents.
+function resolveCoverMedia(
+  coverMedia: undefined | Watchlist['coverMedia'],
+  coversById: ReadonlyMap<number, Media>,
+): Media | null {
+  if (coverMedia == null) {
+    return null
+  }
+
+  if (typeof coverMedia === 'number') {
+    return coversById.get(coverMedia) ?? null
+  }
+
+  return coverMedia
+}
+
 // Blank copy becomes null so the card can show an empty description.
 function toCardDescription(description: null | string | undefined): null | string {
   if (description == null || description.trim().length === 0) {
@@ -190,6 +267,19 @@ function toCardDescription(description: null | string | undefined): null | strin
   }
 
   return description
+}
+
+// Cover poster, then the cover backdrop, then the first preview poster.
+function toCoverPath(
+  watchlist: Watchlist,
+  coversById: ReadonlyMap<number, Media>,
+  previews: readonly WatchlistCardPreview[],
+): null | string {
+  const cover = resolveCoverMedia(watchlist.coverMedia, coversById)
+  const posterPath = trimmedPath(cover?.posterPath)
+  const backdropPath = trimmedPath(cover?.backdropPath)
+
+  return posterPath ?? backdropPath ?? firstPreviewPath(previews)
 }
 
 // A missing item or poster still occupies a preview slot.
@@ -204,4 +294,11 @@ function toWatchlistCardPreview(libraryItem: LibraryItem | undefined): Watchlist
     posterPath: posterPath ? posterPath : null,
     title: libraryItem.media.title,
   }
+}
+
+// Empty image paths are treated as missing.
+function trimmedPath(path: null | string | undefined): null | string {
+  const trimmed = path?.trim()
+
+  return trimmed ? trimmed : null
 }

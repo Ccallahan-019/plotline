@@ -38,7 +38,7 @@ export function PageSizeSelector({
   }
 
   return (
-    <Field orientation="horizontal">
+    <Field className="w-fit" orientation="horizontal">
       <FieldLabel className="text-nowrap mr-1" htmlFor="page-size-selector">
         Rows per Page
       </FieldLabel>

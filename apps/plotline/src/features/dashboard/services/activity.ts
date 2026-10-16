@@ -235,7 +235,8 @@ export function selectActivityPage(
   return {
     ok: true,
     page: {
-      nextCursor: afterCursor.length > query.limit && lastRow ? encodeActivityCursor(lastRow) : null,
+      nextCursor:
+        afterCursor.length > query.limit && lastRow ? encodeActivityCursor(lastRow) : null,
       rows: pageRows,
     },
   }
@@ -383,7 +384,7 @@ function episodeDetail(tvContext: ActivityEventInput['tvContext']): null | strin
     return null
   }
 
-  return `S${season} E${episode}`
+  return `S${season} · E${episode}`
 }
 
 // First completion or rewatch of a movie. Later events for that film do not count again.
@@ -434,7 +435,8 @@ function formatChallengeSnapshot(watchlist: ActivityChallengeInput): string {
   const yearSuffix = year ? ` in ${year}` : ''
 
   if (isRuntimeGoal(challenge, stats)) {
-    const goalMinutes = stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes ?? stats?.totalEligible ?? 0
+    const goalMinutes =
+      stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes ?? stats?.totalEligible ?? 0
     const goalHours = formatHourCount(goalMinutes)
     const completedHours = formatHourCount(stats?.completed ?? 0)
 
@@ -613,7 +615,10 @@ function milestoneRow(input: {
 }
 
 // Film, hour, and streak thresholds crossed while scanning events in time order.
-function milestoneRows(events: readonly ActivityEventInput[], timeZone: string): DashboardActivityRow[] {
+function milestoneRows(
+  events: readonly ActivityEventInput[],
+  timeZone: string,
+): DashboardActivityRow[] {
   const sorted = [...events].filter((event) => !Number.isNaN(Date.parse(event.watchedAt)))
   sorted.sort(compareEvents)
 
@@ -649,7 +654,10 @@ function ratingsByMediaId(reviews: readonly ActivityReviewInput[]): Map<number, 
     const current = ratings.get(media.id)
 
     if (!current || updatedAt >= current.updatedAt) {
-      ratings.set(media.id, { rating: review.rating, updatedAt: Number.isNaN(updatedAt) ? 0 : updatedAt })
+      ratings.set(media.id, {
+        rating: review.rating,
+        updatedAt: Number.isNaN(updatedAt) ? 0 : updatedAt,
+      })
     }
   }
 
@@ -726,9 +734,7 @@ function streakMilestones(
   for (const key of [...firstEventByDay.keys()].sort()) {
     const date = parseCalendarDateKey(key)
     const continues =
-      previous != null &&
-      date != null &&
-      calendarDateKey(addCalendarDays(date, -1)) === previous
+      previous != null && date != null && calendarDateKey(addCalendarDays(date, -1)) === previous
     streak = continues ? streak + 1 : 1
     previous = key
     const threshold = milestoneThreshold(STREAK_MILESTONES, streak)

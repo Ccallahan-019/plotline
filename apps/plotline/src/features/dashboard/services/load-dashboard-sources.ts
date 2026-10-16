@@ -79,19 +79,12 @@ export async function loadReviews(clerkUserId: string, depth: 0 | 1): Promise<Re
  * @returns Watch events in id order
  * @throws When a Payload request fails or paging does not finish
  */
-export async function loadWatchEvents(
-  clerkUserId: string,
-  depth: 0 | 1,
-): Promise<WatchEvent[]> {
+export async function loadWatchEvents(clerkUserId: string, depth: 0 | 1): Promise<WatchEvent[]> {
   return loadCollection<WatchEvent>(clerkUserId, '/api/watch-events', depth)
 }
 
 // Follows Payload pages for one collection. `id` keeps offset paging stable.
-async function loadCollection<T>(
-  clerkUserId: string,
-  path: string,
-  depth: 0 | 1,
-): Promise<T[]> {
+async function loadCollection<T>(clerkUserId: string, path: string, depth: 0 | 1): Promise<T[]> {
   return fetchAllPages<T>(
     (page) =>
       payloadFetch<PayloadPaginatedDocs<T>>(path, {

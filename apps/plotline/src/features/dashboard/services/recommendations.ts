@@ -4,7 +4,7 @@ import type { TmdbSearchResultItem } from '@plotline/shared/tmdb'
 import type { DashboardRecommendationItem, DashboardRecommendationSeed } from '../types'
 
 /** How many posters the overview recommendation card shows. */
-export const RECOMMENDATION_POSTER_LIMIT = 2
+export const RECOMMENDATION_POSTER_LIMIT = 4
 
 const SEED_LIMIT = 2
 const HIGH_RATING = 7
@@ -185,7 +185,9 @@ function mediaKey(mediaType: MediaType, tmdbId: number): string {
 }
 
 // Populated media with a title and TMDB id. Id-only relations are skipped.
-function resolveMedia(media: null | number | RecommendationMedia | undefined): null | RecommendationMedia {
+function resolveMedia(
+  media: null | number | RecommendationMedia | undefined,
+): null | RecommendationMedia {
   if (!media || typeof media === 'number' || !media.title.trim() || media.tmdbId <= 0) {
     return null
   }

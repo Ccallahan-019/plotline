@@ -25,11 +25,11 @@ describe('toContinueWatchingItems', () => {
     )
 
     expect(film).toMatchObject({
-      contextLabel: 'Film · In progress',
-      logLabel: 'Log as watched',
+      contextLabel: 'Film · In Progress',
+      logLabel: 'Log Watch',
       mediaType: 'movie',
       percent: 50,
-      progressLabel: 'In progress',
+      progressLabel: 'In Progress',
       title: 'Heat',
     })
   })

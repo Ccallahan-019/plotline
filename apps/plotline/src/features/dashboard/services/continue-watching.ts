@@ -280,8 +280,7 @@ function splitContinueWatchingHero(items: readonly ContinueWatchingItem[]): {
   return {
     hero: {
       ...heroSource,
-      stalledLabel:
-        heroSource.stalledDays == null ? null : `Stalled · ${heroSource.stalledDays}d`,
+      stalledLabel: heroSource.stalledDays == null ? null : `Stalled · ${heroSource.stalledDays}d`,
     },
     rest: items.filter((item) => item.id !== heroSource.id),
   }
@@ -326,10 +325,10 @@ function toContinueWatchingItem(item: LibraryItem, now: Date): ContinueWatchingI
   if (media.mediaType === 'movie') {
     return {
       ...shared,
-      contextLabel: 'Film · In progress',
-      logLabel: 'Log as watched',
+      contextLabel: 'Film · In Progress',
+      logLabel: 'Log Watch',
       percent: FILM_PROGRESS_PERCENT,
-      progressLabel: 'In progress',
+      progressLabel: 'In Progress',
     }
   }
 
@@ -351,9 +350,7 @@ function toContinueWatchingItem(item: LibraryItem, now: Date): ContinueWatchingI
 
   return {
     ...shared,
-    contextLabel: upNext
-      ? `TV · Next: S${upNext.upNextSeason} E${upNext.upNextEpisode}`
-      : 'TV',
+    contextLabel: upNext ? `TV · Next: S${upNext.upNextSeason} E${upNext.upNextEpisode}` : 'TV',
     logLabel: upNext ? `Log S${upNext.upNextSeason} E${upNext.upNextEpisode}` : 'Log as watched',
     percent,
     progressLabel: hasTotal

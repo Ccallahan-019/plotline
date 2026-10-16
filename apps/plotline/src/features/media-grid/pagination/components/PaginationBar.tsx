@@ -38,9 +38,9 @@ export function PaginationBar({
 
   return (
     <div className={cn('flex flex-col items-center gap-3 w-full', className)}>
-      <div className="flex items-center gap-5 justify-center">
+      <div className="flex flex-wrap items-center gap-5 justify-center">
         {selector && selector}
-        <Pagination>
+        <Pagination className="w-fit">
           <PaginationContent>
             <PaginationItem>
               <PaginationPreviousButton onPageChange={onPageChange} page={page} />

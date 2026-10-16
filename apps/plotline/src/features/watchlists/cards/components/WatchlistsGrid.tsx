@@ -80,13 +80,19 @@ const FetchingOverlay = ({ isFetching }: { isFetching: boolean }) => {
   )
 }
 
-const GridContent = ({ cards, filter }: { cards: WatchlistCard[]; filter: WatchlistCardFilter }) => {
+const GridContent = ({
+  cards,
+  filter,
+}: {
+  cards: WatchlistCard[]
+  filter: WatchlistCardFilter
+}) => {
   if (cards.length === 0) {
     return filter === 'challenge' ? <ChallengesEmpty /> : <WatchlistsEmpty />
   }
 
   return (
-    <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))]">
+    <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))]">
       {cards.map((card) => (
         <WatchlistGridCard card={card} key={card.id} />
       ))}

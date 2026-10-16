@@ -36,7 +36,10 @@ describe('getMembershipChallengeExclusion', () => {
     ).toEqual({ badge: 'rewatch', note: 'Rewatch — excluded per challenge rules' })
 
     expect(
-      getMembershipChallengeExclusion(membership({ countsTowardGoal: false, excludeFromGoal: true }), challenge()),
+      getMembershipChallengeExclusion(
+        membership({ countsTowardGoal: false, excludeFromGoal: true }),
+        challenge(),
+      ),
     ).toEqual({ badge: null, note: null })
   })
 

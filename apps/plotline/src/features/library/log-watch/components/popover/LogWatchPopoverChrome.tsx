@@ -9,38 +9,37 @@ import {
   PopoverTitle,
 } from '@/components/ui/popover'
 
+import { useLogWatchPopover } from '../../providers/LogWatchPopoverProvider'
+import { logWatchTriggerAccessibleName } from '../../services/log-watch-trigger'
 import { LogWatchPopoverTrigger } from './LogWatchPopoverTrigger'
 
 type LogWatchPopoverChromeProps = PropsWithChildren<{
   disabled?: boolean
   media: Media
-  onPopoverOpenChange: (open: boolean) => void
-  popoverOpen: boolean
-  /** Visible button text. Omit to keep "Log Watch". */
-  triggerLabel?: string
 }>
 
 export function LogWatchPopoverChrome({
   children,
   disabled = false,
   media,
-  onPopoverOpenChange,
-  popoverOpen,
-  triggerLabel,
 }: LogWatchPopoverChromeProps) {
-  // Library cards keep a short visible label and a title-specific accessible name.
-  // A custom label (for example "Log S3 E9") is announced with the title.
-  const accessibleName = triggerLabel
-    ? `${triggerLabel}, ${media.title}`
-    : `Log a watch of ${media.title}`
+  const { isDialogOpen, isPopoverOpen, setPopoverOpen, triggerLabel } = useLogWatchPopover()
+
+  function handlePopoverOpenChange(nextOpen: boolean) {
+    if (isDialogOpen) {
+      return
+    }
+
+    setPopoverOpen(nextOpen)
+  }
+
+  // Pass the unset label through. The visible default is "Log Watch", but the
+  // accessible name names the title so each library card stays distinct.
+  const accessibleName = logWatchTriggerAccessibleName(media.title, triggerLabel)
 
   return (
-    <Popover onOpenChange={onPopoverOpenChange} open={popoverOpen}>
-      <LogWatchPopoverTrigger
-        accessibleName={accessibleName}
-        disabled={disabled}
-        triggerLabel={triggerLabel}
-      />
+    <Popover onOpenChange={handlePopoverOpenChange} open={isPopoverOpen}>
+      <LogWatchPopoverTrigger accessibleName={accessibleName} disabled={disabled} />
 
       <PopoverContent align="start" className="min-w-sm" side="top" sideOffset={3}>
         <PopoverHeader>
