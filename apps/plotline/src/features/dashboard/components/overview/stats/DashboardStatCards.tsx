@@ -66,10 +66,7 @@ export function DashboardStatCards({ summary }: DashboardStatCardsProps) {
             </ShowIf>
           </CardHeader>
           <CardContent>
-            <DashboardStatSparkline
-              highlightMonth={summary.titlesPerMonth.highlightMonth}
-              series={card.series}
-            />
+            <DashboardStatSparkline series={card.series} />
           </CardContent>
         </Card>
       ))}

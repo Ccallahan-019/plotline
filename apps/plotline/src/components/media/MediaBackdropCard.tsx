@@ -54,7 +54,7 @@ export function MediaBackdropCard({
           src={backdropUrl}
         />
         {/* Solid on the inner edge and clear at the card edge, so the art strengthens toward the right. */}
-        <div className="absolute inset-0 bg-linear-to-r from-card from-0% via-card/80 via-40% to-card/50" />
+        <div className="absolute inset-0 bg-linear-to-r from-card from-0% via-card/80 via-40% to-card/40" />
       </div>
       <div className="relative z-10 flex min-w-0 flex-col gap-(--card-spacing)">{children}</div>
     </Card>

@@ -23,14 +23,14 @@ export type BuildWatchlistCardsInput = {
  * only the first few per watchlist. `titleCount` comes from `titleCounts` when
  * given, otherwise from the supplied memberships. `previews` is the first three
  * titles; a missing library item or poster stays in its slot with a null poster.
- * `coverPath` is the cover title's poster, then its backdrop, then the first
- * preview poster, and null when none of those images exist. `challenge` and
+ * `coverPath` is the cover title's backdrop, then its poster, then the first
+ * preview backdrop, and null when none of those images exist. `challenge` and
  * `statsCache` are copied through so challenge cards can render pace and
  * progress; a missing group or cache is null. Card order follows `watchlists`,
  * not name.
  *
  * @param input.coverMedia - Cover documents when a watchlist stores `coverMedia` as an id
- * @param input.libraryItems - Preview titles fetched at depth 1. Posters are read from these, not from membership relations
+ * @param input.libraryItems - Preview titles fetched at depth 1. Posters and backdrops are read from these, not from membership relations
  * @param input.memberships - Memberships for the loaded watchlists, in list order
  * @param input.titleCounts - Full membership count per watchlist id, when `memberships` is truncated
  * @param input.watchlists - Watchlists to emit, in the order the caller wants preserved
@@ -49,20 +49,18 @@ export function buildWatchlistCards({
 
   return watchlists.map((watchlist) => {
     const group = grouped.get(watchlist.id) ?? []
-    const previews = group
+    const previewItems = group
       .slice(0, WATCHLIST_CARD_PREVIEW_LIMIT)
-      .map((membership) =>
-        toWatchlistCardPreview(itemsById.get(relationshipId(membership.libraryItem))),
-      )
+      .map((membership) => itemsById.get(relationshipId(membership.libraryItem)))
 
     return {
       challenge: watchlist.challenge ?? null,
-      coverPath: toCoverPath(watchlist, coversById, previews),
+      coverPath: toCoverPath(watchlist, coversById, previewItems),
       createdAt: watchlist.createdAt,
       description: toCardDescription(watchlist.description),
       id: watchlist.id,
       name: watchlist.name,
-      previews,
+      previews: previewItems.map(toWatchlistCardPreview),
       slug: watchlist.slug,
       statsCache: watchlist.statsCache ?? null,
       titleCount: titleCounts?.get(watchlist.id) ?? group.length,
@@ -184,13 +182,17 @@ function compareWatchlistCards(
   }
 }
 
-// First preview poster, used when the watchlist has no cover image.
-function firstPreviewPath(previews: readonly WatchlistCardPreview[]): null | string {
-  for (const preview of previews) {
-    const posterPath = preview.posterPath
+// First preview backdrop, used when the cover title has no image.
+function firstPreviewBackdrop(libraryItems: readonly (LibraryItem | undefined)[]): null | string {
+  for (const libraryItem of libraryItems) {
+    if (libraryItem == null || typeof libraryItem.media !== 'object') {
+      continue
+    }
 
-    if (posterPath) {
-      return posterPath
+    const backdropPath = trimmedPath(libraryItem.media.backdropPath)
+
+    if (backdropPath) {
+      return backdropPath
     }
   }
 
@@ -269,17 +271,17 @@ function toCardDescription(description: null | string | undefined): null | strin
   return description
 }
 
-// Cover poster, then the cover backdrop, then the first preview poster.
+// Cover backdrop, then the cover poster, then the first preview backdrop.
 function toCoverPath(
   watchlist: Watchlist,
   coversById: ReadonlyMap<number, Media>,
-  previews: readonly WatchlistCardPreview[],
+  previewItems: readonly (LibraryItem | undefined)[],
 ): null | string {
   const cover = resolveCoverMedia(watchlist.coverMedia, coversById)
-  const posterPath = trimmedPath(cover?.posterPath)
   const backdropPath = trimmedPath(cover?.backdropPath)
+  const posterPath = trimmedPath(cover?.posterPath)
 
-  return posterPath ?? backdropPath ?? firstPreviewPath(previews)
+  return backdropPath ?? posterPath ?? firstPreviewBackdrop(previewItems)
 }
 
 // A missing item or poster still occupies a preview slot.

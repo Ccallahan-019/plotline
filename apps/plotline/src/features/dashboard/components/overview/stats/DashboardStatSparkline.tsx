@@ -1,31 +1,50 @@
-import { DASHBOARD_MONTH_LABELS } from '@/features/dashboard/services/format-dashboard'
-import { cn } from '@/lib/utils'
+'use client'
+
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+import type { ChartConfig } from '@/components/ui/chart'
+
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { sparklinePoints } from '@/features/dashboard/services/format-dashboard'
+
+const sparklineConfig = {
+  value: {
+    color: 'var(--primary)',
+    label: 'Value',
+  },
+} satisfies ChartConfig
+
+const SPARKLINE_DIMENSION = { height: 32, width: 160 }
 
 type DashboardStatSparklineProps = {
-  highlightMonth: null | number
   series: readonly number[]
 }
 
-export function DashboardStatSparkline({ highlightMonth, series }: DashboardStatSparklineProps) {
-  const max = Math.max(...series, 0)
-
+export function DashboardStatSparkline({ series }: DashboardStatSparklineProps) {
   return (
-    <div aria-hidden className="flex h-8 w-full items-end gap-1">
-      {series.map((value, index) => {
-        const height = max === 0 ? 2 : Math.max(2, Math.round((value / max) * 32))
-        const highlighted = index === highlightMonth
-
-        return (
-          <div
-            className={cn(
-              'min-w-0 flex-1 rounded-sm',
-              highlighted ? 'bg-primary' : 'bg-primary/50',
-            )}
-            key={DASHBOARD_MONTH_LABELS[index]}
-            style={{ height }}
-          />
-        )
-      })}
-    </div>
+    <ChartContainer
+      aria-hidden
+      className="aspect-auto h-8 w-full"
+      config={sparklineConfig}
+      initialDimension={SPARKLINE_DIMENSION}
+    >
+      <AreaChart data={sparklinePoints(series)} margin={{ bottom: 0, left: 0, right: 0, top: 2 }}>
+        {/* Axes, grid, and tooltip stay mounted for the scale, and stay hidden so only the area shows. */}
+        <CartesianGrid horizontal={false} vertical={false} />
+        <XAxis dataKey="index" hide />
+        <YAxis hide />
+        <ChartTooltip active={false} content={<ChartTooltipContent />} />
+        <Area
+          activeDot={false}
+          dataKey="value"
+          dot={false}
+          fill="var(--color-value)"
+          fillOpacity={0.35}
+          stroke="var(--color-value)"
+          strokeWidth={1.5}
+          type="monotone"
+        />
+      </AreaChart>
+    </ChartContainer>
   )
 }

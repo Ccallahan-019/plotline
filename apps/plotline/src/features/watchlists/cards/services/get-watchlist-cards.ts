@@ -28,8 +28,8 @@ const WATCHLIST_CARD_MEMBERSHIP_SORT = 'sortOrder,addedAt,id'
  * `filter` selects challenge lists or lists that are not challenges, using the
  * same watchlist set as `getWatchlists`. Each list asks Payload for only its
  * first three memberships, in parallel, and reads the list's full title count
- * from `totalDocs`. Posters for those memberships, and cover images stored as
- * media ids, then load in a few chunked requests. The result is not name-sorted;
+ * from `totalDocs`. Preview titles for those memberships, and cover images
+ * stored as media ids, then load in a few chunked requests. The result is not name-sorted;
  * callers apply `sortWatchlistCards`.
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
@@ -141,7 +141,7 @@ async function fetchPreviewMemberships(
   }
 }
 
-// Depth 1 so `media.posterPath` and `media.title` are populated. Sort by id so pages cannot skip a row.
+// Depth 1 so `media.posterPath`, `media.backdropPath`, and `media.title` are populated. Sort by id so pages cannot skip a row.
 function libraryItemSearchParams(
   libraryItemIds: readonly number[],
   page: number,

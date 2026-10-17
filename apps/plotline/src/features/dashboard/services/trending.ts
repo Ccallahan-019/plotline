@@ -1,12 +1,44 @@
 import type { MediaType } from '@plotline/shared/constants'
 import type { TmdbSearchResultItem } from '@plotline/shared/tmdb'
 
-import { formatReleaseYear } from '@/features/media-grid/grid/services/media-display-helpers'
+import {
+  formatEpisodeCount,
+  formatReleaseYear,
+  formatRuntime,
+} from '@/features/media-grid/grid/services/media-display-helpers'
 
 import type { TrendingTitle } from '../types'
 
 /** How many mixed weekly trending titles the overview asks for. */
 export const TRENDING_TITLE_LIMIT = 8
+
+/**
+ * Copies a fetched runtime or episode count onto a trending title.
+ *
+ * Movies take `runtime`. Series take `episodeCount`. Zero, negative, and
+ * non-finite lengths stay null.
+ *
+ * @param item - Title to update
+ * @param length - Minutes or episode count from TMDB details
+ * @returns A new title with the length for its media type
+ */
+export function applyTrendingLength(
+  item: TrendingTitle,
+  length: null | number | undefined,
+): TrendingTitle {
+  const value = toTrendingLength(length)
+
+  if (item.mediaType === 'movie') {
+    return { ...item, runtime: value }
+  }
+
+  return { ...item, episodeCount: value }
+}
+
+// True when the row already has the runtime or episode count it shows.
+export function hasTrendingLength(item: TrendingTitle): boolean {
+  return item.mediaType === 'movie' ? item.runtime != null : item.episodeCount != null
+}
 
 /**
  * Interleaves weekly movie and series trending lists.
@@ -17,7 +49,7 @@ export const TRENDING_TITLE_LIMIT = 8
  * @param movies - Page of `/trending/movie/week`
  * @param shows - Page of `/trending/tv/week`
  * @param limit - Maximum mixed titles. Defaults to eight
- * @returns A short mixed list for the overview sidebar. Each title includes its synopsis, backdrop, release year, and score when TMDB sent them
+ * @returns A short mixed list for the overview sidebar. Each title includes its backdrop, release year, score, and runtime or episode count when TMDB sent them
  */
 export function mixTrendingTitles(
   movies: readonly TmdbSearchResultItem[],
@@ -56,18 +88,32 @@ export function mixTrendingTitles(
   return mixed
 }
 
+/**
+ * Media type and length for a trending row.
+ *
+ * Films pair with runtime (`Film · 2h 4m`). Series pair with episode count
+ * (`Series · 12 episodes`). A missing length leaves the type by itself.
+ *
+ * @param item - Type plus the length field for that type
+ * @returns A middle-dot separated description
+ */
+export function trendingTitleDescription(item: {
+  episodeCount: null | number
+  mediaType: MediaType
+  runtime: null | number
+}): string {
+  const length =
+    item.mediaType === 'movie' ? formatRuntime(item.runtime) : formatEpisodeCount(item.episodeCount)
+  const typeLabel = item.mediaType === 'movie' ? 'Film' : 'Series'
+
+  return [typeLabel, length].filter(Boolean).join(' · ')
+}
+
 // Blank path becomes null so the card can skip the backdrop.
 function toBackdropPath(path: null | string | undefined): null | string {
   const trimmed = path?.trim()
 
   return trimmed ? trimmed : null
-}
-
-// Blank synopsis becomes null so the row can omit the description.
-function toOverview(overview: null | string | undefined): null | string {
-  const text = overview?.trim()
-
-  return text ? text : null
 }
 
 // Movie year comes from `release_date`; a series year comes from `first_air_date`.
@@ -77,7 +123,16 @@ function toReleaseYear(item: TmdbSearchResultItem, mediaType: MediaType): null |
   return formatReleaseYear(releaseDate)
 }
 
-// Title, synopsis, backdrop, release year, and score. The route's media type is stamped on.
+// Positive runtime or episode count. Zero, negative, and non-finite values stay null.
+function toTrendingLength(value: null | number | undefined): null | number {
+  if (value == null || !Number.isFinite(value) || value <= 0) {
+    return null
+  }
+
+  return value
+}
+
+// Title, backdrop, release year, score, and length. The route's media type is stamped on.
 function toTrendingTitle(item: TmdbSearchResultItem, mediaType: MediaType): null | TrendingTitle {
   const title = (item.title ?? item.name ?? '').trim()
 
@@ -87,10 +142,11 @@ function toTrendingTitle(item: TmdbSearchResultItem, mediaType: MediaType): null
 
   return {
     backdropPath: toBackdropPath(item.backdrop_path),
+    episodeCount: mediaType === 'tv' ? toTrendingLength(item.number_of_episodes) : null,
     mediaType,
-    overview: toOverview(item.overview),
     posterPath: item.poster_path ?? null,
     releaseYear: toReleaseYear(item, mediaType),
+    runtime: mediaType === 'movie' ? toTrendingLength(item.runtime) : null,
     title,
     tmdbId: item.id,
     voteAverage: toVoteAverage(item.vote_average),

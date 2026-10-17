@@ -1,3 +1,8 @@
+'use client'
+
+import { Bar, BarChart, XAxis, YAxis } from 'recharts'
+
+import type { ChartConfig } from '@/components/ui/chart'
 import type { DashboardSummary } from '@/features/dashboard/types'
 
 import { Badge } from '@/components/ui/badge'
@@ -9,20 +14,30 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import {
-  DASHBOARD_MONTH_LABELS,
   formatDashboardQuantity,
+  monthAxisLetter,
+  titlesPerMonthBars,
+  titlesPerMonthMinPointSize,
 } from '@/features/dashboard/services/format-dashboard'
-import { cn } from '@/lib/utils'
+
+const titlesPerMonthConfig = {
+  count: {
+    color: 'var(--primary)',
+    label: 'Titles',
+  },
+} satisfies ChartConfig
 
 type DashboardMonthlyChartProps = {
   summary: DashboardSummary
 }
 
 export function DashboardMonthlyChart({ summary }: DashboardMonthlyChartProps) {
-  const counts = summary.titlesPerMonth.counts
-  const max = Math.max(...counts, 0)
-  const highlightMonth = summary.titlesPerMonth.highlightMonth
+  const bars = titlesPerMonthBars(
+    summary.titlesPerMonth.counts,
+    summary.titlesPerMonth.highlightMonth,
+  )
 
   return (
     <Card>
@@ -34,40 +49,25 @@ export function DashboardMonthlyChart({ summary }: DashboardMonthlyChartProps) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex items-end gap-1.5">
-          {counts.map((count, index) => {
-            const label = DASHBOARD_MONTH_LABELS[index] ?? ''
-            const height = max === 0 ? 4 : Math.max(4, Math.round((count / max) * 128))
-            const highlighted = index === highlightMonth
-
-            return (
-              <div className="flex min-w-0 flex-1 flex-col items-center gap-2" key={label}>
-                <div className="flex h-32 w-full items-end justify-center">
-                  <div
-                    className={cn(
-                      'w-full max-w-8 rounded-sm',
-                      highlighted ? 'bg-primary' : 'bg-primary/35',
-                    )}
-                    style={{ height }}
-                    title={`${label}: ${formatDashboardQuantity(count, 'title')}`}
-                  />
-                </div>
-                <span
-                  className={cn(
-                    'text-[10px] leading-none',
-                    highlighted ? 'font-medium text-foreground' : 'text-muted-foreground',
-                  )}
-                >
-                  {label}
-                </span>
-              </div>
-            )
-          })}
-        </div>
+        <ChartContainer className="aspect-auto h-48 w-full" config={titlesPerMonthConfig}>
+          <BarChart data={bars} margin={{ bottom: 0, left: 0, right: 0, top: 8 }}>
+            <XAxis
+              axisLine={false}
+              dataKey="month"
+              interval={0}
+              tickFormatter={monthAxisLetter}
+              tickLine={false}
+              tickMargin={8}
+            />
+            <YAxis hide />
+            <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
+            <Bar dataKey="count" minPointSize={titlesPerMonthMinPointSize} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ChartContainer>
         <ul className="sr-only">
-          {counts.map((count, index) => (
-            <li key={DASHBOARD_MONTH_LABELS[index]}>
-              {DASHBOARD_MONTH_LABELS[index]}: {formatDashboardQuantity(count, 'title')}
+          {bars.map((bar) => (
+            <li key={bar.month}>
+              {bar.month}: {formatDashboardQuantity(bar.count, 'title')}
             </li>
           ))}
         </ul>

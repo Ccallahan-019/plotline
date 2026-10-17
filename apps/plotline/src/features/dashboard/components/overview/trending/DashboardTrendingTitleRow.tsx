@@ -7,6 +7,7 @@ import { CardAction, CardHeader } from '@/components/ui/card'
 import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { dashboardTitleHref } from '@/features/dashboard/services/format-dashboard'
+import { trendingTitleDescription } from '@/features/dashboard/services/trending'
 import { TrendingTitle } from '@/features/dashboard/types'
 import { titleBackdropUrl } from '@/features/media-detail/services/media-image-url'
 import { tmdbMediaUrl } from '@/lib/tmdb/tmdb-media-url'
@@ -16,10 +17,10 @@ type DashboardTrendingTitleRowProps = {
 }
 
 export function DashboardTrendingTitleRow({ item }: DashboardTrendingTitleRowProps) {
-  const { backdropPath, mediaType, overview, posterPath, releaseYear, title, tmdbId, voteAverage } =
-    item
+  const { backdropPath, mediaType, posterPath, releaseYear, title, tmdbId, voteAverage } = item
 
   const backdropUrl = titleBackdropUrl(backdropPath)
+  const description = trendingTitleDescription(item)
   const href = dashboardTitleHref(mediaType, tmdbId)
   const src = tmdbMediaUrl(posterPath, 'w185')
 
@@ -50,9 +51,7 @@ export function DashboardTrendingTitleRow({ item }: DashboardTrendingTitleRowPro
                 <span className="shrink-0 text-xs text-muted-foreground">{releaseYear}</span>
               </ShowIf>
             </div>
-            <ShowIf condition={overview != null}>
-              <ItemDescription className="line-clamp-2">{overview}</ItemDescription>
-            </ShowIf>
+            <ItemDescription>{description}</ItemDescription>
           </ItemContent>
         </Item>
         <ShowIf condition={voteAverage != null}>

@@ -222,7 +222,7 @@ describe('buildWatchlistCards', () => {
     expect(cards[1]?.titleCount).toBe(1)
   })
 
-  it('prefers the cover poster, then its backdrop, then the first preview poster', () => {
+  it('prefers the cover backdrop, then its poster, then the first preview backdrop', () => {
     const cards = buildWatchlistCards({
       coverMedia: [
         media({
@@ -235,35 +235,60 @@ describe('buildWatchlistCards', () => {
       libraryItems: [
         libraryItem({
           id: 1,
-          media: media({ id: 1, posterPath: '/preview.jpg', title: 'Preview' }),
+          media: media({
+            backdropPath: '/preview-backdrop.jpg',
+            id: 1,
+            posterPath: '/preview.jpg',
+            title: 'Preview',
+          }),
+        }),
+        libraryItem({
+          id: 2,
+          media: media({
+            backdropPath: '  ',
+            id: 2,
+            posterPath: '/poster-without-still.jpg',
+            title: 'Poster only',
+          }),
+        }),
+        libraryItem({
+          id: 3,
+          media: media({
+            backdropPath: '/later-backdrop.jpg',
+            id: 3,
+            posterPath: '/later-poster.jpg',
+            title: 'Later',
+          }),
         }),
       ],
       memberships: [
         membership({ id: 1, libraryItem: 1, watchlist: 4 }),
         membership({ id: 2, libraryItem: 1, watchlist: 6 }),
+        membership({ id: 3, libraryItem: 2, watchlist: 7 }),
+        membership({ id: 4, libraryItem: 3, watchlist: 7 }),
       ],
       watchlists: [
         watchlist({
           coverMedia: media({
-            backdropPath: '/ignored-backdrop.jpg',
+            backdropPath: '/cover-backdrop.jpg',
             id: 7,
             posterPath: '/cover-poster.jpg',
-            title: 'Poster',
+            title: 'Backdrop',
           }),
           id: 1,
-          name: 'Poster',
-          slug: 'poster',
+          name: 'Backdrop',
+          slug: 'backdrop',
         }),
         watchlist({
           coverMedia: media({
-            backdropPath: '/cover-backdrop.jpg',
+            backdropPath: '   ',
             id: 8,
-            posterPath: '   ',
-            title: 'Backdrop',
+            posterPath: '/poster-only.jpg',
+            title: 'Poster',
           }),
           id: 2,
-          name: 'Backdrop',
-          slug: 'backdrop',
+          name: 'Poster',
+          slug: 'poster',
         }),
         watchlist({ coverMedia: 9, id: 3, name: 'By id', slug: 'by-id' }),
         watchlist({ id: 4, name: 'Preview', slug: 'preview' }),
@@ -274,16 +299,22 @@ describe('buildWatchlistCards', () => {
           name: 'Blank cover',
           slug: 'blank',
         }),
+        watchlist({ id: 7, name: 'Later still', slug: 'later-still' }),
       ],
     })
 
     expect(cards.map((item) => item.coverPath)).toEqual([
-      '/cover-poster.jpg',
       '/cover-backdrop.jpg',
-      '/from-id-poster.jpg',
-      '/preview.jpg',
+      '/poster-only.jpg',
+      '/from-id-backdrop.jpg',
+      '/preview-backdrop.jpg',
       null,
-      '/preview.jpg',
+      '/preview-backdrop.jpg',
+      '/later-backdrop.jpg',
+    ])
+    expect(cards[6]?.previews).toEqual([
+      { posterPath: '/poster-without-still.jpg', title: 'Poster only' },
+      { posterPath: '/later-poster.jpg', title: 'Later' },
     ])
   })
 })
