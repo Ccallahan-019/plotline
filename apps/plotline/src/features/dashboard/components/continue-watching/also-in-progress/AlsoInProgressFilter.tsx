@@ -3,7 +3,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import {
   ContinueWatchingCounts,
   ContinueWatchingTypeFilter,
-} from '../../services/continue-watching'
+} from '../../../services/continue-watching'
 
 type AlsoInProgressFilterProps = {
   counts: ContinueWatchingCounts
@@ -16,16 +16,18 @@ export function AlsoInProgressFilter({
   mediaType,
   setMediaType,
 }: AlsoInProgressFilterProps) {
+  function handleMediaTypeChange(values: string[]) {
+    const next = values[0]
+
+    if (next === 'all' || next === 'movie' || next === 'tv') {
+      setMediaType(next)
+    }
+  }
+
   return (
     <ToggleGroup
       aria-label="Filter also in progress"
-      onValueChange={(values) => {
-        const next = values[0]
-
-        if (next === 'all' || next === 'movie' || next === 'tv') {
-          setMediaType(next)
-        }
-      }}
+      onValueChange={handleMediaTypeChange}
       size="sm"
       value={[mediaType]}
       variant="outline"

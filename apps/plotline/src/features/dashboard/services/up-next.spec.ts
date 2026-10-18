@@ -32,15 +32,17 @@ function item(
   overrides: Partial<ContinueWatchingItem> & Pick<ContinueWatchingItem, 'id' | 'lastWatchedAt'>,
 ): ContinueWatchingItem {
   return {
-    contextLabel: 'Film · In progress',
-    logLabel: 'Log as watched',
+    contextLabel: 'Film · In Progress',
+    logLabel: 'Log Watch',
     mediaType: 'movie',
     percent: 50,
     posterPath: null,
-    progressLabel: 'In progress',
+    progressLabel: 'In Progress',
     stalledDays: null,
     title: `Title ${overrides.id}`,
     tmdbId: overrides.id,
+    upNextEpisode: null,
+    upNextSeason: null,
     ...overrides,
   }
 }

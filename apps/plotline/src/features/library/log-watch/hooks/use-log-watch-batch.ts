@@ -8,10 +8,11 @@ import { useOptimisticLogWatchMutation } from './use-optimistic-log-watch-mutati
  * Mutation that logs multiple TV episodes in one request.
  *
  * Optimistically patches matching library-item status and TV progress (`lastSeason`,
- * `lastEpisode`, `episodesWatched`) in the grid and lookup caches. `episodesWatched`
- * increases only for pairs missing from the watched-episodes cache and not repeated in
- * this payload. A completed show does not increase the count. Rolls those writes back
- * on error and invalidates library queries when the request settles.
+ * `lastEpisode`, `episodesWatched`) in the grid and lookup caches. Loaded watched-episodes
+ * caches also gain the logged pairs, so season pips match the new up-next episode before
+ * the refetch. `episodesWatched` increases only for pairs missing from that cache and not
+ * repeated in this payload. A completed show does not increase the count. Rolls those
+ * writes back on error and invalidates library queries when the request settles.
  *
  * @returns A React Query mutation for `LogWatchBatchInput` → `LogWatchBatchResult`
  */

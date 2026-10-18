@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
-import { ContinueWatchingPage } from '@/features/dashboard/components/continue-watching/ContinueWatchingPage'
+import { ContinueWatchingPage } from '@/features/dashboard/components/continue-watching/page/ContinueWatchingPage'
 import { getInitialContinueWatching } from '@/features/dashboard/services/get-initial-dashboard'
 
 export const metadata = {

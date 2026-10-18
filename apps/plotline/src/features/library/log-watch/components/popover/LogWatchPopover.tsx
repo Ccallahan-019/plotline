@@ -11,7 +11,7 @@ import { LogWatchPopoverShell } from './LogWatchPopoverShell'
 
 type LogWatchPopoverProps = {
   libraryItem: LibraryItem
-  /** Visible button text. Pass `null` to hide it. Continue watching passes `Log S3 E9` or `Log as watched`. */
+  /** Visible button text. Pass `null` to hide it. Continue watching passes `Log S3 E9` or `Log Watch`. */
   triggerLabel?: null | string
   /** Button size. Omit to use the default button size. */
   triggerSize?: ComponentProps<typeof Button>['size']

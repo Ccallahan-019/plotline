@@ -3,9 +3,14 @@ import type { LibraryItem, Media } from '@plotline/payload-types'
 import { describe, expect, it } from 'vitest'
 
 import {
+  alsoInProgressCountLabel,
   buildContinueWatchingView,
+  continueWatchingHeroDetail,
+  continueWatchingHeroEyebrow,
   type ContinueWatchingItem,
   countContinueWatchingItems,
+  formatContinueWatchingRelativeTime,
+  seasonPipProgress,
   sortContinueWatchingItems,
   toContinueWatchingItems,
 } from './continue-watching'
@@ -31,6 +36,8 @@ describe('toContinueWatchingItems', () => {
       percent: 50,
       progressLabel: 'In Progress',
       title: 'Heat',
+      upNextEpisode: null,
+      upNextSeason: null,
     })
   })
 
@@ -61,6 +68,8 @@ describe('toContinueWatchingItems', () => {
       logLabel: 'Log S4 E2',
       percent: 77,
       progressLabel: '37 / 48 eps · 77%',
+      upNextEpisode: 2,
+      upNextSeason: 4,
     })
   })
 
@@ -79,6 +88,8 @@ describe('toContinueWatchingItems', () => {
     expect(show?.percent).toBeNull()
     expect(show?.progressLabel).toBe('12 eps')
     expect(show?.contextLabel).toBe('TV · Next: S1 E3')
+    expect(show?.upNextEpisode).toBe(3)
+    expect(show?.upNextSeason).toBe(1)
   })
 })
 
@@ -197,6 +208,129 @@ describe('sortContinueWatchingItems', () => {
   })
 })
 
+describe('continueWatchingHeroDetail', () => {
+  it('shows in progress for a film and omits the watched time', () => {
+    expect(
+      continueWatchingHeroDetail(
+        {
+          lastWatchedAt: '2026-10-09T00:00:00.000Z',
+          mediaType: 'movie',
+          progressLabel: 'In Progress',
+          upNextEpisode: null,
+          upNextSeason: null,
+        },
+        NOW,
+      ),
+    ).toEqual({
+      episodeLabel: null,
+      lastWatchedLabel: null,
+      statusLabel: 'In Progress',
+    })
+  })
+
+  it('shows the next episode and how long ago a series was watched', () => {
+    expect(
+      continueWatchingHeroDetail(
+        {
+          lastWatchedAt: '2026-10-09T00:00:00.000Z',
+          mediaType: 'tv',
+          progressLabel: '37 / 48 eps · 77%',
+          upNextEpisode: 9,
+          upNextSeason: 3,
+        },
+        NOW,
+      ),
+    ).toEqual({
+      episodeLabel: 'S3 · E9',
+      lastWatchedLabel: 'Last watched 3 days ago',
+      statusLabel: null,
+    })
+  })
+})
+
+describe('continueWatchingHeroEyebrow', () => {
+  it('names the media kind', () => {
+    expect(continueWatchingHeroEyebrow('movie')).toBe('Up Next · Film')
+    expect(continueWatchingHeroEyebrow('tv')).toBe('Up Next · TV')
+  })
+})
+
+describe('formatContinueWatchingRelativeTime', () => {
+  it('returns a distance from now, or null when the timestamp is missing', () => {
+    expect(formatContinueWatchingRelativeTime('2026-10-09T00:00:00.000Z', NOW)).toBe('3 days ago')
+    expect(formatContinueWatchingRelativeTime(null, NOW)).toBeNull()
+  })
+})
+
+describe('alsoInProgressCountLabel', () => {
+  it('pluralizes the remainder count', () => {
+    expect(alsoInProgressCountLabel(1)).toBe('1 Title')
+    expect(alsoInProgressCountLabel(7)).toBe('7 Titles')
+  })
+})
+
+describe('seasonPipProgress', () => {
+  it('skips the row when that season has no positive length', () => {
+    expect(
+      seasonPipProgress({
+        episode: 1,
+        season: 2,
+        seasonEpisodeCounts: [{ episodeCount: 0, season: 2 }],
+        watched: [],
+      }),
+    ).toBeNull()
+    expect(
+      seasonPipProgress({
+        episode: 1,
+        season: 3,
+        seasonEpisodeCounts: [{ episodeCount: 8, season: 1 }],
+        watched: [],
+      }),
+    ).toBeNull()
+  })
+
+  it('counts watched episodes in the up-next season and marks the next one', () => {
+    expect(
+      seasonPipProgress({
+        episode: 3,
+        season: 2,
+        seasonEpisodeCounts: [
+          { episodeCount: 4, season: 1 },
+          { episodeCount: 4, season: 2 },
+        ],
+        watched: [
+          { episode: 1, season: 1 },
+          { episode: 1, season: 2 },
+          { episode: 2, season: 2 },
+          { episode: 2, season: 2 },
+          { episode: 9, season: 2 },
+        ],
+      }),
+    ).toEqual({
+      episodeCount: 4,
+      label: 'Season 2 · 2 of 4 watched',
+      pips: [
+        { episode: 1, state: 'watched' },
+        { episode: 2, state: 'watched' },
+        { episode: 3, state: 'up-next' },
+        { episode: 4, state: 'unwatched' },
+      ],
+      watchedCount: 2,
+    })
+  })
+
+  it('keeps an already watched up-next episode marked watched', () => {
+    expect(
+      seasonPipProgress({
+        episode: 2,
+        season: 1,
+        seasonEpisodeCounts: [{ episodeCount: 2, season: 1 }],
+        watched: [{ episode: 2, season: 1 }],
+      })?.pips[1],
+    ).toEqual({ episode: 2, state: 'watched' })
+  })
+})
+
 describe('countContinueWatchingItems', () => {
   it('counts films and series from the full watching set', () => {
     expect(
@@ -236,14 +370,16 @@ function progressRow(
     Pick<ContinueWatchingItem, 'id' | 'mediaType' | 'percent'>,
 ): ContinueWatchingItem {
   return {
-    contextLabel: 'Film · In progress',
+    contextLabel: 'Film · In Progress',
     lastWatchedAt: '2026-10-10T00:00:00.000Z',
-    logLabel: 'Log as watched',
+    logLabel: 'Log Watch',
     posterPath: null,
-    progressLabel: 'In progress',
+    progressLabel: 'In Progress',
     stalledDays: null,
     title: `Title ${overrides.id}`,
     tmdbId: overrides.id,
+    upNextEpisode: null,
+    upNextSeason: null,
     ...overrides,
   }
 }

@@ -1,6 +1,9 @@
 import { LibraryItem } from '@plotline/payload-types'
 
-import { ContinueWatchingItem, ContinueWatchingTypeFilter } from '../../services/continue-watching'
+import {
+  ContinueWatchingItem,
+  ContinueWatchingTypeFilter,
+} from '../../../services/continue-watching'
 import { ContinueWatchingItemRow } from './ContinueWatchingItemRow'
 
 type AlsoInProgessContentProps = {
@@ -27,12 +30,17 @@ export function AlsoInProgessContent({
   }
 
   return (
-    <ul className="flex flex-col">
-      {alsoInProgress.map((item) => (
-        <li key={item.id}>
-          <ContinueWatchingItemRow item={item} libraryItem={libraryItems.get(item.id)} />
-        </li>
-      ))}
-    </ul>
+    <div className="@container/cw">
+      <ul className="flex min-w-0 flex-col @min-[48rem]/cw:grid @min-[48rem]/cw:grid-cols-[auto_minmax(0,1fr)_minmax(0,16rem)_minmax(0,max-content)_auto]">
+        {alsoInProgress.map((item) => (
+          <li
+            className="@min-[48rem]/cw:col-span-5 @min-[48rem]/cw:grid @min-[48rem]/cw:grid-cols-subgrid"
+            key={item.id}
+          >
+            <ContinueWatchingItemRow item={item} libraryItem={libraryItems.get(item.id)} />
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

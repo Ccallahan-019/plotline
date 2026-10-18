@@ -10,7 +10,26 @@ import {
   restoreLibraryItemQuerySnapshot,
   snapshotLibraryItemQueries,
 } from '../../services/library-query-snapshot'
-import { cachedWatchedEpisodeKeys } from '../services/optimistic-library-item'
+import {
+  applyOptimisticWatchedEpisodes,
+  cachedWatchedEpisodeKeys,
+  loggedTvEpisodes,
+  restoreWatchedEpisodeQueries,
+  type WatchedEpisodeQuerySnapshot,
+} from '../services/optimistic-library-item'
+
+type OptimisticLogWatchContext = {
+  previousWatchedEpisodes: WatchedEpisodeQuerySnapshot
+} & LibraryItemQuerySnapshot
+
+type OptimisticLogWatchVariables = {
+  episodes?: ReadonlyArray<{ episode: number; season: number }>
+  mediaId: number | string
+  tvContext?: {
+    episode?: number
+    season?: number
+  }
+}
 
 type UseOptimisticLogWatchMutationOptions<TInput, TResult> = {
   mutationFn: (input: TInput) => Promise<TResult>
@@ -26,24 +45,30 @@ type UseOptimisticLogWatchMutationOptions<TInput, TResult> = {
  *
  * Cancels in-flight library queries, snapshots the grid and lookup caches, applies
  * `patchItem` to every cached library item (with that item's cached watched-episode keys),
- * restores the snapshots on error, and invalidates library queries when the request settles.
+ * then appends newly logged TV pairs onto loaded watched-episodes caches. Restores those
+ * snapshots on error, and invalidates library queries when the request settles.
+ *
+ * Library rows are patched first so `episodesWatched` still sees the prior key set.
+ * The watched-episodes cache is updated after that, so season pips can mark the logged
+ * episode watched while the hero already shows the new up-next episode.
  *
  * @param options.mutationFn - Request that performs the log
  * @param options.patchItem - Pure cache patch for one library item
  * @returns A React Query mutation for `TInput` → `TResult`
  */
-export function useOptimisticLogWatchMutation<TInput, TResult>({
+export function useOptimisticLogWatchMutation<TInput extends OptimisticLogWatchVariables, TResult>({
   mutationFn,
   patchItem,
 }: UseOptimisticLogWatchMutationOptions<TInput, TResult>) {
   const queryClient = useQueryClient()
 
-  return useMutation<TResult, Error, TInput, LibraryItemQuerySnapshot>({
+  return useMutation<TResult, Error, TInput, OptimisticLogWatchContext>({
     mutationFn,
     onError: (_error, _input, context) => {
       restoreLibraryItemQuerySnapshot(queryClient, context)
+      restoreWatchedEpisodeQueries(queryClient, context?.previousWatchedEpisodes ?? [])
     },
-    onMutate: async (input): Promise<LibraryItemQuerySnapshot> => {
+    onMutate: async (input): Promise<OptimisticLogWatchContext> => {
       const snapshot = await snapshotLibraryItemQueries(queryClient)
 
       const patch = (item: LibraryItem) =>
@@ -59,7 +84,14 @@ export function useOptimisticLogWatchMutation<TInput, TResult>({
         (items) => items?.map(patch),
       )
 
-      return snapshot
+      return {
+        ...snapshot,
+        previousWatchedEpisodes: applyOptimisticWatchedEpisodes(
+          queryClient,
+          input.mediaId,
+          loggedTvEpisodes(input),
+        ),
+      }
     },
     onSettled: () => {
       invalidateAfterLibraryMutation(queryClient)

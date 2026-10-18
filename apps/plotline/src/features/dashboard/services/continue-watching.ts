@@ -1,10 +1,18 @@
 import type { LibraryItem, Media } from '@plotline/payload-types'
 import type { MediaType } from '@plotline/shared/constants'
+import type { WatchedEpisodePair } from '@plotline/shared/log-watch'
 
+import { formatDistance } from 'date-fns'
+
+import { formatDashboardQuantity } from '@/features/dashboard/services/format-dashboard'
 import { getTvWatchProgress } from '@/features/media-detail/services/format-media-title'
 
 const DAY_MS = 86_400_000
 const FILM_PROGRESS_PERCENT = 50
+const HERO_EYEBROW: Record<MediaType, string> = {
+  movie: 'Up Next · Film',
+  tv: 'Up Next · TV',
+}
 const STALLED_AFTER_DAYS = 14
 
 /** Sort options for the also-in-progress list. */
@@ -22,12 +30,20 @@ export type ContinueWatchingHero = {
   stalledLabel: null | string
 } & ContinueWatchingItem
 
+/** Lines under the continue-watching hero title. Null lines are omitted. */
+export type ContinueWatchingHeroDetail = {
+  episodeLabel: null | string
+  lastWatchedLabel: null | string
+  statusLabel: null | string
+}
+
 /**
  * One watching title.
  *
- * Films always report `percent` 50 and the label `In progress`. TV uses
- * `episodesWatched / episodeCount` when the catalog has a total, and omits the
- * percent when it does not. `stalledDays` is set at 14 days since `lastWatchedAt`.
+ * Films always report `percent` 50, the label `In Progress`, and null up-next
+ * fields. TV uses `episodesWatched / episodeCount` when the catalog has a total,
+ * and omits the percent when it does not. `upNextSeason` and `upNextEpisode` are
+ * the next episode to log. `stalledDays` is set at 14 days since `lastWatchedAt`.
  */
 export type ContinueWatchingItem = {
   contextLabel: string
@@ -41,6 +57,8 @@ export type ContinueWatchingItem = {
   stalledDays: null | number
   title: string
   tmdbId: number
+  upNextEpisode: null | number
+  upNextSeason: null | number
 }
 
 export type ContinueWatchingSort = (typeof CONTINUE_WATCHING_SORTS)[number]
@@ -51,6 +69,38 @@ export type ContinueWatchingView = {
   alsoInProgress: ContinueWatchingItem[]
   counts: ContinueWatchingCounts
   hero: ContinueWatchingHero | null
+}
+
+/** One episode mark in the hero's season row. */
+export type SeasonPip = {
+  episode: number
+  state: SeasonPipState
+}
+
+/** Season row for the hero, or absent when the season length is unknown. */
+export type SeasonPipProgress = {
+  episodeCount: number
+  label: string
+  pips: readonly SeasonPip[]
+  watchedCount: number
+}
+
+/** Watched, current, or still-to-watch mark for one episode. */
+export type SeasonPipState = 'unwatched' | 'up-next' | 'watched'
+
+type SeasonEpisodeCount = {
+  episodeCount: number
+  season: number
+}
+
+/**
+ * Count beside the also-in-progress heading.
+ *
+ * @param count - Titles in the filtered remainder, after the hero is removed
+ * @returns Text such as `1 Title` or `7 Titles`
+ */
+export function alsoInProgressCountLabel(count: number): string {
+  return formatDashboardQuantity(count, 'Title')
 }
 
 /**
@@ -84,6 +134,48 @@ export function buildContinueWatchingView(
     counts: countContinueWatchingItems(items),
     hero,
   }
+}
+
+/**
+ * Copy under the continue-watching hero title.
+ *
+ * A film shows `In Progress` and no watched time. A series shows the next
+ * episode (`S3 · E9`) and how long ago it was watched.
+ *
+ * @param item - Hero fields the copy reads
+ * @param now - Instant the relative watched time is measured from
+ * @returns The episode line, the film status, and the last-watched line
+ */
+export function continueWatchingHeroDetail(
+  item: Pick<
+    ContinueWatchingItem,
+    'lastWatchedAt' | 'mediaType' | 'progressLabel' | 'upNextEpisode' | 'upNextSeason'
+  >,
+  now: Date,
+): ContinueWatchingHeroDetail {
+  if (item.mediaType === 'movie') {
+    return {
+      episodeLabel: null,
+      lastWatchedLabel: null,
+      statusLabel: item.progressLabel,
+    }
+  }
+
+  return {
+    episodeLabel: formatUpNextEpisodeLabel(item.upNextSeason, item.upNextEpisode),
+    lastWatchedLabel: formatLastWatchedLabel(item.lastWatchedAt, now),
+    statusLabel: null,
+  }
+}
+
+/**
+ * Eyebrow above the continue-watching hero title.
+ *
+ * @param mediaType - `movie` or `tv`
+ * @returns `Up Next · Film` or `Up Next · TV`
+ */
+export function continueWatchingHeroEyebrow(mediaType: MediaType): string {
+  return HERO_EYEBROW[mediaType]
 }
 
 /**
@@ -125,6 +217,64 @@ export function filterContinueWatchingItems(
   }
 
   return items.filter((item) => item.mediaType === mediaType)
+}
+
+/**
+ * Compact relative time for an also-in-progress row.
+ *
+ * @param lastWatchedAt - Last watch timestamp, or null
+ * @param now - Instant the distance is measured from
+ * @returns Text such as `3 days ago`, or null when the timestamp is missing
+ */
+export function formatContinueWatchingRelativeTime(
+  lastWatchedAt: null | string,
+  now: Date,
+): null | string {
+  const watchedAt = watchedAtTime(lastWatchedAt)
+
+  if (watchedAt == null) {
+    return null
+  }
+
+  return formatDistance(watchedAt, now, { addSuffix: true })
+}
+
+/**
+ * Season pips for the up-next season on the continue-watching hero.
+ *
+ * The season length comes from `seasonEpisodeCounts`. When that season is
+ * missing or not a positive length, the hero skips the pips. A pip is watched
+ * when a pair matches the season and falls inside `1..episodeCount`. The
+ * up-next episode is marked separately unless that episode is already watched.
+ *
+ * @param options.episode - Up-next episode number
+ * @param options.season - Up-next season number
+ * @param options.seasonEpisodeCounts - Per-season lengths from catalog metadata
+ * @param options.watched - Distinct watched pairs for the library item
+ * @returns The pip row and its label, or null when the season length is unknown
+ */
+export function seasonPipProgress(options: {
+  episode: number
+  season: number
+  seasonEpisodeCounts?: null | readonly SeasonEpisodeCount[]
+  watched: readonly WatchedEpisodePair[]
+}): null | SeasonPipProgress {
+  const episodeCount = seasonEpisodeCount(options.seasonEpisodeCounts, options.season)
+
+  if (episodeCount == null) {
+    return null
+  }
+
+  const watchedEpisodes = watchedEpisodesInSeason(options.watched, options.season, episodeCount)
+
+  return {
+    episodeCount,
+    label: `Season ${options.season} · ${watchedEpisodes.size} of ${episodeCount} watched`,
+    pips: Array.from({ length: episodeCount }, (_, index) =>
+      seasonPip(index + 1, options.episode, watchedEpisodes),
+    ),
+    watchedCount: watchedEpisodes.size,
+  }
 }
 
 /**
@@ -244,6 +394,56 @@ function compareSortRank(
   }
 }
 
+// Row subtitle: `Film · In Progress`, `TV · Next: S4 E2`, or `TV` without a next episode.
+function continueWatchingContextLabel(
+  mediaType: MediaType,
+  season: null | number,
+  episode: null | number,
+): string {
+  if (mediaType === 'movie') {
+    return 'Film · In Progress'
+  }
+
+  if (season == null || episode == null) {
+    return 'TV'
+  }
+
+  return `TV · Next: S${season} E${episode}`
+}
+
+// Films, and series with no next episode, use `Log Watch`.
+function continueWatchingLogLabel(
+  mediaType: MediaType,
+  season: null | number,
+  episode: null | number,
+): string {
+  if (mediaType === 'tv' && season != null && episode != null) {
+    return `Log S${season} E${episode}`
+  }
+
+  return 'Log Watch'
+}
+
+// `Last watched 3 days ago`, or null when the timestamp is missing.
+function formatLastWatchedLabel(lastWatchedAt: null | string, now: Date): null | string {
+  const relative = formatContinueWatchingRelativeTime(lastWatchedAt, now)
+
+  if (relative == null) {
+    return null
+  }
+
+  return `Last watched ${relative}`
+}
+
+// Hero episode line, such as `S3 · E9`.
+function formatUpNextEpisodeLabel(season: null | number, episode: null | number): null | string {
+  if (season == null || episode == null) {
+    return null
+  }
+
+  return `S${season} · E${episode}`
+}
+
 // Populated media, when the library relation was loaded with depth.
 function populatedMedia(media: LibraryItem['media']): Media | null {
   return typeof media === 'object' ? media : null
@@ -256,6 +456,37 @@ function progressRank(item: ContinueWatchingItem): number {
   }
 
   return item.percent ?? 0
+}
+
+// Positive episode count for one season, or null when the catalog does not know it.
+function seasonEpisodeCount(
+  seasonEpisodeCounts: null | readonly SeasonEpisodeCount[] | undefined,
+  season: number,
+): null | number {
+  const match = seasonEpisodeCounts?.find((entry) => entry.season === season)
+
+  if (match == null || match.episodeCount <= 0) {
+    return null
+  }
+
+  return match.episodeCount
+}
+
+// One pip. An already watched up-next episode stays watched.
+function seasonPip(
+  episode: number,
+  upNextEpisode: number,
+  watchedEpisodes: ReadonlySet<number>,
+): SeasonPip {
+  if (watchedEpisodes.has(episode)) {
+    return { episode, state: 'watched' }
+  }
+
+  if (episode === upNextEpisode) {
+    return { episode, state: 'up-next' }
+  }
+
+  return { episode, state: 'unwatched' }
 }
 
 // Hero plus the other rows, preserving the original order of the remainder.
@@ -325,10 +556,12 @@ function toContinueWatchingItem(item: LibraryItem, now: Date): ContinueWatchingI
   if (media.mediaType === 'movie') {
     return {
       ...shared,
-      contextLabel: 'Film · In Progress',
-      logLabel: 'Log Watch',
+      contextLabel: continueWatchingContextLabel('movie', null, null),
+      logLabel: continueWatchingLogLabel('movie', null, null),
       percent: FILM_PROGRESS_PERCENT,
       progressLabel: 'In Progress',
+      upNextEpisode: null,
+      upNextSeason: null,
     }
   }
 
@@ -348,14 +581,19 @@ function toContinueWatchingItem(item: LibraryItem, now: Date): ContinueWatchingI
     status: item.status,
   })
 
+  const upNextEpisode = upNext?.upNextEpisode ?? null
+  const upNextSeason = upNext?.upNextSeason ?? null
+
   return {
     ...shared,
-    contextLabel: upNext ? `TV · Next: S${upNext.upNextSeason} E${upNext.upNextEpisode}` : 'TV',
-    logLabel: upNext ? `Log S${upNext.upNextSeason} E${upNext.upNextEpisode}` : 'Log as watched',
+    contextLabel: continueWatchingContextLabel('tv', upNextSeason, upNextEpisode),
+    logLabel: continueWatchingLogLabel('tv', upNextSeason, upNextEpisode),
     percent,
     progressLabel: hasTotal
       ? `${episodesWatched} / ${episodeCount} eps · ${percent}%`
       : `${episodesWatched} eps`,
+    upNextEpisode,
+    upNextSeason,
   }
 }
 
@@ -368,4 +606,21 @@ function watchedAtTime(value: null | string): null | number {
   const time = Date.parse(value)
 
   return Number.isNaN(time) ? null : time
+}
+
+// Distinct episode numbers in one season, ignoring pairs outside `1..episodeCount`.
+function watchedEpisodesInSeason(
+  watched: readonly WatchedEpisodePair[],
+  season: number,
+  episodeCount: number,
+): Set<number> {
+  const episodes = new Set<number>()
+
+  for (const pair of watched) {
+    if (pair.season === season && pair.episode >= 1 && pair.episode <= episodeCount) {
+      episodes.add(pair.episode)
+    }
+  }
+
+  return episodes
 }
