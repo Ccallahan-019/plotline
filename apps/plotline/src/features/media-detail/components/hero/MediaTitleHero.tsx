@@ -53,7 +53,7 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
       >
         <MediaTitleBackButton />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[10rem_minmax(0,1fr)] md:items-end md:gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[10rem_minmax(0,1fr)] md:items-end">
           <div className="flex items-end gap-4 md:contents">
             <MediaPoster
               className="w-24 shrink-0 rounded-md shadow-lg md:col-start-1 md:row-span-2 md:w-40"
