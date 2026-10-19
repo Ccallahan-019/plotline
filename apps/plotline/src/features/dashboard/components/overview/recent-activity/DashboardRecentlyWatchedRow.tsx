@@ -11,6 +11,11 @@ import {
   ItemTitle,
 } from '@/components/ui/item'
 import { ShowIf } from '@/components/utils/ShowIf'
+import { useEpisodeTitle } from '@/features/dashboard/hooks/use-episode-title'
+import {
+  watchedEpisodeLookup,
+  type WatchedEpisodeLookup,
+} from '@/features/dashboard/services/episode-title'
 import { DashboardActivityRow } from '@/features/dashboard/types'
 import { tmdbMediaUrl } from '@/lib/tmdb/tmdb-media-url'
 import { cn } from '@/lib/utils'
@@ -20,9 +25,9 @@ type DashboardRecentlyWatchedRowProps = {
 }
 
 export function DashboardRecentlyWatchedRow({ row }: DashboardRecentlyWatchedRowProps) {
-  const mediaType = row.mediaType === 'movie' ? 'Film' : 'Series'
   const ratingText = row.rating != null ? `${row.rating.toFixed(1)} / 10` : 'Not Rated'
   const hasRating = row.rating != null
+  const episodeLookup = watchedEpisodeLookup(row)
 
   return (
     <Item className="p-0">
@@ -37,12 +42,8 @@ export function DashboardRecentlyWatchedRow({ row }: DashboardRecentlyWatchedRow
       </ItemMedia>
       <ItemContent>
         <RowTitle href={row.href} title={row.title} />
-        <div className="flex flex-wrap gap-2 items-center">
-          <ItemDescription>{mediaType}</ItemDescription>
-          <ShowIf condition={row.detail != null}>
-            <ItemDescription className="text-foreground">{row.detail}</ItemDescription>
-          </ShowIf>
-        </div>
+
+        <EpisodeDetail detail={row.detail} lookup={episodeLookup} mediaType={row.mediaType} />
       </ItemContent>
       <ShowIf condition={row.filterKind === 'watched'}>
         <ItemActions>
@@ -61,6 +62,42 @@ export function DashboardRecentlyWatchedRow({ row }: DashboardRecentlyWatchedRow
       </ShowIf>
     </Item>
   )
+}
+
+function EpisodeDetail({
+  detail,
+  lookup,
+  mediaType,
+}: {
+  detail: null | string
+  lookup: null | WatchedEpisodeLookup
+  mediaType: 'movie' | 'tv' | null
+}) {
+  const mediaTypeText = mediaType === 'movie' ? 'Film' : 'Series'
+
+  return (
+    <div className="flex min-w-0 flex-col">
+      <div className="flex items-start gap-x-2 gap-y-0.5">
+        <ItemDescription>{mediaTypeText}</ItemDescription>
+        <ShowIf condition={detail != null}>
+          <ItemDescription className="text-foreground text-nowrap">{detail}</ItemDescription>
+        </ShowIf>
+      </div>
+      <ShowIf condition={lookup != null}>
+        <RecentlyWatchedEpisodeTitle lookup={lookup} />
+      </ShowIf>
+    </div>
+  )
+}
+
+function RecentlyWatchedEpisodeTitle({ lookup }: { lookup: null | WatchedEpisodeLookup }) {
+  const title = useEpisodeTitle(lookup)
+
+  if (title == null) {
+    return null
+  }
+
+  return <ItemDescription className="text-nowrap">{title}</ItemDescription>
 }
 
 function RowTitle({ href, title }: { href: null | string; title: string }) {

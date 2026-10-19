@@ -56,7 +56,10 @@ export type DashboardActivityRange =
 
 /** One timeline row. `href` is null for milestones and rows without a title page. */
 export type DashboardActivityRow = {
+  /** `S2 · E4` for a TV episode. Null for films and non-episode rows. */
   detail: null | string
+  /** Episode number for a TV watch. Null when the row is not an episode. */
+  episode: null | number
   filterKind: DashboardActivityFilterKind
   href: null | string
   id: string
@@ -65,6 +68,8 @@ export type DashboardActivityRow = {
   occurredAt: string
   posterPath: null | string
   rating: null | number
+  /** Season number for a TV watch. Season 0 is specials. Null when the row is not an episode. */
+  season: null | number
   title: string
   tmdbId: null | number
 }

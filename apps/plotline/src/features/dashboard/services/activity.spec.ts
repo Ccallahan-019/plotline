@@ -44,6 +44,8 @@ describe('buildActivityRows', () => {
       ['Dropped', null, 'watched'],
       ['On hold', null, 'watched'],
     ])
+    expect(rows[1]).toMatchObject({ episode: 4, season: 2 })
+    expect(rows[0]).toMatchObject({ episode: null, season: null })
     expect(rows[0]?.href).toBe('/dashboard/title/movie/1')
   })
 
@@ -392,6 +394,7 @@ function days(start: string, count: number): ActivityEventInput[] {
 function labeled(occurredAt: string) {
   return {
     detail: null,
+    episode: null,
     filterKind: 'watched' as const,
     href: null,
     id: occurredAt,
@@ -400,6 +403,7 @@ function labeled(occurredAt: string) {
     occurredAt,
     posterPath: null,
     rating: null,
+    season: null,
     title: occurredAt,
     tmdbId: null,
   }

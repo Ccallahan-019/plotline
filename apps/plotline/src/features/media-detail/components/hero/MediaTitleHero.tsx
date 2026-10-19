@@ -40,7 +40,7 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
 
   return (
     <section>
-      <div className="relative hidden h-72 overflow-hidden md:block">
+      <div className="relative h-72 overflow-hidden">
         <MediaTitleHeroBackdrop backdropUrl={backdropUrl} />
         <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-background/5" />
       </div>
@@ -48,7 +48,7 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
       <div
         className={cn(
           'relative z-10 flex flex-col gap-4 px-4 py-4 md:px-8',
-          backdropUrl && 'md:-mt-32',
+          backdropUrl && '-mt-36 md:-mt-32',
         )}
       >
         <MediaTitleBackButton />

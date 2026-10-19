@@ -7,6 +7,8 @@ import { formatDistance } from 'date-fns'
 import { formatDashboardQuantity } from '@/features/dashboard/services/format-dashboard'
 import { getTvWatchProgress } from '@/features/media-detail/services/format-media-title'
 
+import { episodeTitleLookup, type WatchedEpisodeLookup } from './episode-title'
+
 const DAY_MS = 86_400_000
 const FILM_PROGRESS_PERCENT = 50
 const HERO_EYEBROW: Record<MediaType, string> = {
@@ -134,6 +136,25 @@ export function buildContinueWatchingView(
     counts: countContinueWatchingItems(items),
     hero,
   }
+}
+
+/**
+ * Season and episode a continue-watching title can name from TMDB.
+ *
+ * Films and series without a next episode return null.
+ *
+ * @param item - Watching title, using its up-next season and episode
+ * @returns Coordinates for a season-details lookup, or null when there is no next episode
+ */
+export function continueWatchingEpisodeLookup(
+  item: Pick<ContinueWatchingItem, 'mediaType' | 'tmdbId' | 'upNextEpisode' | 'upNextSeason'>,
+): null | WatchedEpisodeLookup {
+  return episodeTitleLookup({
+    episode: item.upNextEpisode,
+    mediaType: item.mediaType,
+    season: item.upNextSeason,
+    tmdbId: item.tmdbId,
+  })
 }
 
 /**

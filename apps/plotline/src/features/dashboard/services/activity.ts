@@ -295,6 +295,7 @@ function challengeRows(challenges: readonly ActivityChallengeInput[]): Dashboard
 
     rows.push({
       detail: formatChallengeSnapshot(challenge),
+      episode: null,
       filterKind: 'challenge',
       href: `/dashboard/challenges/${encodeURIComponent(challenge.slug)}`,
       id: paddedId('challenge', challenge.id),
@@ -303,6 +304,7 @@ function challengeRows(challenges: readonly ActivityChallengeInput[]): Dashboard
       occurredAt,
       posterPath: null,
       rating: null,
+      season: null,
       title: challenge.name,
       tmdbId: null,
     })
@@ -375,16 +377,24 @@ function encodeBase64Url(value: string): string {
   return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '')
 }
 
-// `S2 E4` when both numbers are present. Specials can use season 0.
-function episodeDetail(tvContext: ActivityEventInput['tvContext']): null | string {
+// `S2 · E4` when both numbers are present. Specials can use season 0.
+function episodeDetail(tvContext: ActivityEventInput['tvContext']): {
+  detail: null | string
+  episode: null | number
+  season: null | number
+} {
   const season = tvContext?.season
   const episode = tvContext?.episode
 
   if (season == null || episode == null || !Number.isFinite(season) || !Number.isFinite(episode)) {
-    return null
+    return { detail: null, episode: null, season: null }
   }
 
-  return `S${season} · E${episode}`
+  return {
+    detail: `S${season} · E${episode}`,
+    episode,
+    season,
+  }
 }
 
 // First completion or rewatch of a movie. Later events for that film do not count again.
@@ -601,6 +611,7 @@ function milestoneRow(input: {
 }): DashboardActivityRow {
   return {
     detail: null,
+    episode: null,
     filterKind: 'milestone',
     href: null,
     id: `milestone:${input.kind}:${String(input.threshold).padStart(4, '0')}:${String(input.eventId).padStart(8, '0')}`,
@@ -609,6 +620,7 @@ function milestoneRow(input: {
     occurredAt: input.occurredAt,
     posterPath: null,
     rating: null,
+    season: null,
     title: input.title,
     tmdbId: null,
   }
@@ -688,6 +700,7 @@ function reviewRows(reviews: readonly ActivityReviewInput[]): DashboardActivityR
 
     rows.push({
       detail: null,
+      episode: null,
       filterKind: reviewed ? 'reviewed' : 'rated',
       href: titleHref(media),
       id: paddedId('review', review.id),
@@ -696,6 +709,7 @@ function reviewRows(reviews: readonly ActivityReviewInput[]): DashboardActivityR
       occurredAt: review.updatedAt,
       posterPath: media.posterPath ?? null,
       rating: review.rating,
+      season: null,
       title: media.title,
       tmdbId: media.tmdbId,
     })
@@ -798,8 +812,11 @@ function watchRows(
       continue
     }
 
+    const episode = episodeDetail(event.tvContext)
+
     rows.push({
-      detail: episodeDetail(event.tvContext),
+      detail: episode.detail,
+      episode: episode.episode,
       filterKind: 'watched',
       href: titleHref(media),
       id: paddedId('watch', event.id),
@@ -808,6 +825,7 @@ function watchRows(
       occurredAt: event.watchedAt,
       posterPath: media.posterPath ?? null,
       rating: ratings.get(media.id) ?? null,
+      season: episode.season,
       title: media.title,
       tmdbId: media.tmdbId,
     })

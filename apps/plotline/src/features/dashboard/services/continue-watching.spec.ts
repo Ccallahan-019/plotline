@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   alsoInProgressCountLabel,
   buildContinueWatchingView,
+  continueWatchingEpisodeLookup,
   continueWatchingHeroDetail,
   continueWatchingHeroEyebrow,
   type ContinueWatchingItem,
@@ -205,6 +206,30 @@ describe('sortContinueWatchingItems', () => {
     expect(sortContinueWatchingItems(items, 'almost-done').map((item) => item.id)).toEqual([
       1, 3, 4, 2,
     ])
+  })
+})
+
+describe('continueWatchingEpisodeLookup', () => {
+  it('uses the next episode on a series', () => {
+    expect(
+      continueWatchingEpisodeLookup({
+        mediaType: 'tv',
+        tmdbId: 1396,
+        upNextEpisode: 3,
+        upNextSeason: 1,
+      }),
+    ).toEqual({ episode: 3, season: 1, tmdbId: 1396 })
+  })
+
+  it('returns null for a film', () => {
+    expect(
+      continueWatchingEpisodeLookup({
+        mediaType: 'movie',
+        tmdbId: 1,
+        upNextEpisode: null,
+        upNextSeason: null,
+      }),
+    ).toBeNull()
   })
 })
 
