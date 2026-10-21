@@ -43,87 +43,94 @@ type ExcludeMembershipFromGoalVariables = {
 export function useExcludeMembershipFromGoal() {
   const queryClient = useQueryClient()
 
-  return useMutation<WatchlistMembership, Error, ExcludeMembershipFromGoalVariables, ExcludeContext>(
-    {
-      mutationFn: (variables) =>
-        patchWatchlistMembership(variables.slug, variables.membershipId, {
-          excludeFromGoal: variables.excludeFromGoal,
-        }),
-      mutationKey: watchlistQueryKeys.excludeFromGoal(),
-      onError: (error, variables, context) => {
-        if (!context?.previous) {
-          return
-        }
+  return useMutation<
+    WatchlistMembership,
+    Error,
+    ExcludeMembershipFromGoalVariables,
+    ExcludeContext
+  >({
+    mutationFn: (variables) =>
+      patchWatchlistMembership(variables.slug, variables.membershipId, {
+        excludeFromGoal: variables.excludeFromGoal,
+      }),
+    mutationKey: watchlistQueryKeys.excludeFromGoal(),
+    onError: (error, variables, context) => {
+      if (!context?.previous) {
+        return
+      }
 
-        const current = queryClient.getQueryData<WatchlistMembership[]>(context.queryKey)
+      const current = queryClient.getQueryData<WatchlistMembership[]>(context.queryKey)
 
-        queryClient.setQueryData(
-          context.queryKey,
-          current
-            ? restoreMembershipGoalCounts(current, context.previous, variables.membershipId)
-            : context.previous,
-        )
-        toast.error('Could not update counts', {
-          description: countsErrorDescription(error),
-        })
-      },
-      onMutate: async (variables) => {
-        const queryKey = watchlistQueryKeys.watchlistDetailMemberships(variables.slug)
+      queryClient.setQueryData(
+        context.queryKey,
+        current
+          ? restoreMembershipGoalCounts(current, context.previous, variables.membershipId)
+          : context.previous,
+      )
+      toast.error('Could not update counts', {
+        description: countsErrorDescription(error),
+      })
+    },
+    onMutate: async (variables) => {
+      const queryKey = watchlistQueryKeys.watchlistDetailMemberships(variables.slug)
 
-        await queryClient.cancelQueries({ queryKey })
+      await queryClient.cancelQueries({ queryKey })
 
-        const previous = queryClient.getQueryData<WatchlistMembership[]>(queryKey)
+      const previous = queryClient.getQueryData<WatchlistMembership[]>(queryKey)
 
-        const membership = previous?.find((row) => row.id === variables.membershipId)
+      const membership = previous?.find((row) => row.id === variables.membershipId)
 
-        if (previous && membership) {
-          queryClient.setQueryData(
-            queryKey,
-            applyMembershipGoalCounts(
-              previous,
-              variables.membershipId,
-              optimisticMembershipGoalCounts(
-                membership,
-                variables.challenge,
-                variables.excludeFromGoal,
-              ),
-            ),
-          )
-        }
-
-        return { previous, queryKey }
-      },
-      onSettled: (_data, _error, variables) => {
-        // This mutation is still pending until onSettled returns, so 1 means it is the only one.
-        if (queryClient.isMutating({ mutationKey: watchlistQueryKeys.excludeFromGoal() }) > 1) {
-          return
-        }
-
-        void queryClient.invalidateQueries({
-          exact: true,
-          queryKey: watchlistQueryKeys.watchlist(variables.slug),
-        })
-        void queryClient.invalidateQueries({
-          queryKey: watchlistQueryKeys.watchlistDetailMemberships(variables.slug),
-        })
-        void queryClient.invalidateQueries({ queryKey: watchlistQueryKeys.cards() })
-      },
-      onSuccess: (updated, variables) => {
-        const queryKey = watchlistQueryKeys.watchlistDetailMemberships(variables.slug)
-        const current = queryClient.getQueryData<WatchlistMembership[]>(queryKey)
-        const row = current?.find((membership) => membership.id === variables.membershipId)
-
-        if (!current || !row || row.excludeFromGoal !== variables.excludeFromGoal) {
-          return
-        }
-
+      if (previous && membership) {
         queryClient.setQueryData(
           queryKey,
-          applyMembershipGoalCounts(current, variables.membershipId, membershipGoalCountsFrom(updated)),
+          applyMembershipGoalCounts(
+            previous,
+            variables.membershipId,
+            optimisticMembershipGoalCounts(
+              membership,
+              variables.challenge,
+              variables.excludeFromGoal,
+            ),
+          ),
         )
-      },
+      }
+
+      return { previous, queryKey }
     },
-  )
+    onSettled: (_data, _error, variables) => {
+      // This mutation is still pending until onSettled returns, so 1 means it is the only one.
+      if (queryClient.isMutating({ mutationKey: watchlistQueryKeys.excludeFromGoal() }) > 1) {
+        return
+      }
+
+      void queryClient.invalidateQueries({
+        exact: true,
+        queryKey: watchlistQueryKeys.watchlist(variables.slug),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: watchlistQueryKeys.watchlistDetailMemberships(variables.slug),
+      })
+      void queryClient.invalidateQueries({ queryKey: watchlistQueryKeys.cards() })
+    },
+    onSuccess: (updated, variables) => {
+      const queryKey = watchlistQueryKeys.watchlistDetailMemberships(variables.slug)
+      const current = queryClient.getQueryData<WatchlistMembership[]>(queryKey)
+      const row = current?.find((membership) => membership.id === variables.membershipId)
+
+      if (!current || !row || row.excludeFromGoal !== variables.excludeFromGoal) {
+        return
+      }
+
+      queryClient.setQueryData(
+        queryKey,
+        applyMembershipGoalCounts(
+          current,
+          variables.membershipId,
+          membershipGoalCountsFrom(updated),
+        ),
+      )
+    },
+  })
 }
 
 // Prefer the server's exclusion note when it rejects the toggle.

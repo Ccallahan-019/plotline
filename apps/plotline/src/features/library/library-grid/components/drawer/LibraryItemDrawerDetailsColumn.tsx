@@ -52,7 +52,7 @@ export function LibraryItemDrawerDetailsColumn({
         ) : (
           <div className="flex gap-2 -ml-0.5 flex-wrap">
             {viewModel.watchlists.map((watchlist) => (
-              <Badge className="h-7" key={watchlist.id} variant="outline">
+              <Badge className="h-6.5" key={watchlist.id} variant="outline">
                 <Bookmark data-icon="inline-start" fill="currentColor" />
                 {watchlist.name}
               </Badge>

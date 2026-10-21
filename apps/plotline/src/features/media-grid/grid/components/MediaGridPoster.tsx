@@ -1,5 +1,6 @@
 import Image from 'next/image'
 
+import { RatingBadge } from '@/components/ratings/RatingsBadge'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { getPosterUrl } from '@/features/media-grid/grid/services/media-display-helpers'
@@ -7,7 +8,6 @@ import { MediaDisplay } from '@/features/media-grid/types'
 import { cn } from '@/lib/utils'
 
 import { MediaGridPosterEmpty } from './MediaGridPosterEmpty'
-import { RatingBadge } from './RatingBadge'
 
 type MediaGridPosterProps = {
   className?: string

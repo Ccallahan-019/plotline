@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import type { MediaTitlePageData } from '../../types'
 
 import { formatMediaTitleMetaLine, getTvWatchProgress } from '../../services/format-media-title'
-import { mediaImageUrl } from '../../services/media-image-url'
+import { mediaImageUrl, titleBackdropUrl } from '../../services/media-image-url'
 import { MediaTitleActions } from './MediaTitleActions'
 import { MediaTitleBackButton } from './MediaTitleBackButton'
 import { MediaTitleHeroBackdrop } from './MediaTitleHeroBackdrop'
@@ -19,7 +19,7 @@ type MediaTitleHeroProps = {
 }
 
 export function MediaTitleHero({ data }: MediaTitleHeroProps) {
-  const backdropUrl = mediaImageUrl(data.media.backdropPath, 'w1280')
+  const backdropUrl = titleBackdropUrl(data.media.backdropPath)
   const posterUrl = mediaImageUrl(data.media.posterPath, 'w342')
   const metaLine = formatMediaTitleMetaLine({
     certification: data.certification,
@@ -40,7 +40,7 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
 
   return (
     <section>
-      <div className="relative hidden h-72 overflow-hidden md:block">
+      <div className="relative h-72 overflow-hidden">
         <MediaTitleHeroBackdrop backdropUrl={backdropUrl} />
         <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-background/5" />
       </div>
@@ -48,12 +48,12 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
       <div
         className={cn(
           'relative z-10 flex flex-col gap-4 px-4 py-4 md:px-8',
-          backdropUrl && 'md:-mt-32',
+          backdropUrl && '-mt-36 md:-mt-32',
         )}
       >
         <MediaTitleBackButton />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[10rem_minmax(0,1fr)] md:items-end md:gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[10rem_minmax(0,1fr)] md:items-end">
           <div className="flex items-end gap-4 md:contents">
             <MediaPoster
               className="w-24 shrink-0 rounded-md shadow-lg md:col-start-1 md:row-span-2 md:w-40"

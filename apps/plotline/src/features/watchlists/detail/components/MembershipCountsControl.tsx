@@ -51,7 +51,7 @@ export function MembershipCountsControl({
   return (
     <div className="flex items-center gap-2">
       <ShowIf condition={exclusion?.badge === 'rewatch'}>
-        <Badge className="h-7" variant="secondary">
+        <Badge className="h-6.5" variant="secondary">
           Rewatch
         </Badge>
       </ShowIf>

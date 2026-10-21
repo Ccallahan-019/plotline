@@ -22,9 +22,9 @@ export function MediaTitlePage({ initialData, mediaType, tmdbId }: MediaTitlePag
   useSyncTitleBreadcrumb(`/dashboard/title/${mediaType}/${tmdbId}`, data.media.title)
 
   return (
-    <div className="-mx-8 -mt-8 flex flex-col">
+    <div className="-mx-4 -mt-4 md:-mx-8 md:-my-8 flex flex-col">
       <MediaTitleHero data={data} />
-      <div className="px-4 py-6 md:px-8 md:pb-8">
+      <div className="px-4 py-4 md:px-8 md:pb-8">
         <MediaTitleTabs data={data} />
       </div>
     </div>

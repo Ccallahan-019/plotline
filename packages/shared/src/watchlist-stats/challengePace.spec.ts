@@ -80,7 +80,7 @@ describe('formatChallengePace', () => {
         requiredPerDay: 1,
         status: 'active',
       }),
-    ).toEqual({ label: 'Ahead of pace · 1 day left', tone: 'default' })
+    ).toEqual({ label: 'Ahead of pace · 1 day left', tone: 'ahead' })
   })
 
   it('labels an equal rate as on track', () => {

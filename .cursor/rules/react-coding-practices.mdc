@@ -1,0 +1,295 @@
+---
+description: React coding practices — SOLID, data states, custom hooks, named handlers, and shadcn UI
+alwaysApply: true
+---
+
+# React Coding Practices
+
+React components, hooks, and the presentational modules they render through follow the rules below. Domain calculations still belong in pure helpers (see Standard Coding Practices).
+
+## Single Responsibility Principle
+
+A component, hook, or module has one reason to change. Data loading, business rules, and presentation are different reasons. If a change to the API, a change to a counting rule, or a change to the layout would each force an edit in the same function, split them. The component renders. A hook loads and adapts remote state. A pure helper owns the rule.
+
+```tsx
+// ❌ BAD — fetch, progress rule, and markup change for unrelated reasons
+export function ContinueWatchingRow({ itemId }: { itemId: string }) {
+  const { data } = useQuery({
+    queryKey: ['library-items', itemId],
+    queryFn: () => fetchLibraryItem(itemId),
+  })
+  const remaining = Math.max((data?.episodeCount ?? 0) - (data?.episodesWatched ?? 0), 0)
+  const label = remaining === 1 ? '1 episode left' : `${remaining} episodes left`
+
+  return (
+    <Card>
+      <CardTitle>{data?.title}</CardTitle>
+      <CardDescription>{label}</CardDescription>
+    </Card>
+  )
+}
+
+// ✅ GOOD — the hook loads, the helper decides, the component renders
+export function ContinueWatchingRow({ item }: { item: ContinueWatchingItem }) {
+  const label = episodesRemainingLabel(episodesRemaining(item.episodeCount, item.episodesWatched))
+
+  return (
+    <Card>
+      <CardTitle>{item.title}</CardTitle>
+      <CardDescription>{label}</CardDescription>
+    </Card>
+  )
+}
+```
+
+## Open/Closed Principle
+
+A component is open to a new case by adding a new entry, and closed so existing cases stay untouched. Prefer a map typed to the full union over a growing `if` / `switch` inside the component. A new library status, activity kind, or media type should be a new renderer or label, not an edit to every branch already in the function. Type the map as `Record<Union, ...>` so a new member fails the build until it has an entry.
+
+```tsx
+// ❌ BAD — every new status edits this function and re-opens every branch
+export function LibraryStatusBadge({ status }: { status: LibraryStatus }) {
+  if (status === 'planned') return <Badge variant="secondary">Planned</Badge>
+  if (status === 'in_progress') return <Badge>In progress</Badge>
+  if (status === 'completed') return <Badge variant="outline">Completed</Badge>
+  return <Badge variant="destructive">Dropped</Badge>
+}
+
+// ✅ GOOD — adding a status means adding one entry; the component stays the same
+const STATUS_BADGES: Record<LibraryStatus, ReactNode> = {
+  completed: <Badge variant="outline">Completed</Badge>,
+  dropped: <Badge variant="destructive">Dropped</Badge>,
+  in_progress: <Badge>In progress</Badge>,
+  planned: <Badge variant="secondary">Planned</Badge>,
+}
+
+export function LibraryStatusBadge({ status }: { status: LibraryStatus }) {
+  return STATUS_BADGES[status]
+}
+```
+
+## Liskov Substitution Principle
+
+A more specific component, hook, or callback must be usable anywhere the general contract is expected. Same props in, compatible result out. Do not narrow accepted input, throw on values the contract allows, skip a callback the base always runs, or change the meaning of a returned value. Callers swap movie and TV strategies, row variants, or empty states without a special case for one implementation.
+
+```tsx
+type ProgressLabel = (watched: number, total: number) => string
+
+// ❌ BAD — same function type, but this one throws and withholds a label
+const tvProgressLabel: ProgressLabel = (watched, total) => {
+  if (total <= 0) throw new Error('Series has no episodes')
+  return `${watched} of ${total} episodes`
+}
+
+// ✅ GOOD — every implementation returns a string for any non-negative counts
+const movieProgressLabel: ProgressLabel = (watched) => (watched > 0 ? 'Watched' : 'Unwatched')
+
+const tvProgressLabel: ProgressLabel = (watched, total) => {
+  if (total <= 0) return 'No episodes yet'
+  return `${watched} of ${total} episodes`
+}
+```
+
+## Interface Segregation Principle
+
+Props and hook arguments include only what that component or hook reads. A wide `MediaDetail` or `LibraryItem` prop forces every caller to build the whole object and makes the component break when an unused field changes. Pass the fields the UI renders. Let the caller pick them off the larger record.
+
+```tsx
+// ❌ BAD — RatingStars only reads the score, but every caller must supply the title
+type RatingStarsProps = { media: { ratingOutOfTen: number; title: string } }
+
+export function RatingStars({ media }: RatingStarsProps) {
+  return <Badge>{(media.ratingOutOfTen / 2).toFixed(1)} out of 5</Badge>
+}
+
+// ✅ GOOD — the prop is the value the stars render
+type RatingStarsProps = { ratingOutOfTen: number }
+
+export function RatingStars({ ratingOutOfTen }: RatingStarsProps) {
+  return <Badge>{(ratingOutOfTen / 2).toFixed(1)} out of 5</Badge>
+}
+```
+
+## Dependency Inversion Principle
+
+A presentational component depends on props and callbacks, not on a concrete fetcher, mutation hook, router, or store. The parent or a feature hook is the edge that binds those details. The component can then render in a test, a story, or another screen with a different action behind the same callback.
+
+```tsx
+// ❌ BAD — the row cannot render without the delete mutation
+export function WatchlistRow({ watchlist }: { watchlist: WatchlistSummary }) {
+  const { mutate } = useDeleteWatchlist()
+
+  function handleRemove() {
+    mutate(watchlist.id)
+  }
+
+  return <Button onClick={handleRemove}>Remove</Button>
+}
+
+// ✅ GOOD — the row depends on an action; the parent supplies the mutation
+type WatchlistRowProps = {
+  onRemove: (watchlistId: string) => void
+  watchlist: WatchlistSummary
+}
+
+export function WatchlistRow({ onRemove, watchlist }: WatchlistRowProps) {
+  function handleRemove() {
+    onRemove(watchlist.id)
+  }
+
+  return <Button onClick={handleRemove}>Remove</Button>
+}
+```
+
+## Encapsulate heavy hook usage
+
+Several native hooks (`useState`, `useEffect`, `useMemo`, `useQuery`, and similar), or a custom hook composed with more hook calls, do not belong in the component body. Move that block into one custom hook under the feature's `hooks/` module. The component reads the result and renders. Document the hook with a full JSDoc block, as required for `hooks/` modules.
+
+```tsx
+// ❌ BAD — filter state, the query, and the derived rows all live in the component
+export function RecentActivityFeed() {
+  const [filter, setFilter] = useState<ActivityFilter>('all')
+  const query = useQuery({ queryKey: ['activity'], queryFn: fetchRecentActivity })
+  const items = useMemo(
+    () => (query.data ?? []).filter((item) => filter === 'all' || item.kind === filter),
+    [filter, query.data],
+  )
+
+  return <ActivityTimeline items={items} onFilterChange={setFilter} />
+}
+
+// ✅ GOOD — the component renders what the hook returns
+/**
+ * Recent-activity rows for the selected filter.
+ *
+ * @returns The active filter, a setter, the filtered rows, and the query status
+ */
+export function useRecentActivityFeed() {
+  const [filter, setFilter] = useState<ActivityFilter>('all')
+  const query = useQuery({ queryKey: ['activity'], queryFn: fetchRecentActivity })
+  const items = query.data == null ? null : filterActivity(query.data, filter)
+
+  return { filter, isError: query.isError, isLoading: query.isLoading, items, setFilter }
+}
+
+export function RecentActivityFeed() {
+  const { isError, isLoading, items } = useRecentActivityFeed()
+
+  if (isLoading) return <DashboardWidgetSkeleton />
+  if (isError) return <DashboardWidgetError message="Couldn't load recent activity." />
+  if (items == null || items.length === 0) return <RecentActivityEmpty />
+
+  return <ActivityTimeline items={items} />
+}
+```
+
+## Check data states in order
+
+When a component renders data that might be missing, check the states in this order: loading, error, empty, then success. Empty means the request finished and returned no record, or returned an empty list. Do not coerce missing data to `[]` before those checks. That turns a load or a failure into an empty state, so the user sees "nothing here" while the request is still running or has failed.
+
+```tsx
+// ❌ BAD — `?? []` makes loading and error look like an empty list
+export function RecentActivityFeed() {
+  const { isError, isLoading, items, refetch } = useRecentActivityFeed()
+  const rows = items ?? []
+
+  if (rows.length === 0) {
+    return <RecentActivityEmpty />
+  }
+
+  if (isLoading) {
+    return <DashboardWidgetSkeleton />
+  }
+
+  if (isError) {
+    return <DashboardWidgetError message="Couldn't load recent activity." onRetry={refetch} />
+  }
+
+  return <ActivityTimeline items={rows} />
+}
+
+// ✅ GOOD — loading, then error, then empty, then the list
+export function RecentActivityFeed() {
+  const { isError, isLoading, items, refetch } = useRecentActivityFeed()
+
+  function handleRetry() {
+    void refetch()
+  }
+
+  if (isLoading) {
+    return <DashboardWidgetSkeleton />
+  }
+
+  if (isError) {
+    return <DashboardWidgetError message="Couldn't load recent activity." onRetry={handleRetry} />
+  }
+
+  if (items == null || items.length === 0) {
+    return <RecentActivityEmpty />
+  }
+
+  return <ActivityTimeline items={items} />
+}
+```
+
+## Name event handlers
+
+Whenever possible, define a handler above the component's `return`, or inside the custom hook that owns the interaction. Do not write the function inline on a prop. In a list, extract a child component that closes over that row and names the handler there, instead of an arrow in the parent's `map`.
+
+```tsx
+// ❌ BAD — the action is an anonymous function inside JSX
+export function MarkWatchedButton({ itemId, onMarkWatched }: MarkWatchedButtonProps) {
+  return (
+    <Button
+      onClick={() => {
+        onMarkWatched(itemId)
+      }}
+    >
+      Mark watched
+    </Button>
+  )
+}
+
+// ✅ GOOD — the handler is a named function above the return
+export function MarkWatchedButton({ itemId, onMarkWatched }: MarkWatchedButtonProps) {
+  function handleMarkWatched() {
+    onMarkWatched(itemId)
+  }
+
+  return <Button onClick={handleMarkWatched}>Mark watched</Button>
+}
+```
+
+## Prefer shadcn or custom components
+
+User-facing controls and content use a shadcn component from `@/components/ui/*`, or an existing project component such as `ButtonLink` or `PageHeading`. Do not style raw `button`, `a`, `input`, `select`, `textarea`, or dialog markup when a component already covers that control. If none fits, add a custom component in the feature or in `src/components` rather than a one-off native element. A `div`, `span`, or `section` is appropriate only as a layout wrapper that no component represents.
+
+```tsx
+// ❌ BAD — native controls skip the shared button and link styles
+export function TitleActions({ href }: { href: string }) {
+  return (
+    <div>
+      <a href={href}>View title</a>
+      <button type="button">Log watch</button>
+    </div>
+  )
+}
+
+// ✅ GOOD — shared components own the interaction and the styles
+export function TitleActions({ href, onLogWatch }: TitleActionsProps) {
+  function handleLogWatch() {
+    onLogWatch()
+  }
+
+  return (
+    <div>
+      <ButtonLink href={href}>View title</ButtonLink>
+      <Button onClick={handleLogWatch}>Log watch</Button>
+    </div>
+  )
+}
+```
+
+## Existing code
+
+Refactor opportunistically. When a change touches a component, hook, or JSX block that breaks these rules, bring that code into compliance as part of the change. Do not leave a violation in code you are already editing. Limit the refactor to the module you are changing and the hook or component it needs. Do not start a repository-wide rewrite only to apply this ruleset.

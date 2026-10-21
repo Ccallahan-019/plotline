@@ -25,10 +25,10 @@ todos:
     status: completed
   - id: phase-2-dashboard
     content: "Phase 2: /dashboard overview widgets + /dashboard/continue-watching + /dashboard/recent-activity — parallel useQuery + invalidation"
-    status: pending
+    status: completed
   - id: phase-3-watchlists
     content: "Phase 3: watchlist/challenge CRUD, challenge progress on watchlist detail, /dashboard/challenges/*, useWatchlistStats + stats BFF"
-    status: pending
+    status: completed
   - id: phase-4-reviews
     content: "Phase 4: /dashboard/reviews, /dashboard/reviews/rated, /dashboard/reviews/written + review forms on title detail"
     status: pending

@@ -1,4 +1,4 @@
-import type { LibraryItem, Watchlist, WatchlistMembership } from '@plotline/payload-types'
+import type { LibraryItem, Media, Watchlist, WatchlistMembership } from '@plotline/payload-types'
 
 import type { WatchlistCard, WatchlistCardPreview, WatchlistCardSort } from '../types'
 
@@ -7,6 +7,8 @@ import { DEFAULT_WATCHLIST_CARD_SORT } from '../types'
 export const WATCHLIST_CARD_PREVIEW_LIMIT = 3
 
 export type BuildWatchlistCardsInput = {
+  /** Cover documents for watchlists whose `coverMedia` is still an id. */
+  coverMedia?: readonly Media[]
   libraryItems: readonly LibraryItem[]
   memberships: readonly WatchlistMembership[]
   /** Full membership count per watchlist id. Falls back to the supplied memberships when absent. */
@@ -21,40 +23,44 @@ export type BuildWatchlistCardsInput = {
  * only the first few per watchlist. `titleCount` comes from `titleCounts` when
  * given, otherwise from the supplied memberships. `previews` is the first three
  * titles; a missing library item or poster stays in its slot with a null poster.
- * `challenge` and `statsCache` are copied through so challenge cards can render
- * pace and progress; a missing group or cache is null. Card order follows
- * `watchlists`, not name.
+ * `coverPath` is the cover title's backdrop, then its poster, then the first
+ * preview backdrop, and null when none of those images exist. `challenge` and
+ * `statsCache` are copied through so challenge cards can render pace and
+ * progress; a missing group or cache is null. Card order follows `watchlists`,
+ * not name.
  *
- * @param input.libraryItems - Preview titles fetched at depth 1. Posters are read from these, not from membership relations
+ * @param input.coverMedia - Cover documents when a watchlist stores `coverMedia` as an id
+ * @param input.libraryItems - Preview titles fetched at depth 1. Posters and backdrops are read from these, not from membership relations
  * @param input.memberships - Memberships for the loaded watchlists, in list order
  * @param input.titleCounts - Full membership count per watchlist id, when `memberships` is truncated
  * @param input.watchlists - Watchlists to emit, in the order the caller wants preserved
  * @returns One card per watchlist
  */
 export function buildWatchlistCards({
+  coverMedia = [],
   libraryItems,
   memberships,
   titleCounts,
   watchlists,
 }: BuildWatchlistCardsInput): WatchlistCard[] {
   const grouped = membershipsByWatchlistId(memberships)
+  const coversById = indexMedia(coverMedia)
   const itemsById = indexLibraryItems(libraryItems)
 
   return watchlists.map((watchlist) => {
     const group = grouped.get(watchlist.id) ?? []
-    const previews = group
+    const previewItems = group
       .slice(0, WATCHLIST_CARD_PREVIEW_LIMIT)
-      .map((membership) =>
-        toWatchlistCardPreview(itemsById.get(relationshipId(membership.libraryItem))),
-      )
+      .map((membership) => itemsById.get(relationshipId(membership.libraryItem)))
 
     return {
       challenge: watchlist.challenge ?? null,
+      coverPath: toCoverPath(watchlist, coversById, previewItems),
       createdAt: watchlist.createdAt,
       description: toCardDescription(watchlist.description),
       id: watchlist.id,
       name: watchlist.name,
-      previews,
+      previews: previewItems.map(toWatchlistCardPreview),
       slug: watchlist.slug,
       statsCache: watchlist.statsCache ?? null,
       titleCount: titleCounts?.get(watchlist.id) ?? group.length,
@@ -62,6 +68,35 @@ export function buildWatchlistCards({
       visibility: watchlist.visibility,
     }
   })
+}
+
+/**
+ * Media ids for watchlist covers that are not already populated.
+ *
+ * Populated cover documents are skipped because the card builder can read
+ * their image paths directly.
+ *
+ * @param watchlists - Watchlists whose covers may be ids or documents
+ * @returns Unique media ids, in first-seen order
+ */
+export function collectCoverMediaIds(
+  watchlists: readonly Pick<Watchlist, 'coverMedia'>[],
+): number[] {
+  const ids: number[] = []
+  const seen = new Set<number>()
+
+  for (const watchlist of watchlists) {
+    const cover = watchlist.coverMedia
+
+    if (typeof cover !== 'number' || seen.has(cover)) {
+      continue
+    }
+
+    seen.add(cover)
+    ids.push(cover)
+  }
+
+  return ids
 }
 
 /**
@@ -147,12 +182,40 @@ function compareWatchlistCards(
   }
 }
 
+// First preview backdrop, used when the cover title has no image.
+function firstPreviewBackdrop(libraryItems: readonly (LibraryItem | undefined)[]): null | string {
+  for (const libraryItem of libraryItems) {
+    if (libraryItem == null || typeof libraryItem.media !== 'object') {
+      continue
+    }
+
+    const backdropPath = trimmedPath(libraryItem.media.backdropPath)
+
+    if (backdropPath) {
+      return backdropPath
+    }
+  }
+
+  return null
+}
+
 // Last item wins if the same id appears twice.
 function indexLibraryItems(libraryItems: readonly LibraryItem[]): Map<number, LibraryItem> {
   const indexed = new Map<number, LibraryItem>()
 
   for (const libraryItem of libraryItems) {
     indexed.set(libraryItem.id, libraryItem)
+  }
+
+  return indexed
+}
+
+// Last document wins if the same id appears twice.
+function indexMedia(media: readonly Media[]): Map<number, Media> {
+  const indexed = new Map<number, Media>()
+
+  for (const item of media) {
+    indexed.set(item.id, item)
   }
 
   return indexed
@@ -183,6 +246,22 @@ function relationshipId(value: { id: number } | number): number {
   return typeof value === 'number' ? value : value.id
 }
 
+// A populated cover is used as-is. An id is resolved from the fetched documents.
+function resolveCoverMedia(
+  coverMedia: undefined | Watchlist['coverMedia'],
+  coversById: ReadonlyMap<number, Media>,
+): Media | null {
+  if (coverMedia == null) {
+    return null
+  }
+
+  if (typeof coverMedia === 'number') {
+    return coversById.get(coverMedia) ?? null
+  }
+
+  return coverMedia
+}
+
 // Blank copy becomes null so the card can show an empty description.
 function toCardDescription(description: null | string | undefined): null | string {
   if (description == null || description.trim().length === 0) {
@@ -190,6 +269,19 @@ function toCardDescription(description: null | string | undefined): null | strin
   }
 
   return description
+}
+
+// Cover backdrop, then the cover poster, then the first preview backdrop.
+function toCoverPath(
+  watchlist: Watchlist,
+  coversById: ReadonlyMap<number, Media>,
+  previewItems: readonly (LibraryItem | undefined)[],
+): null | string {
+  const cover = resolveCoverMedia(watchlist.coverMedia, coversById)
+  const backdropPath = trimmedPath(cover?.backdropPath)
+  const posterPath = trimmedPath(cover?.posterPath)
+
+  return backdropPath ?? posterPath ?? firstPreviewBackdrop(previewItems)
 }
 
 // A missing item or poster still occupies a preview slot.
@@ -204,4 +296,11 @@ function toWatchlistCardPreview(libraryItem: LibraryItem | undefined): Watchlist
     posterPath: posterPath ? posterPath : null,
     title: libraryItem.media.title,
   }
+}
+
+// Empty image paths are treated as missing.
+function trimmedPath(path: null | string | undefined): null | string {
+  const trimmed = path?.trim()
+
+  return trimmed ? trimmed : null
 }

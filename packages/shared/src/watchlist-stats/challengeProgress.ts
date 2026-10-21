@@ -48,7 +48,7 @@ export function formatChallengeProgress(input: ChallengeProgressInput): string {
   }
 
   const goal = input.goalCount ?? input.totalEligible
-  const unit = input.tvCountRule === 'movies_only' ? 'Films' : 'Titles'
+  const unit = input.tvCountRule === 'movies_only' ? 'films' : 'titles'
 
   return `${formatNumber(input.completed)} ${separator} ${formatNumber(goal)} ${unit}`
 }
@@ -98,16 +98,16 @@ function formatHoursFromMinutes(minutes: number): string {
 function formatTvCountRule(rule: null | TvCountRule | undefined): string {
   switch (rule) {
     case 'movies_only':
-      return 'Movies Only'
+      return 'Movies only'
     case null:
     case undefined:
-      return 'As a Series'
+      return 'As a series'
     case 'tv_as_series':
-      return 'As a Series'
+      return 'As a series'
     case 'tv_by_episode':
-      return 'By Episode'
+      return 'By episode'
     case 'tv_by_season':
-      return 'By Season'
+      return 'By season'
     default: {
       const _exhaustive: never = rule
 

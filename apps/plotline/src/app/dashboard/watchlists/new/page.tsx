@@ -20,7 +20,8 @@ export default async function NewWatchlistPage({ searchParams }: NewWatchlistPag
 
   const params = await searchParams
   const challenge = params.challenge
-  const challengeEnabled = challenge === '1' || (Array.isArray(challenge) && challenge.includes('1'))
+  const challengeEnabled =
+    challenge === '1' || (Array.isArray(challenge) && challenge.includes('1'))
 
   return <WatchlistEditor challengeEnabled={challengeEnabled} mode="create" />
 }

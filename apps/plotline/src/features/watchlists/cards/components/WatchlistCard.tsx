@@ -1,8 +1,10 @@
 import Link from 'next/link'
 
+import { MediaBackdropCard } from '@/components/media/MediaBackdropCard'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ShowIf } from '@/components/utils/ShowIf'
+import { tmdbMediaUrl } from '@/lib/tmdb/tmdb-media-url'
 
 import type { WatchlistCard as WatchlistCardData } from '../types'
 
@@ -24,7 +26,7 @@ export function WatchlistGridCard({ card }: WatchlistGridCardProps) {
   const badgeContent = isChallenge ? 'Challenge' : 'Watchlist'
 
   return (
-    <Card>
+    <MediaBackdropCard backdropUrl={tmdbMediaUrl(card.coverPath, 'w780')}>
       <div className="px-(--card-spacing)">
         <WatchlistPosterStack previews={card.previews} />
       </div>
@@ -50,6 +52,6 @@ export function WatchlistGridCard({ card }: WatchlistGridCardProps) {
           <ChallengeCardProgress card={card} />
         </ShowIf>
       </CardContent>
-    </Card>
+    </MediaBackdropCard>
   )
 }

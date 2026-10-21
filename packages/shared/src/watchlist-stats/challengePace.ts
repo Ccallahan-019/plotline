@@ -16,15 +16,15 @@ export type ChallengePaceInput = {
   status?: ChallengeStatsStatus
 }
 
-export type ChallengePaceTone = 'default' | 'destructive' | 'neutral'
+export type ChallengePaceTone = 'ahead' | 'default' | 'destructive' | 'neutral'
 
 /**
  * Pace badge for a challenge card or detail hero.
  *
  * Complete and overdue win over the daily rate. A challenge that has not started, or whose
  * rate is not computable yet (day zero), stays neutral so it is not immediately behind.
- * Ahead is a faster rate than required; on track includes an equal rate (`onTrack` stays
- * `actualPerDay >= requiredPerDay`).
+ * Ahead is a faster rate than required (`tone` is `ahead`). On track includes an equal
+ * rate (`onTrack` stays `actualPerDay >= requiredPerDay`) and keeps the default tone.
  *
  * @param input - Fields already stored on `statsCache`. Does not add cache fields
  * @returns Label and tone for the badge
@@ -45,7 +45,7 @@ export function formatChallengePace(input: ChallengePaceInput): ChallengePaceBad
   }
 
   if (actualPerDay > requiredPerDay) {
-    return { label: withDaysLeft('Ahead of pace', input.daysRemaining), tone: 'default' }
+    return { label: withDaysLeft('Ahead of pace', input.daysRemaining), tone: 'ahead' }
   }
 
   const onTrack = input.onTrack ?? actualPerDay >= requiredPerDay

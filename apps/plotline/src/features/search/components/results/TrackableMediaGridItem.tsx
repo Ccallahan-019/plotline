@@ -27,7 +27,7 @@ export function TrackableMediaGridItem({
           <div className="absolute top-1 left-1">
             <AnimatedStatusBadge
               animationKey={existingLibraryItem?.id?.toString() ?? ''}
-              className="shadow-sm h-7 rounded-md"
+              className="shadow-sm h-6.5 rounded-md"
               status={existingLibraryItem?.status ?? 'untracked'}
               triggerAnimation={isHovered}
             />

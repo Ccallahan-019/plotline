@@ -73,6 +73,36 @@ describe('fetchAllPages', () => {
     expect(fetchPage).toHaveBeenCalledTimes(MAX_PAYLOAD_PAGES)
   })
 
+  it('stops early once shouldStop is satisfied', async () => {
+    const fetchPage = vi
+      .fn()
+      .mockResolvedValueOnce(pageOf([1, 2], { hasNextPage: true, nextPage: 2 }))
+      .mockResolvedValueOnce(pageOf([3, 4], { hasNextPage: true, nextPage: 3, page: 2 }))
+    const lengths: number[] = []
+    const shouldStop = (docs: readonly number[]) => {
+      lengths.push(docs.length)
+
+      return docs.length >= 4
+    }
+
+    await expect(fetchAllPages(fetchPage, 'test', { shouldStop })).resolves.toEqual([1, 2, 3, 4])
+    expect(fetchPage).toHaveBeenCalledTimes(2)
+    expect(lengths).toEqual([2, 4])
+  })
+
+  it('honors a custom page cap', async () => {
+    const fetchPage = vi
+      .fn()
+      .mockImplementation((page: number) =>
+        Promise.resolve(pageOf([page], { hasNextPage: true, nextPage: page + 1, page })),
+      )
+
+    await expect(fetchAllPages(fetchPage, '/api/things', { maxPages: 3 })).rejects.toThrow(
+      'Payload page limit exceeded for /api/things',
+    )
+    expect(fetchPage).toHaveBeenCalledTimes(3)
+  })
+
   it('propagates a failed page request', async () => {
     const fetchPage = vi.fn().mockRejectedValue(new Error('boom'))
 

@@ -5,7 +5,9 @@ import type { LibraryItem, Media, Watchlist, WatchlistMembership } from '@plotli
 import { useSortable } from '@dnd-kit/react/sortable'
 import Link from 'next/link'
 
+import { MediaBackdropCard } from '@/components/media/MediaBackdropCard'
 import { MediaPoster } from '@/components/media/MediaPoster'
+import { CardContent } from '@/components/ui/card'
 import {
   Item,
   ItemActions,
@@ -16,6 +18,7 @@ import {
 } from '@/components/ui/item'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { StatusBadge } from '@/components/utils/StatusBadge'
+import { titleBackdropUrl } from '@/features/media-detail/services/media-image-url'
 import {
   getPosterUrl,
   getTitleHref,
@@ -25,6 +28,7 @@ import { cn } from '@/lib/utils'
 
 import {
   formatAddedToListLabel,
+  formatMembershipDescription,
   formatMembershipMediaLabel,
 } from '../services/format-membership-metadata'
 import {
@@ -60,6 +64,7 @@ export function WatchlistMembershipRow({
   slug,
 }: WatchlistMembershipRowProps) {
   const media = getMembershipMedia(membership)
+  const backdropUrl = titleBackdropUrl(media?.backdropPath)
   const libraryItem = getMembershipLibraryItem(membership)
   const title = media?.title ?? 'Untitled'
   const mediaLabel = formatMembershipMediaLabel(media)
@@ -71,6 +76,8 @@ export function WatchlistMembershipRow({
     index,
   })
 
+  const description = formatMembershipDescription(mediaLabel, addedLabel)
+
   return (
     <div
       className={cn('w-full', isDragging && 'relative z-10 opacity-70')}
@@ -78,56 +85,62 @@ export function WatchlistMembershipRow({
       ref={ref}
       role="listitem"
     >
-      <Item className="flex-nowrap gap-3" variant="outline">
-        <ShowIf condition={showDragHandle}>
-          <WatchlistMembershipDragButton
-            disabled={reorderDisabled}
-            handleRef={handleRef}
-            title={title}
-          />
-        </ShowIf>
-
-        <ItemMedia>
-          <MediaPoster
-            className="w-16 shrink-0 rounded-sm"
-            fallbackIconClassName="size-4"
-            ratio={2 / 3}
-            sizes="64px"
-            src={getPosterUrl(media?.posterPath)}
-          />
-        </ItemMedia>
-
-        <ItemContent className="min-w-0">
-          <MembershipTitle media={media} title={title} />
-          <ShowIf condition={mediaLabel != null}>
-            <ItemDescription className="line-clamp-1">{mediaLabel}</ItemDescription>
-          </ShowIf>
-          <ShowIf condition={addedLabel != null}>
-            <ItemDescription className="line-clamp-1">{addedLabel}</ItemDescription>
-          </ShowIf>
-        </ItemContent>
-
-        <ItemActions className="ml-auto shrink-0">
-          <div className="flex items-center gap-3">
-            <LibraryItemStatus libraryItem={libraryItem} />
-            <ShowIf condition={showGoalCounts}>
-              <MembershipCountsControl
-                challenge={challenge}
-                membership={membership}
-                slug={slug}
+      <MediaBackdropCard
+        backdropUrl={backdropUrl}
+        imageSizes="340px"
+        size="sm"
+        wrapperClassName="lg:w-1/3"
+      >
+        <CardContent>
+          <Item className="flex-nowrap gap-3 p-0">
+            <ShowIf condition={showDragHandle}>
+              <WatchlistMembershipDragButton
+                disabled={reorderDisabled}
+                handleRef={handleRef}
                 title={title}
               />
             </ShowIf>
-          </div>
-          <WatchlistMembershipMenu
-            membership={membership}
-            onLogWatch={onLogWatch}
-            onRemove={onRemove}
-            slug={slug}
-            title={title}
-          />
-        </ItemActions>
-      </Item>
+
+            <ItemMedia>
+              <MediaPoster
+                className="w-16 shrink-0 rounded-sm"
+                fallbackIconClassName="size-4"
+                ratio={2 / 3}
+                sizes="64px"
+                src={getPosterUrl(media?.posterPath)}
+              />
+            </ItemMedia>
+
+            <ItemContent className="min-w-0">
+              <MembershipTitle media={media} title={title} />
+              <ShowIf condition={description != null}>
+                <ItemDescription className="text-xs">{description}</ItemDescription>
+              </ShowIf>
+            </ItemContent>
+
+            <ItemActions className="ml-auto shrink-0">
+              <div className="flex items-center gap-3">
+                <LibraryItemStatus libraryItem={libraryItem} />
+                <ShowIf condition={showGoalCounts}>
+                  <MembershipCountsControl
+                    challenge={challenge}
+                    membership={membership}
+                    slug={slug}
+                    title={title}
+                  />
+                </ShowIf>
+              </div>
+              <WatchlistMembershipMenu
+                membership={membership}
+                onLogWatch={onLogWatch}
+                onRemove={onRemove}
+                slug={slug}
+                title={title}
+              />
+            </ItemActions>
+          </Item>
+        </CardContent>
+      </MediaBackdropCard>
     </div>
   )
 }

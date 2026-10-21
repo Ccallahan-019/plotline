@@ -14,3 +14,13 @@ export function mediaImageUrl(path: null | string | undefined, size: string): nu
 
   return `${TMDB_IMAGE_BASE}/${size}${path}`
 }
+
+/**
+ * Backdrop URL used by the title detail hero.
+ *
+ * @param path - TMDB backdrop path, or empty when the title has no still
+ * @returns A `w1280` image URL, or `null` when `path` is missing
+ */
+export function titleBackdropUrl(path: null | string | undefined): null | string {
+  return mediaImageUrl(path, 'w1280')
+}

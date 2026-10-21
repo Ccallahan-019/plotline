@@ -6,6 +6,7 @@ import type { WatchlistCard } from '../../types'
 
 import {
   buildWatchlistCards,
+  collectCoverMediaIds,
   collectPreviewLibraryItemIds,
   sortWatchlistCards,
 } from '../build-watchlist-cards'
@@ -220,6 +221,121 @@ describe('buildWatchlistCards', () => {
     expect(cards[1]?.previews).toEqual([{ posterPath: '/other.jpg', title: 'Other' }])
     expect(cards[1]?.titleCount).toBe(1)
   })
+
+  it('prefers the cover backdrop, then its poster, then the first preview backdrop', () => {
+    const cards = buildWatchlistCards({
+      coverMedia: [
+        media({
+          backdropPath: '/from-id-backdrop.jpg',
+          id: 9,
+          posterPath: '/from-id-poster.jpg',
+          title: 'By id',
+        }),
+      ],
+      libraryItems: [
+        libraryItem({
+          id: 1,
+          media: media({
+            backdropPath: '/preview-backdrop.jpg',
+            id: 1,
+            posterPath: '/preview.jpg',
+            title: 'Preview',
+          }),
+        }),
+        libraryItem({
+          id: 2,
+          media: media({
+            backdropPath: '  ',
+            id: 2,
+            posterPath: '/poster-without-still.jpg',
+            title: 'Poster only',
+          }),
+        }),
+        libraryItem({
+          id: 3,
+          media: media({
+            backdropPath: '/later-backdrop.jpg',
+            id: 3,
+            posterPath: '/later-poster.jpg',
+            title: 'Later',
+          }),
+        }),
+      ],
+      memberships: [
+        membership({ id: 1, libraryItem: 1, watchlist: 4 }),
+        membership({ id: 2, libraryItem: 1, watchlist: 6 }),
+        membership({ id: 3, libraryItem: 2, watchlist: 7 }),
+        membership({ id: 4, libraryItem: 3, watchlist: 7 }),
+      ],
+      watchlists: [
+        watchlist({
+          coverMedia: media({
+            backdropPath: '/cover-backdrop.jpg',
+            id: 7,
+            posterPath: '/cover-poster.jpg',
+            title: 'Backdrop',
+          }),
+          id: 1,
+          name: 'Backdrop',
+          slug: 'backdrop',
+        }),
+        watchlist({
+          coverMedia: media({
+            backdropPath: '   ',
+            id: 8,
+            posterPath: '/poster-only.jpg',
+            title: 'Poster',
+          }),
+          id: 2,
+          name: 'Poster',
+          slug: 'poster',
+        }),
+        watchlist({ coverMedia: 9, id: 3, name: 'By id', slug: 'by-id' }),
+        watchlist({ id: 4, name: 'Preview', slug: 'preview' }),
+        watchlist({ coverMedia: 404, id: 5, name: 'Missing', slug: 'missing' }),
+        watchlist({
+          coverMedia: media({ backdropPath: '  ', id: 10, posterPath: '', title: 'Blank' }),
+          id: 6,
+          name: 'Blank cover',
+          slug: 'blank',
+        }),
+        watchlist({ id: 7, name: 'Later still', slug: 'later-still' }),
+      ],
+    })
+
+    expect(cards.map((item) => item.coverPath)).toEqual([
+      '/cover-backdrop.jpg',
+      '/poster-only.jpg',
+      '/from-id-backdrop.jpg',
+      '/preview-backdrop.jpg',
+      null,
+      '/preview-backdrop.jpg',
+      '/later-backdrop.jpg',
+    ])
+    expect(cards[6]?.previews).toEqual([
+      { posterPath: '/poster-without-still.jpg', title: 'Poster only' },
+      { posterPath: '/later-poster.jpg', title: 'Later' },
+    ])
+  })
+})
+
+describe('collectCoverMediaIds', () => {
+  it('returns unique numeric cover ids and skips populated covers', () => {
+    expect(
+      collectCoverMediaIds([
+        watchlist({ coverMedia: 4, id: 1, name: 'A', slug: 'a' }),
+        watchlist({ coverMedia: 4, id: 2, name: 'B', slug: 'b' }),
+        watchlist({ coverMedia: null, id: 3, name: 'C', slug: 'c' }),
+        watchlist({
+          coverMedia: media({ id: 8, title: 'Populated' }),
+          id: 4,
+          name: 'D',
+          slug: 'd',
+        }),
+        watchlist({ coverMedia: 5, id: 5, name: 'E', slug: 'e' }),
+      ]),
+    ).toEqual([4, 5])
+  })
 })
 
 describe('collectPreviewLibraryItemIds', () => {
@@ -292,6 +408,7 @@ function card(
 ): WatchlistCard {
   return {
     challenge: null,
+    coverPath: null,
     createdAt: '2026-01-01T00:00:00.000Z',
     description: null,
     previews: [],

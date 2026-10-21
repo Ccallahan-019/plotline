@@ -1,4 +1,4 @@
-import type { LibraryItem, Watchlist, WatchlistMembership } from '@plotline/payload-types'
+import type { LibraryItem, Media, Watchlist, WatchlistMembership } from '@plotline/payload-types'
 
 import { appendInFilter } from '@/lib/payload/append-in-filter'
 import { fetchAllPages } from '@/lib/payload/fetch-all-pages'
@@ -9,6 +9,7 @@ import type { WatchlistCard, WatchlistCardFilter } from '../types'
 import { getWatchlists } from '../../services/get-watchlists'
 import {
   buildWatchlistCards,
+  collectCoverMediaIds,
   collectPreviewLibraryItemIds,
   WATCHLIST_CARD_PREVIEW_LIMIT,
 } from './build-watchlist-cards'
@@ -27,9 +28,9 @@ const WATCHLIST_CARD_MEMBERSHIP_SORT = 'sortOrder,addedAt,id'
  * `filter` selects challenge lists or lists that are not challenges, using the
  * same watchlist set as `getWatchlists`. Each list asks Payload for only its
  * first three memberships, in parallel, and reads the list's full title count
- * from `totalDocs`. Posters for those memberships then load in a few chunked
- * library-item requests. The result is not name-sorted; callers apply
- * `sortWatchlistCards`.
+ * from `totalDocs`. Preview titles for those memberships, and cover images
+ * stored as media ids, then load in a few chunked requests. The result is not name-sorted;
+ * callers apply `sortWatchlistCards`.
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
  * @param filter - `challenge` or non-challenge `list`
@@ -48,9 +49,12 @@ export async function getWatchlistCards(
 
   const { memberships, titleCounts } = await fetchPreviewMemberships(clerkUserId, watchlists)
   const previewIds = collectPreviewLibraryItemIds(watchlists, memberships)
-  const libraryItems = await fetchPreviewLibraryItems(clerkUserId, previewIds)
+  const [coverMedia, libraryItems] = await Promise.all([
+    fetchCoverMedia(clerkUserId, watchlists),
+    fetchPreviewLibraryItems(clerkUserId, previewIds),
+  ])
 
-  return buildWatchlistCards({ libraryItems, memberships, titleCounts, watchlists })
+  return buildWatchlistCards({ coverMedia, libraryItems, memberships, titleCounts, watchlists })
 }
 
 // Splits ids into groups of at most `size`, keeping order.
@@ -62,6 +66,34 @@ function chunk<T>(values: readonly T[], size: number): T[][] {
   }
 
   return chunks
+}
+
+// Loads cover documents when `coverMedia` is still an id. Populated covers are skipped.
+async function fetchCoverMedia(
+  clerkUserId: string,
+  watchlists: readonly Watchlist[],
+): Promise<Media[]> {
+  const ids = collectCoverMediaIds(watchlists)
+
+  if (ids.length === 0) {
+    return []
+  }
+
+  const chunks = await Promise.all(
+    chunk(ids, LIBRARY_ITEM_CHUNK_SIZE).map((coverIds) =>
+      fetchAllPages<Media>(
+        (page) =>
+          payloadFetch<PayloadPaginatedDocs<Media>>('/api/media', {
+            clerkUserId,
+            method: 'GET',
+            searchParams: mediaSearchParams(coverIds, page),
+          }),
+        '/api/media',
+      ),
+    ),
+  )
+
+  return chunks.flat()
 }
 
 // Loads the preview library items in parallel chunks so no request carries hundreds of ids.
@@ -109,7 +141,7 @@ async function fetchPreviewMemberships(
   }
 }
 
-// Depth 1 so `media.posterPath` and `media.title` are populated. Sort by id so pages cannot skip a row.
+// Depth 1 so `media.posterPath`, `media.backdropPath`, and `media.title` are populated. Sort by id so pages cannot skip a row.
 function libraryItemSearchParams(
   libraryItemIds: readonly number[],
   page: number,
@@ -122,6 +154,23 @@ function libraryItemSearchParams(
   }
 
   appendInFilter(searchParams, 'id', libraryItemIds)
+
+  return searchParams
+}
+
+// Depth 0 is enough: poster and backdrop are columns on the media row. Sort by id so pages cannot skip a row.
+function mediaSearchParams(
+  mediaIds: readonly number[],
+  page: number,
+): Record<string, number | string> {
+  const searchParams: Record<string, number | string> = {
+    depth: 0,
+    limit: PAYLOAD_PAGE_SIZE,
+    page,
+    sort: 'id',
+  }
+
+  appendInFilter(searchParams, 'id', mediaIds)
 
   return searchParams
 }

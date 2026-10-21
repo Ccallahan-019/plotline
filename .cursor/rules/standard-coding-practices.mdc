@@ -1,0 +1,45 @@
+---
+description: Standard coding practices — keep logic in pure helper functions
+alwaysApply: true
+---
+
+# Standard Coding Practices
+
+Calculations, derivations, formatting, filtering, mapping, and predicates belong in pure helper functions. Components, hooks, route handlers, and other callers invoke those helpers. They do not inline the logic.
+
+A helper is pure when the same arguments always produce the same result, it does not read or write React state, and it does not perform I/O. Pass time, randomness, and loaded records in as arguments. Do not mutate arguments; return a new value.
+
+Name the helper for the result the caller gets (`episodesRemaining`, `formatActivityClock`), and keep it next to the feature that owns the rule (usually a `services/` module). Document it the way that module requires.
+
+## Encapsulate logic in pure helpers
+
+```typescript
+// ❌ BAD — progress math and copy are trapped in the component
+export function ContinueWatchingRow({ item }: { item: ContinueWatchingItem }) {
+  const remaining = Math.max(item.episodeCount - item.episodesWatched, 0)
+  const label = remaining === 1 ? '1 episode left' : `${remaining} episodes left`
+
+  return <CardDescription>{label}</CardDescription>
+}
+
+// ✅ GOOD — the rule lives in a pure helper; the component only calls it
+/** Episodes still unwatched. Never negative. */
+export function episodesRemaining(episodeCount: number, episodesWatched: number): number {
+  return Math.max(episodeCount - episodesWatched, 0)
+}
+
+/** Short continue-watching label for a remaining-episode count. */
+export function episodesRemainingLabel(remaining: number): string {
+  return remaining === 1 ? '1 episode left' : `${remaining} episodes left`
+}
+
+export function ContinueWatchingRow({ item }: { item: ContinueWatchingItem }) {
+  const label = episodesRemainingLabel(episodesRemaining(item.episodeCount, item.episodesWatched))
+
+  return <CardDescription>{label}</CardDescription>
+}
+```
+
+## Existing code
+
+Refactor opportunistically. When a change touches code that breaks these rules, bring that code into compliance as part of the change. Do not leave a violation in code you are already editing. Limit the refactor to the module you are changing and the helpers it needs. Do not start a repository-wide rewrite only to apply this ruleset.

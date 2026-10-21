@@ -50,7 +50,7 @@ export function FilterBar({ endActions, onApply, visible = true }: FilterBarProp
         />
       </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center gap-2">
         {endActions}
         <ShowFiltersButton />
       </div>

@@ -3,6 +3,7 @@
 import { Activity, Search, Star, Tv, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ShowIf } from '@/components/utils/ShowIf'
 
@@ -31,33 +32,36 @@ export function MediaTitleTabs({ data }: MediaTitleTabsProps) {
 
   return (
     <Tabs onValueChange={handleTabChange} value={tab}>
-      <div className="overflow-x-auto pb-2">
-        <TabsList className="w-max min-w-full justify-start" variant="line">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          {showSeasons ? (
-            <TabsTrigger value="seasons">
-              <Tv />
-              Seasons
+      <ScrollArea>
+        <div className="pb-3.5">
+          <TabsList className="w-max min-w-full justify-start" variant="line">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            {showSeasons ? (
+              <TabsTrigger value="seasons">
+                <Tv />
+                Seasons
+              </TabsTrigger>
+            ) : null}
+            <TabsTrigger value="cast">
+              <UsersRound />
+              Cast & Crew
             </TabsTrigger>
-          ) : null}
-          <TabsTrigger value="cast">
-            <UsersRound />
-            Cast & Crew
-          </TabsTrigger>
-          <TabsTrigger value="activity">
-            <Activity />
-            Your Activity
-          </TabsTrigger>
-          <TabsTrigger value="reviews">
-            <Star />
-            Ratings & Reviews
-          </TabsTrigger>
-          <TabsTrigger value="similar">
-            <Search />
-            Similar
-          </TabsTrigger>
-        </TabsList>
-      </div>
+            <TabsTrigger value="activity">
+              <Activity />
+              Your Activity
+            </TabsTrigger>
+            <TabsTrigger value="reviews">
+              <Star />
+              Ratings & Reviews
+            </TabsTrigger>
+            <TabsTrigger value="similar">
+              <Search />
+              Similar
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
       <TabsContent className="pt-4" value="overview">
         <MediaOverviewTab data={data} onShowCast={() => setTab('cast')} />

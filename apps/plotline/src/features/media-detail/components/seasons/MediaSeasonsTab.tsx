@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { useTvSeasonEpisodes } from '@/features/library/log-watch/hooks/use-tv-season-episodes'
 import { useWatchedEpisodes } from '@/features/library/watch-events/hooks/use-watched-episodes'
 
@@ -44,7 +45,7 @@ export function MediaSeasonsTab({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="min-w-0 overflow-x-auto">
+      <ScrollArea>
         <div className="flex w-max gap-3 px-1 pt-1 pb-4">
           {seasons.map((season) => (
             <MediaSeasonCard
@@ -57,7 +58,9 @@ export function MediaSeasonsTab({
             />
           ))}
         </div>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+
       <MediaSeasonEpisodeList enabled={enabled} query={episodesQuery} selectedSeason={selected} />
     </div>
   )

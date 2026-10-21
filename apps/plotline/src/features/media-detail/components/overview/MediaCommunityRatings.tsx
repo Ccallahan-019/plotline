@@ -1,6 +1,5 @@
+import { RatingStars } from '@/components/ratings/RatingStars'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-import { RatingStars } from '../ratings/RatingStars'
 
 type MediaCommunityRatingsProps = {
   voteAverage: null | number

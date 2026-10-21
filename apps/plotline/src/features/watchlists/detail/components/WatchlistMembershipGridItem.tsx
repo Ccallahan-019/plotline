@@ -58,7 +58,7 @@ export function WatchlistMembershipGridItem({
               {libraryItem ? (
                 <AnimatedStatusBadge
                   animationKey={libraryItem.id.toString()}
-                  className="h-7 rounded-md shadow-sm"
+                  className="h-6.5 rounded-md shadow-sm"
                   status={libraryItem.status}
                   triggerAnimation={isHovered}
                 />

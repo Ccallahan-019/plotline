@@ -9,10 +9,11 @@ import { useOptimisticLogWatchMutation } from './use-optimistic-log-watch-mutati
  *
  * Optimistically patches matching library-item status, movie `progress.watched` /
  * `rewatchCount` (when the cached item is already watched or completed), and TV progress
- * in the grid and lookup caches. `episodesWatched` increases only for pairs missing from
- * the watched-episodes cache and not repeated in this payload. A completed show does not
- * increase the count. Rolls those writes back on error and invalidates library queries
- * when the request settles.
+ * in the grid and lookup caches. A loaded watched-episodes cache also gains the logged
+ * pair, so season pips match the new up-next episode before the refetch. `episodesWatched`
+ * increases only for pairs missing from that cache and not repeated in this payload. A
+ * completed show does not increase the count. Rolls those writes back on error and
+ * invalidates library queries when the request settles.
  *
  * @returns A React Query mutation for `LogWatchInput` → `LogWatchResult`
  */

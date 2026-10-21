@@ -120,6 +120,16 @@ export class TmdbClient {
     })
   }
 
+  /**
+   * Loads page 1 of TMDB's weekly trending list.
+   *
+   * @param mediaType - `movie` or `tv`
+   * @returns Results for `/trending/{mediaType}/week`
+   */
+  async getTrending(mediaType: MediaType): Promise<TmdbSearchResponse> {
+    return this.fetchValidated(`/trending/${mediaType}/week`, tmdbSearchResponseSchema)
+  }
+
   async getTvDetails(id: number): Promise<TmdbTvDetails> {
     return this.fetchValidated(`/tv/${id}`, tmdbTvDetailsSchema, {
       append_to_response: 'external_ids',

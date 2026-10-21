@@ -31,7 +31,7 @@ export function LibraryPagination() {
         scrollTargetId="library-results"
         selector={
           <PageSizeSelector
-            className="min-w-[120px]"
+            className="min-w-30"
             onPageSizeChange={setPageSize}
             pageSize={pageSize}
           />

@@ -32,6 +32,10 @@ export function LogWatchDialog({
   open,
   watchedCoverage,
 }: LogWatchDialogProps) {
+  function handleCancel() {
+    onOpenChange(false)
+  }
+
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-xl">
@@ -44,7 +48,7 @@ export function LogWatchDialog({
           form={form}
           isSubmitting={isSubmitting}
           media={media}
-          onCancel={() => onOpenChange(false)}
+          onCancel={handleCancel}
           watchedCoverage={watchedCoverage}
         />
       </DialogContent>

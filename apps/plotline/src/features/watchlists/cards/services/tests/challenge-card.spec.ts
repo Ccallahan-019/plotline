@@ -27,7 +27,7 @@ describe('getChallengeCardView', () => {
       paceLabel: 'Behind pace · 10 days left',
       paceTone: 'destructive',
       percentComplete: 60,
-      progressLabel: '31 of 52 Titles',
+      progressLabel: '31 of 52 titles',
     })
   })
 
@@ -54,7 +54,7 @@ describe('getChallengeCardView', () => {
       }),
     )
 
-    expect(films.progressLabel).toBe('31 of 52 Films')
+    expect(films.progressLabel).toBe('31 of 52 films')
     expect(hours.progressLabel).toBe('38 of 100 hrs')
   })
 
@@ -69,7 +69,7 @@ describe('getChallengeCardView', () => {
     expect(view.paceLabel).toBe('Not started')
     expect(view.paceTone).toBe('neutral')
     expect(view.percentComplete).toBe(0)
-    expect(view.progressLabel).toBe('0 of 52 Titles')
+    expect(view.progressLabel).toBe('0 of 52 titles')
   })
 
   it('reports overdue from the stats status', () => {
