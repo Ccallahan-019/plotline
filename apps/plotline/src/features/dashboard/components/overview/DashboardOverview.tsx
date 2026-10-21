@@ -1,6 +1,5 @@
 'use client'
 
-import type { DashboardRecommendations, TrendingTitles } from '@/features/dashboard/types'
 import type { LibraryItemsResponse } from '@/features/library/library-grid/types'
 
 import { DashboardChallengeSpotlight } from '@/features/dashboard/components/overview/challenge/DashboardChallengeSpotlight'
@@ -17,15 +16,9 @@ import { DashboardWatchlists } from '@/features/dashboard/components/overview/wa
 
 type DashboardOverviewProps = {
   continueWatching?: LibraryItemsResponse
-  recommendations?: DashboardRecommendations
-  trending?: TrendingTitles
 }
 
-export function DashboardOverview({
-  continueWatching,
-  recommendations,
-  trending,
-}: DashboardOverviewProps) {
+export function DashboardOverview({ continueWatching }: DashboardOverviewProps) {
   return (
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_28rem]">
       <div className="flex min-w-0 flex-col gap-6">
@@ -38,8 +31,8 @@ export function DashboardOverview({
       <div className="flex min-w-0 flex-col gap-6">
         <DashboardWatchlists />
         <DashboardStreaksSection />
-        <DashboardTrendingCard initialData={trending} />
-        <DashboardRecommendationsCard initialData={recommendations} />
+        <DashboardTrendingCard />
+        <DashboardRecommendationsCard />
       </div>
     </div>
   )

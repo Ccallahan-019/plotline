@@ -11,8 +11,9 @@ import { buildDashboardSummary, countCompletedChallenges } from './summary'
 /**
  * Computes the dashboard year summary for the signed-in profile.
  *
- * Watch events, reviews, completed films, and challenge lists are loaded, then
- * the pure summary math applies the requested year and timezone.
+ * Watch events and reviews load only the fields the math reads, alongside the completed
+ * film count and challenge lists. The pure summary math then applies the requested year
+ * and timezone.
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
  * @param filters - Calendar year and IANA timezone
@@ -26,8 +27,10 @@ export async function getDashboardSummary(
   now = new Date(),
 ): Promise<DashboardSummary> {
   const [events, reviews, filmsCompleted, challenges] = await Promise.all([
-    loadWatchEvents(clerkUserId, 0),
-    loadReviews(clerkUserId, 0),
+    loadWatchEvents(clerkUserId, 0, {
+      select: ['eventType', 'media', 'runtimeMinutes', 'watchedAt'],
+    }),
+    loadReviews(clerkUserId, 0, { select: ['rating', 'updatedAt'] }),
     countCompletedFilms(clerkUserId),
     loadChallengeWatchlists(clerkUserId),
   ])

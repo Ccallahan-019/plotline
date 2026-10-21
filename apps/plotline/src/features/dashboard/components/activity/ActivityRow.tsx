@@ -36,7 +36,7 @@ export function ActivityRow({ isFirst, isLast, row, timeZone }: ActivityRowProps
             <ActivityRowRating filterKind={row.filterKind} rating={row.rating} />
           </div>
           <ActivityRowDetail detail={row.detail} filterKind={row.filterKind} />
-          <ActivityChallengeBar detail={row.detail} filterKind={row.filterKind} />
+          <ActivityChallengeBar filterKind={row.filterKind} progress={row.progress} />
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <ActivityMediaTypeBadge mediaType={row.mediaType} />

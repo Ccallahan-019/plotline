@@ -22,7 +22,8 @@ export async function GET() {
   try {
     const trending = await getTrendingTitles(createTmdbClient(accessToken))
 
-    return NextResponse.json(trending)
+    // The weekly chart is the same for everyone and moves slowly, so let the browser reuse it.
+    return NextResponse.json(trending, { headers: { 'Cache-Control': 'private, max-age=3600' } })
   } catch (error) {
     if (error instanceof TmdbError) {
       return tmdbErrorResponse(error, { notFound: 'Trending titles are unavailable' })

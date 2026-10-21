@@ -1,17 +1,14 @@
 import { Progress } from '@/components/ui/progress'
 
 import { activityChallengePercent } from '../../services/activity-display'
-import { DashboardActivityFilterKind } from '../../types'
+import { DashboardActivityRow } from '../../types'
 
-type ActivityChallengeBarProps = {
-  detail: null | string
-  filterKind: DashboardActivityFilterKind
-}
+type ActivityChallengeBarProps = Pick<DashboardActivityRow, 'filterKind' | 'progress'>
 
-export function ActivityChallengeBar({ detail, filterKind }: ActivityChallengeBarProps) {
-  const percent = activityChallengePercent({ detail, filterKind })
+export function ActivityChallengeBar({ filterKind, progress }: ActivityChallengeBarProps) {
+  const percent = activityChallengePercent({ filterKind, progress })
 
-  if (percent == null || detail == null) {
+  if (percent == null) {
     return null
   }
 

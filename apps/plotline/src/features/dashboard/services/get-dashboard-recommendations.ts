@@ -19,7 +19,7 @@ import {
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
  * @param client - TMDB client used for each seed's recommendations
- * @returns Seeds, why they were chosen, and up to two posters
+ * @returns Seeds, why they were chosen, and up to four posters
  * @throws When a Payload request fails, or every TMDB recommendation call fails
  */
 export async function getDashboardRecommendations(

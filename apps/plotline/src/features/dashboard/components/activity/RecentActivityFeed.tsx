@@ -5,7 +5,7 @@ import { activitySelectedDay } from '@/features/dashboard/services/activity-disp
 
 import { ActivityFilters } from './ActivityFilters'
 import { ActivityViewingYear } from './ActivityViewingYear'
-import { RecetActivityFeedContent } from './RecetActivityFeedContent'
+import { RecentActivityFeedContent } from './RecentActivityFeedContent'
 
 type RecentActivityFeedProps = {
   timeZone: string
@@ -57,7 +57,7 @@ export function RecentActivityFeed({ timeZone }: RecentActivityFeedProps) {
           />
         </div>
 
-        <RecetActivityFeedContent
+        <RecentActivityFeedContent
           hasNextPage={hasNextPage}
           isError={isError}
           isFetchingNextPage={isFetchingNextPage}

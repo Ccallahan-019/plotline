@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { MediaPoster } from '@/components/media/MediaPoster'
 import { RatingStars } from '@/components/ratings/RatingStars'
+import { Badge } from '@/components/ui/badge'
 import {
   Item,
   ItemActions,
@@ -19,6 +20,8 @@ import {
 import { DashboardActivityRow } from '@/features/dashboard/types'
 import { tmdbMediaUrl } from '@/lib/tmdb/tmdb-media-url'
 import { cn } from '@/lib/utils'
+
+const WATCHED_LABEL = 'Watched'
 
 type DashboardRecentlyWatchedRowProps = {
   row: DashboardActivityRow
@@ -45,21 +48,9 @@ export function DashboardRecentlyWatchedRow({ row }: DashboardRecentlyWatchedRow
 
         <EpisodeDetail detail={row.detail} lookup={episodeLookup} mediaType={row.mediaType} />
       </ItemContent>
-      <ShowIf condition={row.filterKind === 'watched'}>
-        <ItemActions>
-          <div className="flex items-center gap-2">
-            {/* Stand in for inline ratings until ratings are implemented */}
-            <RatingStars ratingOutOfTen={row.rating ?? 0} />
-            <span
-              className={cn(
-                hasRating ? 'text-foreground text-sm' : 'text-muted-foreground text-xs',
-              )}
-            >
-              {ratingText}
-            </span>
-          </div>
-        </ItemActions>
-      </ShowIf>
+      <ItemActions>
+        <RowTrailing hasRating={hasRating} ratingText={ratingText} row={row} />
+      </ItemActions>
     </Item>
   )
 }
@@ -109,5 +100,30 @@ function RowTitle({ href, title }: { href: null | string; title: string }) {
     <Link href={href}>
       <ItemTitle className="text-base">{title}</ItemTitle>
     </Link>
+  )
+}
+
+// Dropped and on-hold events stay in the watched feed, so they show their status in place of a rating.
+function RowTrailing({
+  hasRating,
+  ratingText,
+  row,
+}: {
+  hasRating: boolean
+  ratingText: string
+  row: DashboardActivityRow
+}) {
+  if (row.label !== WATCHED_LABEL) {
+    return <Badge variant="secondary">{row.label}</Badge>
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Stand in for inline ratings until ratings are implemented */}
+      <RatingStars ratingOutOfTen={row.rating ?? 0} />
+      <span className={cn(hasRating ? 'text-foreground text-sm' : 'text-muted-foreground text-xs')}>
+        {ratingText}
+      </span>
+    </div>
   )
 }

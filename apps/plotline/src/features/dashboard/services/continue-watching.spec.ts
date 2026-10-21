@@ -207,6 +207,25 @@ describe('sortContinueWatchingItems', () => {
       1, 3, 4, 2,
     ])
   })
+
+  it('breaks almost-done ties between films by last watched', () => {
+    const films = [
+      progressRow({
+        id: 1,
+        lastWatchedAt: '2026-10-01T00:00:00.000Z',
+        mediaType: 'movie',
+        percent: 50,
+      }),
+      progressRow({
+        id: 2,
+        lastWatchedAt: '2026-10-11T00:00:00.000Z',
+        mediaType: 'movie',
+        percent: 50,
+      }),
+    ]
+
+    expect(sortContinueWatchingItems(films, 'almost-done').map((item) => item.id)).toEqual([2, 1])
+  })
 })
 
 describe('continueWatchingEpisodeLookup', () => {

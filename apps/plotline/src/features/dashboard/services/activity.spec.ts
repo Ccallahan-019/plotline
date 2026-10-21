@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import type { ActivityChallengeInput, ActivityEventInput, ActivityReviewInput } from './activity'
 
-import { buildActivityRows, groupActivityRows, selectActivityPage } from './activity'
+import {
+  activityRangeBounds,
+  buildActivityRows,
+  groupActivityRows,
+  selectActivityPage,
+} from './activity'
 
 const TIME_ZONE = 'UTC'
 
@@ -92,6 +97,7 @@ describe('buildActivityRows', () => {
       href: '/dashboard/challenges/2026-films',
       label: 'Challenge',
       occurredAt: '2026-10-01T12:00:00.000Z',
+      progress: { completed: 31, goal: 52, label: '31 / 52' },
       title: '2026 films',
     })
   })
@@ -125,6 +131,7 @@ describe('buildActivityRows', () => {
 
     expect(titles[0]?.detail).toBe('52 titles in 2026 · 31 / 52')
     expect(hours[0]?.detail).toBe('100 hours in 2026 · 38 / 100')
+    expect(hours[0]?.progress).toEqual({ completed: 38, goal: 100, label: '38 / 100' })
   })
 
   it('emits film milestones for completed movies and ignores series', () => {
@@ -407,6 +414,7 @@ function labeled(occurredAt: string) {
     mediaType: 'movie' as const,
     occurredAt,
     posterPath: null,
+    progress: null,
     rating: null,
     season: null,
     title: occurredAt,
@@ -443,3 +451,60 @@ function watch(
     ...overrides,
   }
 }
+
+describe('activityRangeBounds', () => {
+  const today = { day: 14, month: 10, year: 2026 }
+
+  it('leaves all-time open on both sides', () => {
+    expect(activityRangeBounds({ type: 'all' }, today)).toEqual({ from: null, to: null })
+  })
+
+  it('pads the start of a rolling window by a day', () => {
+    expect(activityRangeBounds({ days: 7, type: 'rolling' }, today)).toEqual({
+      from: '2026-10-07T00:00:00.000Z',
+      to: null,
+    })
+  })
+
+  it('starts the year the day before January 1', () => {
+    expect(activityRangeBounds({ type: 'year' }, today)).toEqual({
+      from: '2025-12-31T00:00:00.000Z',
+      to: null,
+    })
+  })
+
+  it('brackets a single day on both sides', () => {
+    expect(activityRangeBounds({ date: '2026-03-01', type: 'date' }, today)).toEqual({
+      from: '2026-02-28T00:00:00.000Z',
+      to: '2026-03-03T00:00:00.000Z',
+    })
+  })
+})
+
+describe('buildActivityRows milestones', () => {
+  it('skips the milestone scan when asked', () => {
+    const events = Array.from({ length: 10 }, (_, index) =>
+      watch({
+        id: index + 1,
+        watchedAt: `2026-10-${String(index + 1).padStart(2, '0')}T12:00:00.000Z`,
+      }),
+    )
+    const withMilestones = buildActivityRows({
+      challenges: [],
+      events,
+      reviews: [],
+      timeZone: TIME_ZONE,
+    })
+    const without = buildActivityRows({
+      challenges: [],
+      events,
+      includeMilestones: false,
+      reviews: [],
+      timeZone: TIME_ZONE,
+    })
+
+    expect(withMilestones.some((row) => row.filterKind === 'milestone')).toBe(true)
+    expect(without.some((row) => row.filterKind === 'milestone')).toBe(false)
+    expect(without).toHaveLength(10)
+  })
+})

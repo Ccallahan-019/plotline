@@ -93,8 +93,32 @@ describe('buildDashboardSummary', () => {
     expect(summary.heatmap.activeDays).toBe(7)
     expect(summary.heatmap.longestStreak).toBe(3)
     expect(summary.heatmap.titlesThisYear).toBe(5)
-    expect(summary.heatmap.busiestDay).toEqual({ count: 2, date: '2026-01-15' })
+    expect(summary.heatmap.busiestDay).toEqual({ count: 1, date: '2026-03-03' })
+    expect(summary.heatmap.days.find((day) => day.date === '2026-01-15')?.count).toBe(1)
     expect(summary.heatmap.days.find((day) => day.date === '2026-01-01')?.count).toBe(0)
+  })
+
+  it('counts distinct titles per heatmap day, not events', () => {
+    const summary = buildDashboardSummary({
+      challengesCompleted: 0,
+      events: [
+        event({ mediaId: 1, watchedAt: '2026-05-10T15:00:00.000Z' }),
+        event({ mediaId: 1, watchedAt: '2026-05-10T16:00:00.000Z' }),
+        event({ mediaId: 1, watchedAt: '2026-05-10T17:00:00.000Z' }),
+        event({ mediaId: 2, watchedAt: '2026-05-10T18:00:00.000Z' }),
+        event({ eventType: 'dropped', mediaId: 3, watchedAt: '2026-05-11T18:00:00.000Z' }),
+      ],
+      filmsCompleted: 0,
+      now: new Date('2026-06-01T15:00:00.000Z'),
+      reviews: [],
+      timeZone: TIME_ZONE,
+      year: 2026,
+    })
+
+    expect(summary.heatmap.days.find((day) => day.date === '2026-05-10')?.count).toBe(2)
+    expect(summary.heatmap.days.find((day) => day.date === '2026-05-11')?.count).toBe(1)
+    expect(summary.heatmap.busiestDay).toEqual({ count: 2, date: '2026-05-10' })
+    expect(summary.heatmap.activeDays).toBe(2)
   })
 
   it('lets the current streak cross New Year while the year streak stays inside the year', () => {

@@ -8,7 +8,7 @@ import { alsoInProgressCountLabel } from '@/features/dashboard/services/continue
 
 import { DashboardWidgetError } from '../../state/DashboardWidgetError'
 import { DashboardWidgetSkeleton } from '../../state/DashboardWidgetSkeleton'
-import { AlsoInProgessContent } from '../also-in-progress/AlsoInProgessContent'
+import { AlsoInProgressContent } from '../also-in-progress/AlsoInProgressContent'
 import { AlsoInProgressFilter } from '../also-in-progress/AlsoInProgressFilter'
 import { ContinueWatchingHeroCard } from '../hero/ContinueWatchingHeroCard'
 import { ContinueWatchingEmpty } from './ContinueWatchingEmpty'
@@ -77,7 +77,7 @@ function ContinueWatchingBody({ initialData }: ContinueWatchingPageProps) {
           <ContinueWatchingSortSelector setSort={setSort} sort={sort} />
         </div>
         <AlsoInProgressFilter counts={counts} mediaType={mediaType} setMediaType={setMediaType} />
-        <AlsoInProgessContent
+        <AlsoInProgressContent
           alsoInProgress={alsoInProgress}
           libraryItems={libraryItems}
           mediaType={mediaType}

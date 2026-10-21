@@ -32,21 +32,23 @@ type ActivityRowCopy = Pick<DashboardActivityRow, 'detail' | 'filterKind'>
 /**
  * Fill percent for a challenge snapshot, from 0 through 100.
  *
- * Snapshots end in `completed / goal`, including decimal hours. The bar caps
- * at full when the snapshot is already past the goal.
+ * Reads the row's structured progress, which may be in decimal hours. The bar
+ * caps at full when the snapshot is already past the goal.
  *
- * @param row.detail - Snapshot such as `52 films in 2026 · 31 / 52`
  * @param row.filterKind - Row kind after classification
- * @returns The capped percent, or null when the row has no challenge fraction
+ * @param row.progress - Completed and goal from the challenge snapshot
+ * @returns The capped percent, or null when the row has no usable goal
  */
-export function activityChallengePercent(row: ActivityRowCopy): null | number {
-  const fraction = row.filterKind === 'challenge' ? challengeFraction(row.detail) : null
+export function activityChallengePercent(
+  row: Pick<DashboardActivityRow, 'filterKind' | 'progress'>,
+): null | number {
+  const progress = row.filterKind === 'challenge' ? row.progress : null
 
-  if (!fraction) {
+  if (!progress || !Number.isFinite(progress.completed) || !(progress.goal > 0)) {
     return null
   }
 
-  return Math.min(100, (fraction.completed / fraction.goal) * 100)
+  return Math.min(100, (progress.completed / progress.goal) * 100)
 }
 
 /**
@@ -84,21 +86,19 @@ export function activityRangeOptions(range: string): ActivityRangeOption[] {
  * A challenge uses its name and the completed/goal fraction (`Form Check · 1 / 5`).
  * The goal wording and year stay off the row. Every other kind uses the title.
  *
- * @param row.detail - Snapshot such as `5 titles in 2026 · 1 / 5`, when the row has one
  * @param row.filterKind - Row kind after classification
+ * @param row.progress - Challenge fraction, such as `1 / 5`, when the row has one
  * @param row.title - Challenge, milestone, or media title
  * @returns The headline after the kind label
  */
 export function activityRowHeadline(
-  row: ActivityRowCopy & Pick<DashboardActivityRow, 'title'>,
+  row: Pick<DashboardActivityRow, 'filterKind' | 'progress' | 'title'>,
 ): string {
-  if (row.filterKind !== 'challenge') {
+  if (row.filterKind !== 'challenge' || !row.progress) {
     return row.title
   }
 
-  const fraction = challengeFraction(row.detail)
-
-  return fraction ? `${row.title} · ${fraction.label}` : row.title
+  return `${row.title} · ${row.progress.label}`
 }
 
 /**
@@ -175,25 +175,6 @@ export function heatmapFooterFigures(heatmap: DashboardHeatmap): HeatmapFooterFi
     { label: 'Busiest Day', value: formatHeatmapBusiestDay(heatmap.busiestDay) },
     { label: 'Titles This Year', value: formatDashboardCount(heatmap.titlesThisYear) },
   ]
-}
-
-// Completed and goal from the end of a challenge snapshot, such as `1 / 5` or `0.5 / 1.5`.
-function challengeFraction(
-  detail: null | string,
-): { completed: number; goal: number; label: string } | null {
-  if (detail == null) {
-    return null
-  }
-
-  const match = /(\d+(?:\.\d+)?) \/ (\d+(?:\.\d+)?)$/.exec(detail)
-  const completed = match ? Number(match[1]) : Number.NaN
-  const goal = match ? Number(match[2]) : Number.NaN
-
-  if (!match || !Number.isFinite(completed) || !Number.isFinite(goal) || goal <= 0) {
-    return null
-  }
-
-  return { completed, goal, label: `${match[1]} / ${match[2]}` }
 }
 
 // Month and day of the busiest heatmap day, or an em dash when the year has no titles.

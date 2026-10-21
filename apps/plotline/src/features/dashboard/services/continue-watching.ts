@@ -342,10 +342,11 @@ export function toContinueWatchingItems(
   return rows
 }
 
-// Films sort after every series, including series with no known percent.
+// Films sort after every series, including series with no known percent (rank 0).
+// A finite rank keeps two films equal instead of subtracting infinities into NaN.
 function almostDoneRank(item: ContinueWatchingItem): number {
   if (item.mediaType === 'movie') {
-    return Number.NEGATIVE_INFINITY
+    return -1
   }
 
   return item.percent ?? 0

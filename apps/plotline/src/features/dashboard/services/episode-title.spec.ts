@@ -88,6 +88,7 @@ function row(overrides: Partial<DashboardActivityRow>): DashboardActivityRow {
     mediaType: 'tv',
     occurredAt: '2026-10-01T12:00:00.000Z',
     posterPath: null,
+    progress: null,
     rating: null,
     season: null,
     title: 'The Show',

@@ -17,11 +17,5 @@ export default async function DashboardPage() {
 
   const initial = await getInitialDashboardOverview(userId)
 
-  return (
-    <DashboardOverview
-      continueWatching={initial.continueWatching}
-      recommendations={initial.recommendations}
-      trending={initial.trending}
-    />
-  )
+  return <DashboardOverview continueWatching={initial.continueWatching} />
 }

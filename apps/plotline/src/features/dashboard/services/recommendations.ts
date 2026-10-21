@@ -63,10 +63,10 @@ export function libraryMediaKeys(
  *
  * Pages are read in seed order. Titles already in the library, the seeds
  * themselves, and duplicate recommendations are dropped. The result stops at
- * two posters.
+ * `limit` posters (four by default).
  *
  * @param input.libraryKeys - Keys from `libraryMediaKeys`
- * @param input.limit - Maximum posters. Defaults to two
+ * @param input.limit - Maximum posters. Defaults to four
  * @param input.pages - Recommendation pages aligned with the seed order
  * @param input.seeds - Seed titles, which are not recommended back
  * @returns Posters for the overview card

@@ -9,7 +9,7 @@ const UP_NEXT_LIMIT = 6
  * This does not promote the stalled continue-watching hero ahead of newer titles.
  *
  * @param items - Watching rows from `toContinueWatchingItems`, in any order
- * @returns At most five rows, newest watch first
+ * @returns At most six rows, newest watch first
  */
 export function selectUpNextItems(items: readonly ContinueWatchingItem[]): ContinueWatchingItem[] {
   return [...items].sort(compareRecentlyWatched).slice(0, UP_NEXT_LIMIT)

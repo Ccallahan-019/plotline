@@ -12,7 +12,7 @@ import { DashboardWidgetSkeleton } from '../state/DashboardWidgetSkeleton'
 import { RecentActivityEmpty } from './RecentActivityEmpty'
 import { RecentActivityResults } from './RecentActivityResults'
 
-type RecetActivityFeedContentProps = {
+type RecentActivityFeedContentProps = {
   hasNextPage: boolean
   isError: boolean
   isFetchingNextPage: boolean
@@ -27,7 +27,7 @@ type RecetActivityFeedContentProps = {
   timeZone: string
 }
 
-export function RecetActivityFeedContent({
+export function RecentActivityFeedContent({
   hasNextPage,
   isError,
   isFetchingNextPage,
@@ -40,7 +40,7 @@ export function RecetActivityFeedContent({
   range,
   rows,
   timeZone,
-}: RecetActivityFeedContentProps) {
+}: RecentActivityFeedContentProps) {
   if (isLoading) {
     return <DashboardWidgetSkeleton className="h-80" />
   }

@@ -1,7 +1,5 @@
 'use client'
 
-import type { DashboardRecommendations } from '@/features/dashboard/types'
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { useDashboardRecommendations } from '@/features/dashboard/hooks/use-dashboard-recommendations'
@@ -9,12 +7,8 @@ import { useDashboardRecommendations } from '@/features/dashboard/hooks/use-dash
 import { DashboardRecommendationsCardContent } from './DashboardRecommendationsCardContent'
 import { DashboardRecommendationsCardDescription } from './DashboardRecommendationsCardDescription'
 
-type DashboardRecommendationsCardProps = {
-  initialData?: DashboardRecommendations
-}
-
-export function DashboardRecommendationsCard({ initialData }: DashboardRecommendationsCardProps) {
-  const query = useDashboardRecommendations({ initialData })
+export function DashboardRecommendationsCard() {
+  const query = useDashboardRecommendations()
 
   if (query.data && query.data.seeds.length === 0) {
     return null

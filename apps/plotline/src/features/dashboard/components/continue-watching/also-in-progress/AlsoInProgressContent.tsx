@@ -6,17 +6,17 @@ import {
 } from '../../../services/continue-watching'
 import { ContinueWatchingItemRow } from './ContinueWatchingItemRow'
 
-type AlsoInProgessContentProps = {
+type AlsoInProgressContentProps = {
   alsoInProgress: ContinueWatchingItem[]
   libraryItems: ReadonlyMap<number, LibraryItem>
   mediaType: ContinueWatchingTypeFilter
 }
 
-export function AlsoInProgessContent({
+export function AlsoInProgressContent({
   alsoInProgress,
   libraryItems,
   mediaType,
-}: AlsoInProgessContentProps) {
+}: AlsoInProgressContentProps) {
   if (alsoInProgress.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">

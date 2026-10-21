@@ -12,7 +12,7 @@ describe('formatChallengeProgress', () => {
         totalEligible: 40,
         variant: 'card',
       }),
-    ).toBe('31 of 52 Titles')
+    ).toBe('31 of 52 titles')
   })
 
   it('formats a count goal for the detail hero', () => {
@@ -24,7 +24,7 @@ describe('formatChallengeProgress', () => {
         totalEligible: 40,
         variant: 'detail',
       }),
-    ).toBe('31 / 52 Titles')
+    ).toBe('31 / 52 titles')
   })
 
   it('uses films when the TV rule is movies only', () => {
@@ -37,7 +37,7 @@ describe('formatChallengeProgress', () => {
         tvCountRule: 'movies_only',
         variant: 'card',
       }),
-    ).toBe('31 of 52 Films')
+    ).toBe('31 of 52 films')
   })
 
   it('falls back to total eligible titles when the count goal is unset', () => {
@@ -48,7 +48,7 @@ describe('formatChallengeProgress', () => {
         totalEligible: 10,
         variant: 'detail',
       }),
-    ).toBe('3 / 10 Titles')
+    ).toBe('3 / 10 titles')
   })
 
   it('formats runtime minutes as hours and keeps whole hours as integers', () => {
@@ -129,7 +129,7 @@ describe('formatChallengeProgress', () => {
         totalEligible: 2000,
         variant: 'card',
       }),
-    ).toBe('1,000 of 2,000 Titles')
+    ).toBe('1,000 of 2,000 titles')
   })
 })
 
@@ -145,7 +145,7 @@ describe('getChallengeMetaLabels', () => {
     ).toEqual([
       { label: 'Goal type', value: 'Count' },
       { label: 'Due date', value: 'Dec 31, 2026' },
-      { label: 'TV counting', value: 'By Episode' },
+      { label: 'TV counting', value: 'By episode' },
       { label: 'Rewatches', value: 'Excluded' },
     ])
   })
@@ -161,7 +161,7 @@ describe('getChallengeMetaLabels', () => {
     ).toEqual([
       { label: 'Goal type', value: 'Runtime' },
       { label: 'Due date', value: 'Jun 1, 2026' },
-      { label: 'TV counting', value: 'Movies Only' },
+      { label: 'TV counting', value: 'Movies only' },
       { label: 'Rewatches', value: 'Included' },
     ])
   })
@@ -170,7 +170,7 @@ describe('getChallengeMetaLabels', () => {
     expect(getChallengeMetaLabels({})).toEqual([
       { label: 'Goal type', value: 'Count' },
       { label: 'Due date', value: '—' },
-      { label: 'TV counting', value: 'As a Series' },
+      { label: 'TV counting', value: 'As a series' },
       { label: 'Rewatches', value: 'Excluded' },
     ])
   })
@@ -178,11 +178,11 @@ describe('getChallengeMetaLabels', () => {
   it('names the remaining TV counting rules', () => {
     expect(getChallengeMetaLabels({ tvCountRule: 'tv_as_series' })[2]).toEqual({
       label: 'TV counting',
-      value: 'As a Series',
+      value: 'As a series',
     })
     expect(getChallengeMetaLabels({ tvCountRule: 'tv_by_season' })[2]).toEqual({
       label: 'TV counting',
-      value: 'By Season',
+      value: 'By season',
     })
   })
 

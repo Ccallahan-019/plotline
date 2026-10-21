@@ -1,6 +1,7 @@
 import type { MediaType, WatchEventType } from '@plotline/shared/constants'
 
 import type {
+  ActivityChallengeProgress,
   DashboardActivityGroup,
   DashboardActivityKind,
   DashboardActivityMediaType,
@@ -105,6 +106,52 @@ type ActivityMedia = {
 }
 
 /**
+ * UTC instants that safely bracket a range's days for a database filter.
+ *
+ * Local day boundaries sit up to 14 hours from UTC midnight, so each bound is
+ * padded by a whole day. Rows outside the bracket cannot match the range, and
+ * rows inside it still need the exact `matchesRange` check. Rolling and year
+ * ranges have no upper bound.
+ *
+ * @param range - Range from the activity query
+ * @param today - Current calendar day in the request timezone
+ * @returns ISO lower and upper bounds, each null when the range does not limit that side
+ */
+export function activityRangeBounds(
+  range: DashboardActivityRange,
+  today: CalendarDate,
+): { from: null | string; to: null | string } {
+  switch (range.type) {
+    case 'all':
+      return { from: null, to: null }
+    case 'date': {
+      const day = parseCalendarDateKey(range.date)
+
+      if (!day) {
+        return { from: null, to: null }
+      }
+
+      return {
+        from: utcDayStart(addCalendarDays(day, -1)),
+        to: utcDayStart(addCalendarDays(day, 2)),
+      }
+    }
+    case 'rolling':
+      return { from: utcDayStart(addCalendarDays(today, -range.days)), to: null }
+    case 'year':
+      return {
+        from: utcDayStart(addCalendarDays({ day: 1, month: 1, year: today.year }, -1)),
+        to: null,
+      }
+    default: {
+      const exhaustive: never = range
+
+      return exhaustive
+    }
+  }
+}
+
+/**
  * Builds every activity row for a profile, newest first.
  *
  * Watch events use the label Watched, except `dropped` and `on_hold`, which keep
@@ -116,6 +163,7 @@ type ActivityMedia = {
  *
  * @param input.challenges - Profile watchlists; disabled challenges and caches without a timestamp are skipped
  * @param input.events - Watch events used for rows and for milestone scanning
+ * @param input.includeMilestones - Set false to skip the milestone scan when the caller will filter those rows out. Defaults to true
  * @param input.reviews - Profile reviews; a trimmed body makes the row Reviewed
  * @param input.timeZone - IANA zone used when streak milestones cross calendar days
  * @returns Timeline rows sorted newest first
@@ -123,6 +171,7 @@ type ActivityMedia = {
 export function buildActivityRows(input: {
   challenges: readonly ActivityChallengeInput[]
   events: readonly ActivityEventInput[]
+  includeMilestones?: boolean
   reviews: readonly ActivityReviewInput[]
   timeZone: string
 }): DashboardActivityRow[] {
@@ -131,7 +180,7 @@ export function buildActivityRows(input: {
     ...watchRows(input.events, ratings),
     ...reviewRows(input.reviews),
     ...challengeRows(input.challenges),
-    ...milestoneRows(input.events, input.timeZone),
+    ...(input.includeMilestones === false ? [] : milestoneRows(input.events, input.timeZone)),
   ]
 
   return rows.sort(compareActivityRows)
@@ -235,14 +284,12 @@ export function selectActivityPage(
   }
 
   const today = calendarDateInTimeZone(now, query.timeZone)
-  const filtered = [...rows]
-    .filter(
-      (row) =>
-        matchesKind(row, query.kind) &&
-        matchesMediaType(row, query.mediaType) &&
-        matchesRange(row, query.range, today, query.timeZone),
-    )
-    .sort(compareActivityRows)
+  const filtered = rows.filter(
+    (row) =>
+      matchesKind(row, query.kind) &&
+      matchesMediaType(row, query.mediaType) &&
+      matchesRange(row, query.range, today, query.timeZone),
+  )
   const afterCursor = cursor ? filtered.filter((row) => isAfterCursor(row, cursor)) : filtered
   const pageRows = afterCursor.slice(0, query.limit)
   const lastRow = pageRows.at(-1)
@@ -319,8 +366,10 @@ function challengeRows(challenges: readonly ActivityChallengeInput[]): Dashboard
       continue
     }
 
+    const snapshot = challengeSnapshot(challenge)
+
     rows.push({
-      detail: formatChallengeSnapshot(challenge),
+      detail: snapshot.detail,
       episode: null,
       filterKind: 'challenge',
       href: `/dashboard/challenges/${encodeURIComponent(challenge.slug)}`,
@@ -329,6 +378,7 @@ function challengeRows(challenges: readonly ActivityChallengeInput[]): Dashboard
       mediaType: null,
       occurredAt,
       posterPath: null,
+      progress: snapshot.progress,
       rating: null,
       season: null,
       title: challenge.name,
@@ -337,6 +387,42 @@ function challengeRows(challenges: readonly ActivityChallengeInput[]): Dashboard
   }
 
   return rows
+}
+
+// `52 films in 2026 · 31 / 52` plus the same fraction as numbers, so the bar never re-reads
+// the text. Runtime goals use hours on both sides of the fraction.
+function challengeSnapshot(watchlist: ActivityChallengeInput): {
+  detail: string
+  progress: ActivityChallengeProgress
+} {
+  const challenge = watchlist.challenge
+  const stats = watchlist.statsCache
+  const year = challengeYear(challenge?.dueDate) ?? challengeYear(challenge?.startDate)
+  const yearSuffix = year ? ` in ${year}` : ''
+
+  if (isRuntimeGoal(challenge, stats)) {
+    const goalMinutes =
+      stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes ?? stats?.totalEligible ?? 0
+    const goal = roundedHours(goalMinutes)
+    const completed = roundedHours(stats?.completed ?? 0)
+    const goalHours = formatHourCount(goal)
+    const label = `${formatHourCount(completed)} / ${goalHours}`
+
+    return {
+      detail: `${goalHours} hours${yearSuffix} · ${label}`,
+      progress: { completed, goal, label },
+    }
+  }
+
+  const goal = stats?.goalCount ?? challenge?.goalCount ?? stats?.totalEligible ?? 0
+  const completed = stats?.completed ?? 0
+  const unit = challenge?.tvCountRule === 'movies_only' ? 'films' : 'titles'
+  const label = `${completed} / ${goal}`
+
+  return {
+    detail: `${goal} ${unit}${yearSuffix} · ${label}`,
+    progress: { completed, goal, label },
+  }
 }
 
 // Leading year of a challenge date, when the value starts with four digits.
@@ -463,32 +549,8 @@ function filmMilestones(events: readonly ActivityEventInput[]): DashboardActivit
   return rows
 }
 
-// `52 films in 2026 · 31 / 52`. Runtime goals use hours on both sides of the fraction.
-function formatChallengeSnapshot(watchlist: ActivityChallengeInput): string {
-  const challenge = watchlist.challenge
-  const stats = watchlist.statsCache
-  const year = challengeYear(challenge?.dueDate) ?? challengeYear(challenge?.startDate)
-  const yearSuffix = year ? ` in ${year}` : ''
-
-  if (isRuntimeGoal(challenge, stats)) {
-    const goalMinutes =
-      stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes ?? stats?.totalEligible ?? 0
-    const goalHours = formatHourCount(goalMinutes)
-    const completedHours = formatHourCount(stats?.completed ?? 0)
-
-    return `${goalHours} hours${yearSuffix} · ${completedHours} / ${goalHours}`
-  }
-
-  const goal = stats?.goalCount ?? challenge?.goalCount ?? stats?.totalEligible ?? 0
-  const unit = challenge?.tvCountRule === 'movies_only' ? 'films' : 'titles'
-
-  return `${goal} ${unit}${yearSuffix} · ${stats?.completed ?? 0} / ${goal}`
-}
-
 // Whole hours stay integers. Any other duration shows one decimal hour.
-function formatHourCount(minutes: number): string {
-  const hours = Math.round((Math.max(0, minutes) / 60) * 10) / 10
-
+function formatHourCount(hours: number): string {
   return Number.isInteger(hours) ? String(hours) : hours.toFixed(1)
 }
 
@@ -577,10 +639,7 @@ function isRuntimeGoal(
 }
 
 // Earliest and latest row dates in the collapsed previous week. One day omits the span.
-function lastWeekDateLabel(
-  rows: readonly DashboardActivityRow[],
-  timeZone: string,
-): null | string {
+function lastWeekDateLabel(rows: readonly DashboardActivityRow[], timeZone: string): null | string {
   const dates = rows
     .map((row) => activityRowDate(row, timeZone))
     .filter((date): date is CalendarDate => date != null)
@@ -668,6 +727,7 @@ function milestoneRow(input: {
     mediaType: input.mediaType,
     occurredAt: input.occurredAt,
     posterPath: null,
+    progress: null,
     rating: null,
     season: null,
     title: input.title,
@@ -757,6 +817,7 @@ function reviewRows(reviews: readonly ActivityReviewInput[]): DashboardActivityR
       mediaType: media.mediaType,
       occurredAt: review.updatedAt,
       posterPath: media.posterPath ?? null,
+      progress: null,
       rating: review.rating,
       season: null,
       title: media.title,
@@ -765,6 +826,11 @@ function reviewRows(reviews: readonly ActivityReviewInput[]): DashboardActivityR
   }
 
   return rows
+}
+
+// Minutes as hours rounded to one decimal; negative durations count as zero.
+function roundedHours(minutes: number): number {
+  return Math.round((Math.max(0, minutes) / 60) * 10) / 10
 }
 
 // Non-negative runtime. Missing and invalid values add no time.
@@ -827,6 +893,11 @@ function titleHref(media: ActivityMedia): string {
   return `/dashboard/title/${media.mediaType}/${media.tmdbId}`
 }
 
+// Midnight UTC that opens a calendar day, as an ISO instant.
+function utcDayStart(date: CalendarDate): string {
+  return `${calendarDateKey(date)}T00:00:00.000Z`
+}
+
 // Dropped and on hold keep their own labels. Every other watch event is Watched.
 function watchLabel(eventType: WatchEventType): string {
   switch (eventType) {
@@ -873,6 +944,7 @@ function watchRows(
       mediaType: media.mediaType,
       occurredAt: event.watchedAt,
       posterPath: media.posterPath ?? null,
+      progress: null,
       rating: ratings.get(media.id) ?? null,
       season: episode.season,
       title: media.title,

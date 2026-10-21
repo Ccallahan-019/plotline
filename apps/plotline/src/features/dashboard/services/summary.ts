@@ -48,8 +48,9 @@ export type SummaryWatchEvent = {
  *
  * Titles and hours count `started`, `progress`, `completed`, and `rewatched` events.
  * A title logged twice in the year counts once in the year total and once in each
- * month it was logged. Missing runtimes count as zero hours. Streaks and the heatmap
- * count every watch event, including dropped and on hold. The current streak and the
+ * month it was logged. Missing runtimes count as zero hours. Streaks and active days
+ * count every watch event, including dropped and on hold. A heatmap cell counts the
+ * distinct titles with an event that day, so three episodes of one series count as 1. The current streak and the
  * lifetime hour total may use events outside `year`. The rating headline is the
  * lifetime mean; its series is the mean of reviews updated in each month of `year`.
  *
@@ -68,7 +69,7 @@ export function buildDashboardSummary(input: BuildDashboardSummaryInput): Dashbo
   const minutesByMonth = Array.from({ length: MONTHS_IN_YEAR }, () => 0)
   const yearDays = new Set<string>()
   const allDays = new Set<string>()
-  const heatmapCounts = new Map<string, number>()
+  const heatmapTitles = new Map<string, Set<number>>()
   const yearMedia = new Set<number>()
   let yearMinutes = 0
   let lifetimeMinutes = 0
@@ -86,7 +87,10 @@ export function buildDashboardSummary(input: BuildDashboardSummaryInput): Dashbo
 
     if (inYear) {
       yearDays.add(key)
-      heatmapCounts.set(key, (heatmapCounts.get(key) ?? 0) + 1)
+      const dayTitles = heatmapTitles.get(key) ?? new Set<number>()
+
+      dayTitles.add(event.mediaId)
+      heatmapTitles.set(key, dayTitles)
     }
 
     if (!TITLE_AND_HOUR_EVENT_TYPES.has(event.eventType)) {
@@ -122,7 +126,7 @@ export function buildDashboardSummary(input: BuildDashboardSummaryInput): Dashbo
     input.timeZone,
     input.year,
   )
-  const heatmapDays = heatmapForYear(input.year, heatmapCounts)
+  const heatmapDays = heatmapForYear(input.year, heatmapTitles)
 
   return {
     heatmap: {
@@ -241,12 +245,15 @@ function daysInMonth(yearDays: ReadonlySet<string>, year: number, monthIndex: nu
   return [...yearDays].filter((day) => day.startsWith(prefix))
 }
 
-// One cell per day. Days with no events stay at zero so the grid can render the year.
-function heatmapForYear(year: number, counts: ReadonlyMap<string, number>): DashboardHeatmapDay[] {
+// One cell per day. A day's count is its distinct titles; days with no events stay at zero so the grid can render the year.
+function heatmapForYear(
+  year: number,
+  titlesByDay: ReadonlyMap<string, ReadonlySet<number>>,
+): DashboardHeatmapDay[] {
   return calendarDaysInYear(year).map((date) => {
     const key = calendarDateKey(date)
 
-    return { count: counts.get(key) ?? 0, date: key }
+    return { count: titlesByDay.get(key)?.size ?? 0, date: key }
   })
 }
 

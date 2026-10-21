@@ -11,6 +11,7 @@ describe('activity row copy', () => {
     const row = {
       detail: '52 films in 2026 · 31 / 52',
       filterKind: 'challenge' as const,
+      progress: { completed: 31, goal: 52, label: '31 / 52' },
       title: '2026 films',
     }
 
@@ -22,27 +23,42 @@ describe('activity row copy', () => {
   it('caps a finished challenge and reads decimal hours', () => {
     expect(
       activityChallengePercent({
-        detail: '10 hours in 2026 · 12.5 / 10',
         filterKind: 'challenge',
+        progress: { completed: 12.5, goal: 10, label: '12.5 / 10' },
       }),
     ).toBe(100)
     expect(
       activityChallengePercent({
-        detail: '1.5 hours in 2026 · 0.5 / 1.5',
         filterKind: 'challenge',
+        progress: { completed: 0.5, goal: 1.5, label: '0.5 / 1.5' },
       }),
     ).toBeCloseTo((0.5 / 1.5) * 100)
     expect(
       activityRowHeadline({
-        detail: '1.5 hours in 2026 · 0.5 / 1.5',
         filterKind: 'challenge',
+        progress: { completed: 0.5, goal: 1.5, label: '0.5 / 1.5' },
         title: 'Runtime',
       }),
     ).toBe('Runtime · 0.5 / 1.5')
   })
 
+  it('skips the bar for a challenge without a usable goal', () => {
+    expect(
+      activityChallengePercent({
+        filterKind: 'challenge',
+        progress: { completed: 0, goal: 0, label: '0 / 0' },
+      }),
+    ).toBeNull()
+    expect(activityChallengePercent({ filterKind: 'challenge', progress: null })).toBeNull()
+  })
+
   it('keeps an episode line under the title and skips a bar', () => {
-    const row = { detail: 'S2 · E4', filterKind: 'watched' as const, title: 'Loki' }
+    const row = {
+      detail: 'S2 · E4',
+      filterKind: 'watched' as const,
+      progress: null,
+      title: 'Loki',
+    }
 
     expect(activityRowHeadline(row)).toBe('Loki')
     expect(activityRowSubtitle(row)).toBe('S2 · E4')
@@ -50,7 +66,12 @@ describe('activity row copy', () => {
   })
 
   it('leaves milestones on one line', () => {
-    const row = { detail: null, filterKind: 'milestone' as const, title: '25-day streak' }
+    const row = {
+      detail: null,
+      filterKind: 'milestone' as const,
+      progress: null,
+      title: '25-day streak',
+    }
 
     expect(activityRowHeadline(row)).toBe('25-day streak')
     expect(activityRowSubtitle(row)).toBeNull()

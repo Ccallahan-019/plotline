@@ -1,5 +1,17 @@
 import type { MediaType } from '@plotline/shared/constants'
 
+/**
+ * Challenge completed/goal as the snapshot reports it.
+ *
+ * Counts are whole titles; runtime goals are hours rounded to one decimal.
+ * `label` is the `completed / goal` text the row headline shows.
+ */
+export type ActivityChallengeProgress = {
+  completed: number
+  goal: number
+  label: string
+}
+
 /** Kind stored on a row. `all` is a filter only. */
 export type DashboardActivityFilterKind = Exclude<DashboardActivityKind, 'all'>
 
@@ -69,6 +81,8 @@ export type DashboardActivityRow = {
   mediaType: MediaType | null
   occurredAt: string
   posterPath: null | string
+  /** Completed and goal for a challenge snapshot, in the units its label shows. Null on every other row. */
+  progress: ActivityChallengeProgress | null
   rating: null | number
   /** Season number for a TV watch. Season 0 is specials. Null when the row is not an episode. */
   season: null | number
