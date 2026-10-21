@@ -311,12 +311,12 @@ describe('groupActivityRows', () => {
       TIME_ZONE,
     )
 
-    expect(groups.map((group) => [group.label, group.rows.length])).toEqual([
-      ['Today', 1],
-      ['Yesterday', 1],
-      ['Monday', 1],
-      ['Last week', 2],
-      ['Oct 4', 1],
+    expect(groups.map((group) => [group.label, group.dateLabel, group.rows.length])).toEqual([
+      ['Today', 'Wed · Oct 14', 1],
+      ['Yesterday', 'Tue · Oct 13', 1],
+      ['Monday', 'Oct 12', 1],
+      ['Last week', 'Oct 6 – Oct 11', 2],
+      ['Oct 4', null, 1],
     ])
   })
 
@@ -331,7 +331,11 @@ describe('groupActivityRows', () => {
       TIME_ZONE,
     )
 
-    expect(groups.map((group) => group.label)).toEqual(['Today', 'Yesterday', 'Last week'])
+    expect(groups.map((group) => [group.label, group.dateLabel])).toEqual([
+      ['Today', 'Mon · Oct 12'],
+      ['Yesterday', 'Sun · Oct 11'],
+      ['Last week', 'Oct 10'],
+    ])
   })
 
   it('uses the request timezone when a UTC instant is still the previous evening', () => {
@@ -342,6 +346,7 @@ describe('groupActivityRows', () => {
     )
 
     expect(groups[0]?.label).toBe('Yesterday')
+    expect(groups[0]?.dateLabel).toBe('Tue · Oct 13')
   })
 })
 

@@ -17,6 +17,35 @@ export function heatmapDaysWithTitles(days: readonly DashboardHeatmapDay[]): Das
 }
 
 /**
+ * Fill for a heatmap day, including the hover fill so a button variant cannot replace it.
+ *
+ * Zero titles stay muted. One, two, and up to four titles step through the primary
+ * color. Five or more use the solid primary fill.
+ *
+ * @param count - Titles logged that day
+ * @returns Tailwind classes for that level
+ */
+export function heatmapLevelClass(count: number): string {
+  if (count <= 0) {
+    return 'bg-muted hover:bg-muted'
+  }
+
+  if (count === 1) {
+    return 'bg-primary/30 hover:bg-primary/30'
+  }
+
+  if (count === 2) {
+    return 'bg-primary/50 hover:bg-primary/50'
+  }
+
+  if (count <= 4) {
+    return 'bg-primary/75 hover:bg-primary/75'
+  }
+
+  return 'bg-primary hover:bg-primary'
+}
+
+/**
  * Month abbreviation for each week column.
  *
  * The label sits on the week that contains the first of the month. Later weeks

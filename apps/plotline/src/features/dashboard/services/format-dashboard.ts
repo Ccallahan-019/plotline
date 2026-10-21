@@ -69,7 +69,7 @@ export function dashboardTitleHref(mediaType: MediaType, tmdbId: number): string
  *
  * @param iso - Event timestamp
  * @param timeZone - IANA zone for the clock
- * @returns A short time such as `3:04 PM`, or an empty string when `iso` is not a date
+ * @returns A short time such as `3:04 pm`, or an empty string when `iso` is not a date
  */
 export function formatActivityClock(iso: string, timeZone: string): string {
   const time = Date.parse(iso)
@@ -85,6 +85,7 @@ export function formatActivityClock(iso: string, timeZone: string): string {
   })
     .format(time)
     .replace(/[\u202f\u00a0]/g, ' ')
+    .toLowerCase()
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import type { DashboardSummary, DashboardSummaryFilters } from '../types'
 
@@ -9,6 +9,7 @@ import { dashboardQueryKeys } from '../services/query-keys'
 
 type UseDashboardSummaryOptions = {
   initialData?: DashboardSummary
+  keepPrevious?: boolean
 }
 
 /**
@@ -19,6 +20,7 @@ type UseDashboardSummaryOptions = {
  *
  * @param filters - Calendar year and IANA timezone sent to the summary BFF
  * @param options.initialData - Server-prefetched summary for these filters
+ * @param options.keepPrevious - When true, the last summary stays visible while another year loads
  * @returns A React Query result for `DashboardSummary`
  */
 export function useDashboardSummary(
@@ -34,6 +36,7 @@ export function useDashboardSummary(
 
   return useQuery({
     initialData,
+    placeholderData: options?.keepPrevious ? keepPreviousData : undefined,
     queryFn: () => fetchDashboardSummary(filters),
     queryKey: dashboardQueryKeys.summary(filters),
   })

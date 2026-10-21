@@ -156,6 +156,30 @@ export function parseCalendarDateKey(value: string): CalendarDate | null {
 }
 
 /**
+ * Calendar years ending at `year`, newest first.
+ *
+ * The viewing-year select uses this bounded list. The summary route accepts any
+ * year, and a profile does not publish which years contain activity.
+ *
+ * @param year - Newest year, usually the current calendar year
+ * @param count - How many years to include. Defaults to 6
+ * @returns Years from `year` down through `year - count + 1`
+ */
+export function recentCalendarYears(year: number, count = 6): number[] {
+  return Array.from({ length: count }, (_, index) => year - index)
+}
+
+/**
+ * Short weekday name, such as `Mon`.
+ *
+ * @param date - Calendar day to label
+ * @returns The abbreviated weekday in `en-US`
+ */
+export function shortWeekdayLabel(date: CalendarDate): string {
+  return formatUtcDay(date, { weekday: 'short' })
+}
+
+/**
  * Monday of the ISO week that contains `date`.
  *
  * @param date - Any day in the week

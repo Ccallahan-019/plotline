@@ -20,6 +20,8 @@ export type DashboardActivityFilters = {
 
 /** One day header in the activity timeline. */
 export type DashboardActivityGroup = {
+  /** Date under the header, such as `Mon · Oct 12`. Null when `label` is already the date. */
+  dateLabel: null | string
   key: string
   label: string
   rows: DashboardActivityRow[]

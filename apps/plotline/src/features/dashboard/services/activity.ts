@@ -17,6 +17,7 @@ import {
   compareCalendarDates,
   monthDayLabel,
   parseCalendarDateKey,
+  shortWeekdayLabel,
   startOfIsoWeek,
   weekdayName,
 } from './calendar'
@@ -154,9 +155,12 @@ export function decodeActivityCursor(value: string): ActivityCursor | null {
 /**
  * Groups a newest-first page into timeline headers.
  *
- * Today and yesterday are labeled on their own. Other days in the current
- * Monday–Sunday week use the weekday name. The previous Monday–Sunday collapses
- * into Last week. Older days use a short month and day.
+ * Today and yesterday keep those words as the header, with `Mon · Oct 12` underneath.
+ * Other days in the current Monday–Sunday week use the weekday name and the month
+ * and day underneath. The previous Monday–Sunday collapses into Last week, with the
+ * earliest and latest dates among that group's rows underneath (`Oct 6 – Oct 11`,
+ * or one date when every row is on the same day). Older days use a short month and
+ * day as the header and no second line.
  *
  * @param rows - Newest-first rows, usually one loaded page plus older pages
  * @param now - Instant that defines today
@@ -186,10 +190,21 @@ export function groupActivityRows(
       continue
     }
 
-    groups.push({ key: label.key, label: label.label, rows: [row] })
+    groups.push({
+      dateLabel: label.dateLabel,
+      key: label.key,
+      label: label.label,
+      rows: [row],
+    })
   }
 
-  return groups
+  return groups.map((group) => {
+    if (group.key !== 'last-week') {
+      return group
+    }
+
+    return { ...group, dateLabel: lastWeekDateLabel(group.rows, timeZone) }
+  })
 }
 
 /**
@@ -246,13 +261,13 @@ export function selectActivityPage(
 function activityGroupLabel(
   date: CalendarDate,
   today: CalendarDate,
-): { key: string; label: string } {
+): { dateLabel: null | string; key: string; label: string } {
   if (compareCalendarDates(date, today) === 0) {
-    return { key: 'today', label: 'Today' }
+    return { dateLabel: weekdayMonthDayLabel(date), key: 'today', label: 'Today' }
   }
 
   if (compareCalendarDates(date, addCalendarDays(today, -1)) === 0) {
-    return { key: 'yesterday', label: 'Yesterday' }
+    return { dateLabel: weekdayMonthDayLabel(date), key: 'yesterday', label: 'Yesterday' }
   }
 
   const thisWeekStart = startOfIsoWeek(today)
@@ -263,7 +278,7 @@ function activityGroupLabel(
     compareCalendarDates(date, lastWeekStart) >= 0 &&
     compareCalendarDates(date, lastWeekEnd) <= 0
   ) {
-    return { key: 'last-week', label: 'Last week' }
+    return { dateLabel: null, key: 'last-week', label: 'Last week' }
   }
 
   const thisWeekEnd = addCalendarDays(thisWeekStart, 6)
@@ -272,10 +287,21 @@ function activityGroupLabel(
     compareCalendarDates(date, thisWeekStart) >= 0 &&
     compareCalendarDates(date, thisWeekEnd) <= 0
   ) {
-    return { key: calendarDateKey(date), label: weekdayName(date) }
+    return { dateLabel: monthDayLabel(date), key: calendarDateKey(date), label: weekdayName(date) }
   }
 
-  return { key: calendarDateKey(date), label: monthDayLabel(date) }
+  return { dateLabel: null, key: calendarDateKey(date), label: monthDayLabel(date) }
+}
+
+// Calendar day of a row in the request timezone, or null when the timestamp cannot be read.
+function activityRowDate(row: DashboardActivityRow, timeZone: string): CalendarDate | null {
+  const occurredAt = Date.parse(row.occurredAt)
+
+  if (Number.isNaN(occurredAt)) {
+    return null
+  }
+
+  return calendarDateInTimeZone(new Date(occurredAt), timeZone)
 }
 
 // Enabled challenges with a calculated snapshot. There is no challenge history.
@@ -548,6 +574,29 @@ function isRuntimeGoal(
   const goalMinutes = stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes
 
   return goalMinutes != null && (stats?.goalCount ?? challenge?.goalCount) == null
+}
+
+// Earliest and latest row dates in the collapsed previous week. One day omits the span.
+function lastWeekDateLabel(
+  rows: readonly DashboardActivityRow[],
+  timeZone: string,
+): null | string {
+  const dates = rows
+    .map((row) => activityRowDate(row, timeZone))
+    .filter((date): date is CalendarDate => date != null)
+    .sort(compareCalendarDates)
+  const start = dates[0]
+  const end = dates.at(-1)
+
+  if (!start || !end) {
+    return null
+  }
+
+  if (compareCalendarDates(start, end) === 0) {
+    return monthDayLabel(start)
+  }
+
+  return `${monthDayLabel(start)} – ${monthDayLabel(end)}`
 }
 
 // `all` keeps every row. Dropped and on hold still match the watched filter.
@@ -832,4 +881,9 @@ function watchRows(
   }
 
   return rows
+}
+
+// `Mon · Oct 12` for the today and yesterday headers.
+function weekdayMonthDayLabel(date: CalendarDate): string {
+  return `${shortWeekdayLabel(date)} · ${monthDayLabel(date)}`
 }

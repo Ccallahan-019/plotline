@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 
-import type { ActivityRangeValue } from '../components/activity/ActivityFilters'
 import type { DashboardActivityKind, DashboardActivityMediaType } from '../types'
 
 import {
@@ -17,6 +16,8 @@ import { useDashboardActivity } from './use-dashboard-activity'
  *
  * Starts on all kinds, all media, and the last 30 days. Changing a filter
  * changes the activity query key, so the feed loads that selection from the start.
+ * `range` may also be one `YYYY-MM-DD` day from the viewing-year heatmap. Setting
+ * a preset replaces that day.
  *
  * @param timeZone - IANA zone used for the activity day boundaries
  * @returns The selected filters, their setters, the flattened rows, and the infinite-query status
@@ -26,22 +27,30 @@ export function useRecentActivityFeed(timeZone: string) {
   const [mediaType, setMediaType] = useState<DashboardActivityMediaType>(
     DASHBOARD_ACTIVITY_DEFAULT_MEDIA_TYPE,
   )
-  const [range, setRange] = useState<ActivityRangeValue>(DASHBOARD_ACTIVITY_DEFAULT_RANGE)
-  const query = useDashboardActivity({ kind, mediaType, range, timeZone })
-  const rows = query.data == null ? null : query.data.pages.flatMap((page) => page.rows)
+  const [range, setRange] = useState<string>(DASHBOARD_ACTIVITY_DEFAULT_RANGE)
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    isLoading,
+    refetch,
+  } = useDashboardActivity({ kind, mediaType, range, timeZone })
+  const rows = data == null ? null : data.pages.flatMap((page) => page.rows)
 
   return {
-    fetchNextPage: query.fetchNextPage,
-    hasNextPage: query.hasNextPage,
-    isError: query.isError,
-    isFetching: query.isFetching,
-    isFetchingNextPage: query.isFetchingNextPage,
-    isFetchNextPageError: query.isFetchNextPageError,
-    isLoading: query.isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    isLoading,
     kind,
     mediaType,
     range,
-    refetch: query.refetch,
+    refetch,
     rows,
     setKind,
     setMediaType,

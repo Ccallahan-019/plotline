@@ -1,42 +1,61 @@
 import type { DashboardSummary } from '@/features/dashboard/types'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { ShowIf } from '@/components/utils/ShowIf'
-import { monthDayLabel, parseCalendarDateKey } from '@/features/dashboard/services/calendar'
+import { heatmapFooterFigures } from '@/features/dashboard/services/activity-display'
 import {
-  formatDashboardQuantity,
-  formatHeatmapDayLabel,
-} from '@/features/dashboard/services/format-dashboard'
-import {
-  heatmapDaysWithTitles,
   heatmapWeekMonthLabels,
   layoutHeatmapWeeks,
 } from '@/features/dashboard/services/layout-heatmap'
+import { cn } from '@/lib/utils'
 
 import { DashboardHeatmapDayCell } from './DashboardHeatmapDayCell'
 import { DashboardHeatmapLegend } from './DashboardHeatmapLegend'
 import { DashboardHeatmapMonthLabel } from './DashboardHeatmapMonthLabel'
 import { DashboardHeatmapWeekdayLabels } from './DashboardHeatmapWeekdayLabels'
+import { ViewingYearSelector } from './ViewingYearSelector'
 
 type DashboardHeatmapProps = {
+  busy?: boolean
+  onSelectDay: (date: string) => void
+  onYearChange: (year: number) => void
+  selectedDate: null | string
   summary: DashboardSummary
+  year: number
+  years: readonly number[]
 }
 
-export function DashboardHeatmap({ summary }: DashboardHeatmapProps) {
+export function DashboardHeatmap({
+  busy = false,
+  onSelectDay,
+  onYearChange,
+  selectedDate,
+  summary,
+  year,
+  years,
+}: DashboardHeatmapProps) {
   const weeks = layoutHeatmapWeeks(summary.heatmap.days)
   const monthLabels = heatmapWeekMonthLabels(weeks)
-  const titledDays = heatmapDaysWithTitles(summary.heatmap.days)
+  const figures = heatmapFooterFigures(summary.heatmap)
 
   return (
-    <Card>
+    <Card aria-busy={busy}>
       <CardHeader>
-        <CardTitle>Watch Calendar</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
-          {heatmapDescription(summary)}
-        </CardDescription>
+        <CardTitle>Your Viewing Year</CardTitle>
+        <CardDescription>Click a day to jump to that date in the feed</CardDescription>
+        <CardAction>
+          <ViewingYearSelector onYearChange={onYearChange} year={year} years={years} />
+        </CardAction>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+      <CardContent className={cn('flex flex-col gap-2', busy && 'opacity-60')}>
         <ScrollArea>
           <div className="flex w-max gap-2 pb-3">
             <DashboardHeatmapWeekdayLabels />
@@ -54,7 +73,14 @@ export function DashboardHeatmap({ summary }: DashboardHeatmapProps) {
                     {week.map((cell, dayIndex) => {
                       const key = cell.kind === 'day' ? cell.date : `${weekIndex}-${dayIndex}`
 
-                      return <DashboardHeatmapDayCell cell={cell} key={key} />
+                      return (
+                        <DashboardHeatmapDayCell
+                          cell={cell}
+                          key={key}
+                          onSelectDay={onSelectDay}
+                          selected={cell.kind === 'day' && cell.date === selectedDate}
+                        />
+                      )
                     })}
                   </div>
                 ))}
@@ -63,36 +89,20 @@ export function DashboardHeatmap({ summary }: DashboardHeatmapProps) {
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
-
-        <ShowIf condition={titledDays.length > 0}>
-          <ul className="sr-only">
-            {titledDays.map((day) => (
-              <li key={day.date}>{formatHeatmapDayLabel(day.date, day.count)}</li>
-            ))}
-          </ul>
-        </ShowIf>
-
         <DashboardHeatmapLegend />
       </CardContent>
+      <CardFooter>
+        <dl className="grid w-full grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+          {figures.map((figure) => (
+            <div key={figure.label}>
+              <dt className="text-xs text-muted-foreground">{figure.label}</dt>
+              <dd className="text-sm font-medium tabular-nums">{figure.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </CardFooter>
     </Card>
   )
-}
-
-function heatmapDescription(summary: DashboardSummary): string {
-  const { heatmap } = summary
-  const parts = [
-    formatDashboardQuantity(heatmap.activeDays, 'Active Day'),
-    `Longest Streak - ${formatDashboardQuantity(heatmap.longestStreak, 'day')}`,
-    formatDashboardQuantity(heatmap.titlesThisYear, 'Title'),
-  ]
-  const busiest = heatmap.busiestDay
-  const busiestDate = busiest ? parseCalendarDateKey(busiest.date) : null
-
-  if (busiest && busiestDate) {
-    parts.push(`Busiest Day - ${monthDayLabel(busiestDate)}`)
-  }
-
-  return parts.join(' · ')
 }
 
 function weekKey(
