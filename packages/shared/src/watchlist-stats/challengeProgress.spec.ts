@@ -120,6 +120,31 @@ describe('formatChallengeProgress', () => {
     ).toBe('0.5 of 1.5 hrs')
   })
 
+  it('counts a list size goal as titles and ignores a leftover runtime', () => {
+    expect(
+      formatChallengeProgress({
+        completed: 12,
+        goalCount: null,
+        goalRuntimeMinutes: 6000,
+        goalType: 'list_size',
+        totalEligible: 40,
+        variant: 'card',
+      }),
+    ).toBe('12 of 40 titles')
+
+    expect(
+      formatChallengeProgress({
+        completed: 12,
+        goalCount: null,
+        goalRuntimeMinutes: 6000,
+        goalType: 'list_size',
+        totalEligible: 40,
+        tvCountRule: 'movies_only',
+        variant: 'detail',
+      }),
+    ).toBe('12 / 40 films')
+  })
+
   it('groups large counts', () => {
     expect(
       formatChallengeProgress({
@@ -171,7 +196,7 @@ describe('getChallengeMetaLabels', () => {
       getChallengeMetaLabels({
         goalType: 'list_size',
       })[0],
-    ).toEqual({ label: 'Goal type', value: 'List size' })
+    ).toEqual({ label: 'Goal type', value: 'List' })
   })
 
   it('uses the collection defaults when challenge fields are omitted', () => {

@@ -37,7 +37,7 @@ export function ChallengeProgressCard({ watchlist }: ChallengeProgressCardProps)
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-4">
           {view.paceRates.map((item) => (
             <div className="flex min-w-0 flex-col gap-1" key={item.label}>
-              <dt className="text-xs text-muted-foreground uppercase tracking-wide">
+              <dt className="text-xs text-nowrap text-muted-foreground uppercase tracking-wide">
                 {item.label}
               </dt>
               <dd className="text-sm font-medium">{item.value}</dd>

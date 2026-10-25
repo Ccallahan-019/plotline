@@ -58,6 +58,35 @@ describe('getChallengeCardView', () => {
     expect(hours.progressLabel).toBe('38 of 100 hrs')
   })
 
+  it('counts a list size goal from the cache and ignores a leftover runtime', () => {
+    const titles = getChallengeCardView(
+      card({
+        challenge: {
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+        },
+        statsCache: stats({ completed: 12, goalCount: 40, totalEligible: 40 }),
+      }),
+    )
+    const films = getChallengeCardView(
+      card({
+        challenge: {
+          enabled: true,
+          goalCount: null,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+          tvCountRule: 'movies_only',
+        },
+        statsCache: stats({ completed: 12, goalRuntimeMinutes: 6000, totalEligible: 16 }),
+      }),
+    )
+
+    expect(titles.progressLabel).toBe('12 of 40 titles')
+    expect(films.progressLabel).toBe('12 of 16 films')
+  })
+
   it('keeps a challenge without stats neutral instead of complete', () => {
     const view = getChallengeCardView(
       card({

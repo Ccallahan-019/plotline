@@ -1,7 +1,7 @@
 import type { ComputeWatchlistStatsInput, StatsMembershipInput, WatchlistStatsCache } from './types'
 
 import { filterMembershipsByTvRule } from './applyTvCountRule'
-import { computeChallengePacing } from './computeChallengePacing'
+import { refreshChallengePacing } from './refreshChallengePacing'
 
 type MembershipTotals = {
   completed: number
@@ -70,21 +70,12 @@ export function computeWatchlistStats(input: ComputeWatchlistStatsInput): Watchl
   }
 
   if (challenge?.enabled) {
-    Object.assign(
+    return refreshChallengePacing({
+      challenge,
+      referenceDate,
       stats,
-      computeChallengePacing({
-        challenge,
-        completed: totals.completed,
-        inProgress: totals.inProgress,
-        referenceDate,
-        remaining,
-        watchlistCreatedAt: input.watchlistCreatedAt,
-      }),
-    )
-  }
-
-  if (isListSizeGoal && qualifyingMemberships.length === 0) {
-    return keepEmptyListSizeNotStarted(stats)
+      watchlistCreatedAt: input.watchlistCreatedAt,
+    })
   }
 
   return stats
@@ -124,21 +115,6 @@ function getInProgressWeight(membership: StatsMembershipInput): number {
 
 function isActiveMembership(membership: StatsMembershipInput): boolean {
   return membership.listStatus !== 'skipped' && membership.countsTowardGoal !== false
-}
-
-// Pacing treats a zero remainder as finished. An empty list has not started.
-function keepEmptyListSizeNotStarted(stats: WatchlistStatsCache): WatchlistStatsCache {
-  const next: WatchlistStatsCache = {
-    ...stats,
-    percentComplete: 0,
-    status: 'not_started',
-  }
-
-  delete next.onTrack
-  delete next.projectedFinishDate
-  delete next.requiredPerDay
-
-  return next
 }
 
 // Completed, in-progress, and eligible units from each membership's goal weight.

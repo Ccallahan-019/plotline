@@ -21,19 +21,26 @@ export type ChallengeProgressInput = {
 
 export type ChallengeProgressVariant = 'card' | 'detail'
 
+const formatGoalType: Record<ChallengeGoalType, string> = {
+  count: 'Count',
+  list_size: 'List',
+  runtime_minutes: 'Runtime',
+}
+
 /**
  * Progress line for a challenge card (`31 of 52 titles`) or detail hero (`31 / 52 titles`).
  *
- * The denominator is `goalCount` or `goalRuntimeMinutes`, then `totalEligible`. Count goals
- * say titles, or films when the TV rule is movies only. Runtime goals format stored minutes
- * as hours, and a whole hour stays an integer.
+ * The denominator is `goalCount` or `goalRuntimeMinutes`, then `totalEligible`. Count and
+ * list-size goals say titles, or films when the TV rule is movies only. A list-size caller
+ * passes a null stored count and the cache's `totalEligible` (`12 of 40 titles`). Runtime
+ * goals format stored minutes as hours, and a whole hour stays an integer.
  *
  * @param input.completed - `statsCache.completed`, in titles or minutes
- * @param input.goalCount - Count goal; falls back to `totalEligible`
+ * @param input.goalCount - Count goal; falls back to `totalEligible`. Null for list size
  * @param input.goalRuntimeMinutes - Runtime goal in minutes; falls back to `totalEligible`
- * @param input.goalType - Selects count vs runtime. Inferred from which goal is set when omitted
+ * @param input.goalType - Selects count, list size, or runtime. Inferred from which goal is set when omitted
  * @param input.totalEligible - Fallback denominator from `statsCache`
- * @param input.tvCountRule - `movies_only` uses films for count goals
+ * @param input.tvCountRule - `movies_only` uses films for count and list-size goals
  * @param input.variant - Card uses "of"; detail uses "/"
  * @returns The progress line
  */
@@ -66,7 +73,7 @@ export function getChallengeMetaLabels(
   >,
 ): ChallengeMetaLabel[] {
   return [
-    { label: 'Goal type', value: formatGoalType(challenge.goalType) },
+    { label: 'Goal type', value: formatGoalType[challenge.goalType ?? 'count'] },
     { label: 'Due date', value: formatDueDate(challenge.dueDate) },
     { label: 'TV counting', value: formatTvCountRule(challenge.tvCountRule) },
     { label: 'Rewatches', value: challenge.includeRewatches === true ? 'Included' : 'Excluded' },
@@ -79,24 +86,6 @@ function formatDueDate(dueDate: null | string | undefined): string {
   }
 
   return formatReleaseDateForCalendar(dueDate.slice(0, 10)) ?? '—'
-}
-
-function formatGoalType(goalType: ChallengeGoalType | null | undefined): string {
-  switch (goalType) {
-    case 'count':
-    case null:
-    case undefined:
-      return 'Count'
-    case 'list_size':
-      return 'List size'
-    case 'runtime_minutes':
-      return 'Runtime'
-    default: {
-      const _exhaustive: never = goalType
-
-      return _exhaustive
-    }
-  }
 }
 
 // Whole hours stay integers. Any other duration shows one decimal hour.
@@ -130,14 +119,22 @@ function formatTvCountRule(rule: null | TvCountRule | undefined): string {
   }
 }
 
+// Runtime when the type says so, or when the type is omitted and only minutes are stored.
+// List size stays a title count even if a previous runtime value is still on the document.
 function isRuntimeGoal(input: ChallengeProgressInput): boolean {
-  if (input.goalType === 'runtime_minutes') {
-    return true
-  }
+  switch (input.goalType) {
+    case 'count':
+    case 'list_size':
+      return false
+    case null:
+    case undefined:
+      return input.goalRuntimeMinutes != null && input.goalCount == null
+    case 'runtime_minutes':
+      return true
+    default: {
+      const _exhaustive: never = input.goalType
 
-  if (input.goalType === 'count') {
-    return false
+      return _exhaustive
+    }
   }
-
-  return input.goalRuntimeMinutes != null && input.goalCount == null
 }

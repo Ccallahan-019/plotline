@@ -351,6 +351,18 @@ function activityRowDate(row: DashboardActivityRow, timeZone: string): CalendarD
   return calendarDateInTimeZone(new Date(occurredAt), timeZone)
 }
 
+// List size has no stored target, so the cache's count wins over a leftover document goal.
+function challengeGoalCount(
+  challenge: ActivityChallengeInput['challenge'],
+  stats: ActivityChallengeInput['statsCache'],
+): number {
+  if (challenge?.goalType === 'list_size') {
+    return stats?.goalCount ?? stats?.totalEligible ?? 0
+  }
+
+  return stats?.goalCount ?? challenge?.goalCount ?? stats?.totalEligible ?? 0
+}
+
 // Enabled challenges with a calculated snapshot. There is no challenge history.
 function challengeRows(challenges: readonly ActivityChallengeInput[]): DashboardActivityRow[] {
   const rows: DashboardActivityRow[] = []
@@ -390,7 +402,8 @@ function challengeRows(challenges: readonly ActivityChallengeInput[]): Dashboard
 }
 
 // `52 films in 2026 · 31 / 52` plus the same fraction as numbers, so the bar never re-reads
-// the text. Runtime goals use hours on both sides of the fraction.
+// the text. Runtime goals use hours on both sides of the fraction. A list-size goal uses
+// the cached title count, even when a previous runtime value is still stored.
 function challengeSnapshot(watchlist: ActivityChallengeInput): {
   detail: string
   progress: ActivityChallengeProgress
@@ -414,7 +427,7 @@ function challengeSnapshot(watchlist: ActivityChallengeInput): {
     }
   }
 
-  const goal = stats?.goalCount ?? challenge?.goalCount ?? stats?.totalEligible ?? 0
+  const goal = challengeGoalCount(challenge, stats)
   const completed = stats?.completed ?? 0
   const unit = challenge?.tvCountRule === 'movies_only' ? 'films' : 'titles'
   const label = `${completed} / ${goal}`
@@ -620,22 +633,29 @@ function isAfterCursor(row: DashboardActivityRow, cursor: ActivityCursor): boole
   return row.id < cursor.id
 }
 
-// Runtime when the goal type says so, or when only a minute goal is stored.
+// Runtime when the type says so, or when the type is omitted and only minutes are stored.
+// List size stays a title count even if a previous runtime value is still on the document.
 function isRuntimeGoal(
   challenge: ActivityChallengeInput['challenge'],
   stats: ActivityChallengeInput['statsCache'],
 ): boolean {
-  if (challenge?.goalType === 'runtime_minutes') {
-    return true
+  const goalType = challenge?.goalType
+
+  switch (goalType) {
+    case 'count':
+    case 'list_size':
+      return false
+    case null:
+    case undefined:
+      return storedMinutesWithoutCount(challenge, stats)
+    case 'runtime_minutes':
+      return true
+    default: {
+      const _exhaustive: never = goalType
+
+      return _exhaustive
+    }
   }
-
-  if (challenge?.goalType === 'count') {
-    return false
-  }
-
-  const goalMinutes = stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes
-
-  return goalMinutes != null && (stats?.goalCount ?? challenge?.goalCount) == null
 }
 
 // Earliest and latest row dates in the collapsed previous week. One day omits the span.
@@ -840,6 +860,16 @@ function runtimeMinutes(value: null | number | undefined): number {
   }
 
   return value
+}
+
+// True when minutes are stored and neither the cache nor the document has a count goal.
+function storedMinutesWithoutCount(
+  challenge: ActivityChallengeInput['challenge'],
+  stats: ActivityChallengeInput['statsCache'],
+): boolean {
+  const goalMinutes = stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes
+
+  return goalMinutes != null && (stats?.goalCount ?? challenge?.goalCount) == null
 }
 
 // Each time a streak reaches a threshold, including a later streak after a gap.

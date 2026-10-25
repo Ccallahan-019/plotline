@@ -1,13 +1,6 @@
 import { ButtonLink } from '@/components/buttons/ButtonLink'
 import { MediaBackdropCard } from '@/components/media/MediaBackdropCard'
-import { Badge } from '@/components/ui/badge'
-import {
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { ShowIf } from '@/components/utils/ShowIf'
 import {
@@ -56,9 +49,6 @@ export function DashboardChallengeSpotlightCard({ card }: DashboardChallengeSpot
             <PaceBadge paceBadge={paceBadge} />
           </div>
         </ShowIf>
-        <CardAction>
-          <Badge variant="secondary">Challenge Mode</Badge>
-        </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <Progress
@@ -76,7 +66,7 @@ export function DashboardChallengeSpotlightCard({ card }: DashboardChallengeSpot
             perWeekLabel={legend.perWeekLabel}
             requiredPaceLabel={legend.requiredPaceLabel}
           />
-          <ButtonLink href={`/dashboard/challenges/${card.slug}`} size="sm" variant="outline">
+          <ButtonLink href={`/dashboard/challenges/${card.slug}`} size="sm" variant="secondary">
             View Challenge
           </ButtonLink>
         </div>

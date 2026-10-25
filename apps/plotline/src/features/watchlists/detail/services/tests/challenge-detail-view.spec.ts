@@ -74,6 +74,60 @@ describe('getChallengeDetailView', () => {
     expect(hours.progressGoal).toBe(' / 100 hrs')
   })
 
+  it('keeps a list size goal in titles or films when a runtime value is still stored', () => {
+    const titles = getChallengeDetailView(
+      watchlist({
+        challenge: {
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+        },
+        statsCache: stats({
+          completed: 12,
+          daysTotal: 10,
+          goalCount: 40,
+          percentComplete: 30,
+          remaining: 28,
+          requiredPerDay: 2.8,
+          totalEligible: 40,
+        }),
+      }),
+    )
+    const films = getChallengeDetailView(
+      watchlist({
+        challenge: {
+          enabled: true,
+          goalCount: null,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+          tvCountRule: 'movies_only',
+        },
+        statsCache: stats({
+          completed: 12,
+          daysTotal: 8,
+          goalRuntimeMinutes: 6000,
+          percentComplete: 75,
+          remaining: 4,
+          requiredPerDay: 0.5,
+          totalEligible: 16,
+        }),
+      }),
+    )
+
+    expect(titles.progressLabel).toBe('12 / 40 titles')
+    expect(titles.meta[0]).toEqual({ label: 'Goal type', value: 'List' })
+    expect(titles.paceRates).toEqual([
+      { label: 'Original pace', value: '~ 4.0 titles / day' },
+      { label: 'Required pace', value: '~ 2.8 titles / day' },
+    ])
+    expect(films.progressLabel).toBe('12 / 16 films')
+    expect(films.paceRates).toEqual([
+      { label: 'Original pace', value: '~ 2.0 films / day' },
+      { label: 'Required pace', value: '~ 0.5 films / day' },
+    ])
+  })
+
   it('shows the starting daily rate and the rate still needed to finish on time', () => {
     const titles = getChallengeDetailView(
       watchlist({

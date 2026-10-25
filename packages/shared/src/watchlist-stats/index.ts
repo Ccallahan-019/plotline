@@ -20,6 +20,8 @@ export {
   shouldCountPriorCompletion,
 } from './membershipFields'
 export type { MembershipRuleEligibility } from './membershipFields'
+export { refreshChallengePacing } from './refreshChallengePacing'
+export type { RefreshChallengePacingInput } from './refreshChallengePacing'
 export type {
   ComputeWatchlistStatsInput,
   StatsLibraryItem,

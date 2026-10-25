@@ -37,7 +37,7 @@ type PaceUnit = 'films' | 'hrs' | 'titles'
 /**
  * Daily rate still needed to finish the challenge by its due date.
  *
- * Runtime goals show hours. Count goals show films or titles. A missing rate is an em dash.
+ * Runtime goals show hours. Count and list-size goals show films or titles. A missing rate is an em dash.
  *
  * @param watchlist - Challenge settings plus cached pacing
  * @returns Copy such as `~ 1.5 titles / day`
@@ -64,7 +64,7 @@ export function getChallengeDetailView(
   const pace = formatChallengePace(toPaceInput(stats))
   const progressLabel = formatChallengeProgress({
     completed: stats?.completed ?? 0,
-    goalCount: watchlist.challenge?.goalCount,
+    goalCount: progressGoalCount(watchlist),
     goalRuntimeMinutes: watchlist.challenge?.goalRuntimeMinutes,
     goalType: watchlist.challenge?.goalType,
     totalEligible: stats?.totalEligible ?? 0,
@@ -88,8 +88,8 @@ export function getChallengeDetailView(
 /**
  * Required daily rate in the units pace copy displays.
  *
- * Runtime cache values are minutes per day and come back as hours. Count goals
- * come back unchanged. A missing or non-finite rate is omitted.
+ * Runtime cache values are minutes per day and come back as hours. Count and list-size
+ * goals come back unchanged. A missing or non-finite rate is omitted.
  *
  * @param watchlist - Challenge settings plus cached pacing
  * @returns Hours for a runtime goal, otherwise the cached count rate
@@ -142,6 +142,7 @@ function getChallengePaceRates(watchlist: ChallengePaceSource): ChallengePaceRat
 }
 
 // Goal size in the same units the cache uses for per-day rates (minutes or titles).
+// List size uses the cached target, which changes as titles are added or removed.
 function getGoalUnits(watchlist: ChallengePaceSource, unit: PaceUnit): number | undefined {
   const challenge = watchlist.challenge
   const stats = watchlist.statsCache
@@ -150,30 +151,55 @@ function getGoalUnits(watchlist: ChallengePaceSource, unit: PaceUnit): number | 
     return challenge?.goalRuntimeMinutes ?? stats?.goalRuntimeMinutes ?? stats?.totalEligible
   }
 
+  if (challenge?.goalType === 'list_size') {
+    return stats?.goalCount ?? stats?.totalEligible
+  }
+
   return challenge?.goalCount ?? stats?.goalCount ?? stats?.totalEligible
 }
 
-// Runtime rates display as hours. Count rates follow the progress copy: films or titles.
+// Runtime rates display as hours. Count and list-size rates follow the progress copy: films or titles.
 function getPaceUnit(watchlist: ChallengePaceSource): PaceUnit {
-  const challenge = watchlist.challenge
-
-  if (challenge?.goalType === 'runtime_minutes') {
+  if (isRuntimePace(watchlist.challenge)) {
     return 'hrs'
   }
 
-  if (
-    challenge?.goalType !== 'count' &&
-    challenge?.goalRuntimeMinutes != null &&
-    challenge.goalCount == null
-  ) {
-    return 'hrs'
-  }
-
-  if (challenge?.tvCountRule === 'movies_only') {
+  if (watchlist.challenge?.tvCountRule === 'movies_only') {
     return 'films'
   }
 
   return 'titles'
+}
+
+// Runtime when the type says so, or when the type is omitted and only minutes are stored.
+// List size stays titles or films even if a previous runtime value is still on the document.
+function isRuntimePace(challenge: ChallengePaceSource['challenge']): boolean {
+  const goalType = challenge?.goalType
+
+  switch (goalType) {
+    case 'count':
+    case 'list_size':
+      return false
+    case null:
+    case undefined:
+      return challenge != null && challenge.goalRuntimeMinutes != null && challenge.goalCount == null
+    case 'runtime_minutes':
+      return true
+    default: {
+      const _exhaustive: never = goalType
+
+      return _exhaustive
+    }
+  }
+}
+
+// List size stores no target. The cached count is the denominator, then total eligible.
+function progressGoalCount(watchlist: ChallengePaceSource): null | number | undefined {
+  if (watchlist.challenge?.goalType === 'list_size') {
+    return watchlist.statsCache?.goalCount ?? null
+  }
+
+  return watchlist.challenge?.goalCount
 }
 
 // The hero styles the completed count apart from the goal (` / 52 titles`).
