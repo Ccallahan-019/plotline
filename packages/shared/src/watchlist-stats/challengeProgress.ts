@@ -82,7 +82,21 @@ function formatDueDate(dueDate: null | string | undefined): string {
 }
 
 function formatGoalType(goalType: ChallengeGoalType | null | undefined): string {
-  return goalType === 'runtime_minutes' ? 'Runtime' : 'Count'
+  switch (goalType) {
+    case 'count':
+    case null:
+    case undefined:
+      return 'Count'
+    case 'list_size':
+      return 'List size'
+    case 'runtime_minutes':
+      return 'Runtime'
+    default: {
+      const _exhaustive: never = goalType
+
+      return _exhaustive
+    }
+  }
 }
 
 // Whole hours stay integers. Any other duration shows one decimal hour.

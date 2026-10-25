@@ -2,6 +2,7 @@ import type { Watchlist } from '@plotline/payload-types'
 
 import {
   CHALLENGE_GOAL_TYPES,
+  type ChallengeGoalType,
   PRIOR_COMPLETION_RULES,
   TV_COUNT_RULES,
   VISIBILITIES,
@@ -65,6 +66,11 @@ export const watchlistFormSchema = z
       return
     }
 
+    // The goal is the qualifying titles on the list, so neither number is required.
+    if (values.goalType === 'list_size') {
+      return
+    }
+
     addRuntimeGoalIssue(values.goalHours, ctx)
   })
 
@@ -103,7 +109,9 @@ export function createWatchlistFormValues(challengeEnabled: boolean): WatchlistF
  * Form defaults for creating or editing a watchlist.
  *
  * A missing description becomes an empty string so the textarea stays controlled.
- * Stored minutes are shown as hours. System lists keep the challenge switch off.
+ * Stored minutes are shown as hours. A list-size goal stays list size so editing
+ * it does not turn the challenge into a count goal. System lists keep the
+ * challenge switch off.
  *
  * @param watchlist - Watchlist whose details fill the form
  * @returns Field values for the shared form
@@ -118,7 +126,7 @@ export function toWatchlistFormValues(watchlist: WatchlistFormSource): Watchlist
     dueDate: parseStoredCalendarDate(challenge?.dueDate),
     goalCount: challenge?.goalCount ?? null,
     goalHours: minutesToHours(challenge?.goalRuntimeMinutes),
-    goalType: challenge?.goalType === 'runtime_minutes' ? 'runtime_minutes' : 'count',
+    goalType: readFormGoalType(challenge?.goalType),
     includeRewatches: challenge?.includeRewatches === true,
     name: watchlist.name,
     priorCompletionRule: challenge?.priorCompletionRule ?? 'exclude_if_already_completed',
@@ -132,8 +140,9 @@ export function toWatchlistFormValues(watchlist: WatchlistFormSource): Watchlist
  * Maps submitted form values to the watchlist write payload.
  *
  * Trims both text fields. A blank description is sent as `null`. Challenge mode
- * off sends only `enabled: false`. When it is on, hours become minutes and the
- * inactive goal is null. System lists always save with challenge mode off.
+ * off sends only `enabled: false`. When it is on, a count goal sends titles, a
+ * runtime goal sends minutes, and a list-size goal sends both numbers as null.
+ * System lists always save with challenge mode off.
  *
  * @param values - Submitted form values
  * @param options.isSystem - When true, the challenge switch cannot turn the list into a challenge
@@ -332,6 +341,13 @@ function readCoverMediaId(coverMedia: undefined | Watchlist['coverMedia']): null
   }
 
   return typeof coverMedia === 'number' ? coverMedia : coverMedia.id
+}
+
+// Stored goal types pass through. A missing type stays on the count default.
+function readFormGoalType(goalType: null | string | undefined): ChallengeGoalType {
+  const match = CHALLENGE_GOAL_TYPES.find((type) => type === goalType)
+
+  return match ?? 'count'
 }
 
 // True when both days are set and the start is a later calendar day than the due date.

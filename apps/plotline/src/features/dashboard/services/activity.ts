@@ -1,4 +1,4 @@
-import type { MediaType, WatchEventType } from '@plotline/shared/constants'
+import type { ChallengeGoalType, MediaType, WatchEventType } from '@plotline/shared/constants'
 
 import type {
   ActivityChallengeProgress,
@@ -41,7 +41,7 @@ export type ActivityChallengeInput = {
     enabled?: boolean | null
     goalCount?: null | number
     goalRuntimeMinutes?: null | number
-    goalType?: 'count' | 'runtime_minutes' | null
+    goalType?: ChallengeGoalType | null
     startDate?: null | string
     tvCountRule?: 'movies_only' | 'tv_as_series' | 'tv_by_episode' | 'tv_by_season' | null
   } | null

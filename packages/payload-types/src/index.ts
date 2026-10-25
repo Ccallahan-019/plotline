@@ -281,7 +281,7 @@ export interface Watchlist {
     enabled?: boolean | null;
     startDate?: string | null;
     dueDate?: string | null;
-    goalType?: ('count' | 'runtime_minutes') | null;
+    goalType?: ('count' | 'list_size' | 'runtime_minutes') | null;
     goalCount?: number | null;
     goalRuntimeMinutes?: number | null;
     tvCountRule?: ('movies_only' | 'tv_as_series' | 'tv_by_episode' | 'tv_by_season') | null;

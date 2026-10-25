@@ -166,6 +166,14 @@ describe('getChallengeMetaLabels', () => {
     ])
   })
 
+  it('labels a list size challenge', () => {
+    expect(
+      getChallengeMetaLabels({
+        goalType: 'list_size',
+      })[0],
+    ).toEqual({ label: 'Goal type', value: 'List size' })
+  })
+
   it('uses the collection defaults when challenge fields are omitted', () => {
     expect(getChallengeMetaLabels({})).toEqual([
       { label: 'Goal type', value: 'Count' },

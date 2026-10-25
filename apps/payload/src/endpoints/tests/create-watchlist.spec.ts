@@ -161,6 +161,81 @@ describe('createWatchlistEndpoint', () => {
     expect(create).not.toHaveBeenCalled()
   })
 
+  it('creates a list size challenge without a goal number', async () => {
+    const { create, req } = createReq({
+      body: {
+        ...validBody,
+        challenge: {
+          dueDate: '2026-12-31',
+          enabled: true,
+          goalCount: null,
+          goalRuntimeMinutes: null,
+          goalType: 'list_size',
+          includeRewatches: false,
+          priorCompletionRule: 'exclude_if_already_completed',
+          startDate: null,
+          tvCountRule: 'tv_as_series',
+        },
+      },
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(200)
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          challenge: expect.objectContaining({
+            dueDate: '2026-12-31T00:00:00.000Z',
+            enabled: true,
+            goalCount: null,
+            goalRuntimeMinutes: null,
+            goalType: 'list_size',
+          }),
+        }),
+      }),
+    )
+  })
+
+  it('rejects a list size challenge that sets a goal number', async () => {
+    const challenge = {
+      dueDate: '2026-12-31',
+      enabled: true,
+      goalCount: null,
+      goalRuntimeMinutes: null,
+      goalType: 'list_size' as const,
+      includeRewatches: false,
+      priorCompletionRule: 'exclude_if_already_completed' as const,
+      startDate: null,
+      tvCountRule: 'tv_as_series' as const,
+    }
+    const withCount = createReq({
+      body: {
+        ...validBody,
+        challenge: { ...challenge, goalCount: 10 },
+      },
+    })
+
+    const countResponse = await readResponse(withCount.req)
+
+    expect(countResponse.status).toBe(400)
+    expect(await countResponse.json()).toEqual({ error: 'Only the active goal can be set' })
+    expect(withCount.create).not.toHaveBeenCalled()
+
+    const withRuntime = createReq({
+      body: {
+        ...validBody,
+        challenge: { ...challenge, goalRuntimeMinutes: 90 },
+      },
+    })
+
+    const runtimeResponse = await readResponse(withRuntime.req)
+
+    expect(runtimeResponse.status).toBe(400)
+    expect(await runtimeResponse.json()).toEqual({ error: 'Only the active goal can be set' })
+    expect(withRuntime.create).not.toHaveBeenCalled()
+  })
+
   it('rejects a start date after the due date', async () => {
     const { create, req } = createReq({
       body: {
