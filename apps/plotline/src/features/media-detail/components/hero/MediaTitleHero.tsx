@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils'
 
 import type { MediaTitlePageData } from '../../types'
 
-import { formatMediaTitleMetaLine, getTvWatchProgress } from '../../services/format-media-title'
-import { mediaImageUrl, titleBackdropUrl } from '../../services/media-image-url'
+import { formatMediaTitleMetaLine } from '../../services/format-media-title'
+import { mediaImageUrl } from '../../services/media-image-url'
 import { MediaTitleActions } from './MediaTitleActions'
 import { MediaTitleBackButton } from './MediaTitleBackButton'
 import { MediaTitleHeroBackdrop } from './MediaTitleHeroBackdrop'
@@ -19,36 +19,27 @@ type MediaTitleHeroProps = {
 }
 
 export function MediaTitleHero({ data }: MediaTitleHeroProps) {
-  const backdropUrl = titleBackdropUrl(data.media.backdropPath)
   const posterUrl = mediaImageUrl(data.media.posterPath, 'w342')
   const metaLine = formatMediaTitleMetaLine({
     certification: data.certification,
     media: data.media,
   })
-  const progress =
-    data.media.mediaType === 'tv'
-      ? getTvWatchProgress({
-          episodeCount: data.media.tvMeta?.episodeCount,
-          episodesWatched: data.libraryItem?.progress.episodesWatched,
-          lastEpisode: data.libraryItem?.progress.lastEpisode,
-          lastSeason: data.libraryItem?.progress.lastSeason,
-          media: data.media,
-          seasonsCompleted: data.libraryItem?.progress.seasonsCompleted,
-          status: data.libraryItem?.status,
-        })
-      : null
 
   return (
     <section>
       <div className="relative h-72 overflow-hidden">
-        <MediaTitleHeroBackdrop backdropUrl={backdropUrl} />
-        <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-background/5" />
+        <MediaTitleHeroBackdrop backdropPath={data.media.backdropPath} />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-transparent" />
+        <div className="hidden 2xl:block">
+          <div className="absolute w-1/7 right-0 top-0 h-full bg-linear-to-l from-background via-background/60 to-transparent" />
+          <div className="absolute w-1/7 left-0 top-0 h-full bg-linear-to-r from-background via-background/60 to-transparent" />
+        </div>
       </div>
 
       <div
         className={cn(
           'relative z-10 flex flex-col gap-4 px-4 py-4 md:px-8',
-          backdropUrl && '-mt-36 md:-mt-32',
+          data.media.backdropPath && '-mt-36 md:-mt-32',
         )}
       >
         <MediaTitleBackButton />
@@ -76,7 +67,7 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
           <div className="flex flex-col gap-3 self-start md:col-start-2 md:row-start-2">
             <MediaTitleActions data={data} />
             <MediaTitleYourRating className="md:hidden" />
-            <MediaTitleTvProgress progress={progress} />
+            <MediaTitleTvProgress libraryItem={data.libraryItem} media={data.media} />
           </div>
         </div>
       </div>

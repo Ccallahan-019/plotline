@@ -1,10 +1,14 @@
 import Image from 'next/image'
 
+import { titleBackdropUrl } from '../../services/media-image-url'
+
 type MediaTitleHeroBackdropProps = {
-  backdropUrl: null | string
+  backdropPath?: null | string
 }
 
-export function MediaTitleHeroBackdrop({ backdropUrl }: MediaTitleHeroBackdropProps) {
+export function MediaTitleHeroBackdrop({ backdropPath }: MediaTitleHeroBackdropProps) {
+  const backdropUrl = backdropPath ? titleBackdropUrl(backdropPath) : null
+
   return (
     <div className="relative h-72 overflow-hidden md:block">
       {backdropUrl ? (

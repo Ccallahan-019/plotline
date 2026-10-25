@@ -21,8 +21,9 @@ export type ChallengePaceTone = 'ahead' | 'default' | 'destructive' | 'neutral'
 /**
  * Pace badge for a challenge card or detail hero.
  *
- * Complete and overdue win over the daily rate. A challenge that has not started, or whose
- * rate is not computable yet (day zero), stays neutral so it is not immediately behind.
+ * A challenge that has not started stays neutral, including an empty list-size goal whose
+ * remainder is zero. Complete and overdue win over the daily rate. A rate that is not
+ * computable yet (day zero) stays neutral so the challenge is not immediately behind.
  * Ahead is a faster rate than required (`tone` is `ahead`). On track includes an equal
  * rate (`onTrack` stays `actualPerDay >= requiredPerDay`) and keeps the default tone.
  *
@@ -30,6 +31,10 @@ export type ChallengePaceTone = 'ahead' | 'default' | 'destructive' | 'neutral'
  * @returns Label and tone for the badge
  */
 export function formatChallengePace(input: ChallengePaceInput): ChallengePaceBadge {
+  if (input.status === 'not_started') {
+    return { label: withDaysLeft('Not started', input.daysRemaining), tone: 'neutral' }
+  }
+
   if (input.remaining === 0 || input.status === 'completed') {
     return { label: 'Complete', tone: 'default' }
   }
@@ -40,7 +45,7 @@ export function formatChallengePace(input: ChallengePaceInput): ChallengePaceBad
 
   const { actualPerDay, requiredPerDay } = input
 
-  if (input.status === 'not_started' || actualPerDay == null || requiredPerDay == null) {
+  if (actualPerDay == null || requiredPerDay == null) {
     return { label: withDaysLeft('Not started', input.daysRemaining), tone: 'neutral' }
   }
 

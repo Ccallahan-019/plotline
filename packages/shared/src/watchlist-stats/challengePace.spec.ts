@@ -58,6 +58,25 @@ describe('formatChallengePace', () => {
     ).toEqual({ label: 'Not started', tone: 'neutral' })
   })
 
+  it('keeps an empty list not started when the remainder is zero', () => {
+    expect(
+      formatChallengePace({
+        daysRemaining: 20,
+        remaining: 0,
+        status: 'not_started',
+      }),
+    ).toEqual({ label: 'Not started · 20 days left', tone: 'neutral' })
+  })
+
+  it('keeps an empty list not started when days remaining is unset', () => {
+    expect(
+      formatChallengePace({
+        remaining: 0,
+        status: 'not_started',
+      }),
+    ).toEqual({ label: 'Not started', tone: 'neutral' })
+  })
+
   it('stays neutral on day zero when the daily rate is not computable yet', () => {
     expect(
       formatChallengePace({

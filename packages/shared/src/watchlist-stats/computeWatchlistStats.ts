@@ -3,54 +3,56 @@ import type { ComputeWatchlistStatsInput, StatsMembershipInput, WatchlistStatsCa
 import { filterMembershipsByTvRule } from './applyTvCountRule'
 import { computeChallengePacing } from './computeChallengePacing'
 
+type MembershipTotals = {
+  completed: number
+  inProgress: number
+  totalEligible: number
+}
+
 export function computeWatchlistStats(input: ComputeWatchlistStatsInput): WatchlistStatsCache {
   const referenceDate = input.referenceDate ?? new Date()
   const challenge = input.challenge
-  const tvFiltered = filterMembershipsByTvRule(input.memberships, challenge?.tvCountRule)
-  const activeMemberships = tvFiltered.filter(isActiveMembership)
-
-  const completed = activeMemberships.reduce(
-    (sum, membership) => sum + getCompletedWeight(membership),
-    0,
-  )
-  const inProgress = activeMemberships.reduce(
-    (sum, membership) => sum + getInProgressWeight(membership),
-    0,
-  )
+  const qualifyingMemberships = filterMembershipsByTvRule(
+    input.memberships,
+    challenge?.tvCountRule,
+  ).filter(isActiveMembership)
 
   const goalType = challenge?.goalType ?? 'count'
-  const isRuntimeGoal = challenge?.enabled && goalType === 'runtime_minutes'
+  const isListSizeGoal = challenge?.enabled === true && goalType === 'list_size'
+  const totals = isListSizeGoal
+    ? countUnweightedTitles(qualifyingMemberships)
+    : sumWeightedUnits(qualifyingMemberships)
 
-  const totalEligibleUnits = activeMemberships.reduce(
-    (sum, membership) => sum + getEligibleWeight(membership),
-    0,
-  )
-
-  let totalEligible = totalEligibleUnits
-  let remaining = Math.max(0, totalEligible - completed)
+  let totalEligible = totals.totalEligible
+  let remaining = Math.max(0, totalEligible - totals.completed)
   let goalCount: number | undefined
   let goalRuntimeMinutes: number | undefined
   let completedRuntimeMinutes: number | undefined
   let remainingRuntimeMinutes: number | undefined
 
-  if (isRuntimeGoal) {
-    goalRuntimeMinutes = challenge?.goalRuntimeMinutes ?? totalEligibleUnits
+  if (challenge?.enabled && goalType === 'runtime_minutes') {
+    goalRuntimeMinutes = challenge.goalRuntimeMinutes ?? totals.totalEligible
     totalEligible = goalRuntimeMinutes
-    completedRuntimeMinutes = completed
-    remainingRuntimeMinutes = Math.max(0, goalRuntimeMinutes - completed)
+    completedRuntimeMinutes = totals.completed
+    remainingRuntimeMinutes = Math.max(0, goalRuntimeMinutes - totals.completed)
     remaining = remainingRuntimeMinutes
-  } else if (challenge?.enabled && goalType === 'count') {
-    goalCount = challenge.goalCount ?? totalEligibleUnits
+  } else if (isListSizeGoal) {
+    // The target is the qualifying titles currently on the list.
+    goalCount = totals.totalEligible
     totalEligible = goalCount
-    remaining = Math.max(0, goalCount - completed)
+    remaining = Math.max(0, goalCount - totals.completed)
+  } else if (challenge?.enabled && goalType === 'count') {
+    goalCount = challenge.goalCount ?? totals.totalEligible
+    totalEligible = goalCount
+    remaining = Math.max(0, goalCount - totals.completed)
   }
 
   const percentComplete =
-    totalEligible > 0 ? Math.min(100, Math.round((completed / totalEligible) * 100)) : 0
+    totalEligible > 0 ? Math.min(100, Math.round((totals.completed / totalEligible) * 100)) : 0
 
   const stats: WatchlistStatsCache = {
-    completed,
-    inProgress,
+    completed: totals.completed,
+    inProgress: totals.inProgress,
     lastCalculatedAt: referenceDate.toISOString(),
     percentComplete,
     remaining,
@@ -72,8 +74,8 @@ export function computeWatchlistStats(input: ComputeWatchlistStatsInput): Watchl
       stats,
       computeChallengePacing({
         challenge,
-        completed,
-        inProgress,
+        completed: totals.completed,
+        inProgress: totals.inProgress,
         referenceDate,
         remaining,
         watchlistCreatedAt: input.watchlistCreatedAt,
@@ -81,7 +83,23 @@ export function computeWatchlistStats(input: ComputeWatchlistStatsInput): Watchl
     )
   }
 
+  if (isListSizeGoal && qualifyingMemberships.length === 0) {
+    return keepEmptyListSizeNotStarted(stats)
+  }
+
   return stats
+}
+
+// One title per membership. Goal weight is not the unit.
+function countUnweightedTitles(memberships: StatsMembershipInput[]): MembershipTotals {
+  return memberships.reduce<MembershipTotals>(
+    (totals, membership) => ({
+      completed: totals.completed + (membership.listStatus === 'completed' ? 1 : 0),
+      inProgress: totals.inProgress + (membership.listStatus === 'in_progress' ? 1 : 0),
+      totalEligible: totals.totalEligible + 1,
+    }),
+    { completed: 0, inProgress: 0, totalEligible: 0 },
+  )
 }
 
 function getCompletedWeight(membership: StatsMembershipInput): number {
@@ -106,4 +124,28 @@ function getInProgressWeight(membership: StatsMembershipInput): number {
 
 function isActiveMembership(membership: StatsMembershipInput): boolean {
   return membership.listStatus !== 'skipped' && membership.countsTowardGoal !== false
+}
+
+// Pacing treats a zero remainder as finished. An empty list has not started.
+function keepEmptyListSizeNotStarted(stats: WatchlistStatsCache): WatchlistStatsCache {
+  const next: WatchlistStatsCache = {
+    ...stats,
+    percentComplete: 0,
+    status: 'not_started',
+  }
+
+  delete next.onTrack
+  delete next.projectedFinishDate
+  delete next.requiredPerDay
+
+  return next
+}
+
+// Completed, in-progress, and eligible units from each membership's goal weight.
+function sumWeightedUnits(memberships: StatsMembershipInput[]): MembershipTotals {
+  return {
+    completed: memberships.reduce((sum, membership) => sum + getCompletedWeight(membership), 0),
+    inProgress: memberships.reduce((sum, membership) => sum + getInProgressWeight(membership), 0),
+    totalEligible: memberships.reduce((sum, membership) => sum + getEligibleWeight(membership), 0),
+  }
 }
