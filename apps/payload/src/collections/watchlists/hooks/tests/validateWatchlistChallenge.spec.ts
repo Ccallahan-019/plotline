@@ -215,3 +215,68 @@ describe('validateWatchlistChallenge', () => {
     ).toBe(data)
   })
 })
+
+describe('validateWatchlistChallenge goal cleanup edge cases', () => {
+  const dueDate = '2026-12-31T00:00:00.000Z'
+
+  it('leaves stored goals alone when the write turns challenge mode off', () => {
+    const data = { challenge: { enabled: false } }
+
+    expect(
+      run(data, {
+        challenge: {
+          dueDate,
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+        },
+      }),
+    ).toBe(data)
+  })
+
+  it('clears leftover goals when a disabled list-size challenge is turned back on', () => {
+    expect(
+      run(
+        { challenge: { enabled: true } },
+        {
+          challenge: {
+            dueDate,
+            enabled: false,
+            goalCount: 52,
+            goalRuntimeMinutes: 6000,
+            goalType: 'list_size',
+          },
+        },
+      ),
+    ).toEqual({
+      challenge: {
+        enabled: true,
+        goalCount: null,
+        goalRuntimeMinutes: null,
+      },
+    })
+  })
+
+  it('clears the runtime goal left on a list-size challenge that switches to count', () => {
+    expect(
+      run(
+        { challenge: { goalCount: 10, goalType: 'count' } },
+        {
+          challenge: {
+            dueDate,
+            enabled: true,
+            goalRuntimeMinutes: 6000,
+            goalType: 'list_size',
+          },
+        },
+      ),
+    ).toEqual({
+      challenge: {
+        goalCount: 10,
+        goalRuntimeMinutes: null,
+        goalType: 'count',
+      },
+    })
+  })
+})

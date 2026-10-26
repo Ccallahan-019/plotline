@@ -1,9 +1,16 @@
-import { PriorCompletionRule } from '@plotline/shared/constants'
+import type { PriorCompletionRule } from '@plotline/shared/constants'
+
+import type { SelectFieldItem } from '@/features/forms/components/SelectField'
 
 import { Field, FieldContent, FieldLabel } from '@/components/ui/field'
-import { SelectFieldItem } from '@/features/forms/components/SelectField'
 
-import { WatchlistFormApi } from '../hooks/use-watchlist-form'
+import type { WatchlistFormApi } from '../hooks/use-watchlist-form'
+
+const PRIOR_COMPLETION_ITEMS: SelectFieldItem<PriorCompletionRule>[] = [
+  { label: 'Exclude Already-Completed Titles', value: 'exclude_if_already_completed' },
+  { label: 'Count If Completed After Joining', value: 'count_if_completed_after_join' },
+  { label: 'Count All On Joining', value: 'count_all_on_join' },
+]
 
 type WatchlistChallengePriorCompletionRuleFieldProps = {
   form: WatchlistFormApi
@@ -14,12 +21,6 @@ export function WatchlistChallengePriorCompletionRuleField({
   form,
   isSubmitting,
 }: WatchlistChallengePriorCompletionRuleFieldProps) {
-  const PRIOR_COMPLETION_ITEMS: SelectFieldItem<PriorCompletionRule>[] = [
-    { label: 'Exclude Already-Completed Titles', value: 'exclude_if_already_completed' },
-    { label: 'Count If Completed After Joining', value: 'count_if_completed_after_join' },
-    { label: 'Count All On Joining', value: 'count_all_on_join' },
-  ]
-
   return (
     <form.AppField name="priorCompletionRule">
       {(field) => (

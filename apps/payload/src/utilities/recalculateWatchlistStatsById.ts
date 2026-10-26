@@ -8,10 +8,22 @@ import { Payload, PayloadRequest } from 'payload'
 
 import { SKIP_WATCHLIST_STATS_RECALC } from '@/collections/watchlists/context'
 
+/**
+ * Recomputes and stores `statsCache` for one watchlist from its memberships.
+ *
+ * A list-size challenge that already finished keeps its completion latch from the
+ * stored cache, so titles added later show as new instead of undoing the finish.
+ *
+ * @param payload - Payload instance
+ * @param watchlistId - Watchlist to recalculate
+ * @param req - Request whose transaction the reads and write join
+ * @param options.reopenCompletion - Measure a latched list live again. A fully watched list keeps its finish
+ */
 export async function recalculateWatchlistStatsById(
   payload: Payload,
   watchlistId: number | string,
   req?: PayloadRequest,
+  options?: { reopenCompletion?: boolean },
 ): Promise<void> {
   if (req?.context?.[SKIP_WATCHLIST_STATS_RECALC]) {
     return
@@ -65,6 +77,8 @@ export async function recalculateWatchlistStatsById(
   const statsCache = computeWatchlistStats({
     challenge: watchlist.challenge as null | undefined | WatchlistChallengeConfig,
     memberships: statsMemberships,
+    previousStats: watchlist.statsCache,
+    reopenCompletion: options?.reopenCompletion === true,
     watchlistCreatedAt: watchlist.createdAt,
   })
 

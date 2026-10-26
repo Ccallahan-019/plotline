@@ -194,7 +194,7 @@ describe('computeWatchlistStats list_size', () => {
     expect(onlyExcluded.requiredPerDay).toBeUndefined()
   })
 
-  it('stays not_started when an empty list is past due', () => {
+  it('is overdue when an empty list that never finished is past due', () => {
     const stats = statsFor(
       [],
       listSizeChallenge({
@@ -208,8 +208,9 @@ describe('computeWatchlistStats list_size', () => {
       daysRemaining: 0,
       daysTotal: 30,
       percentComplete: 0,
-      status: 'not_started',
+      status: 'overdue',
     })
+    expect(stats.completedAt).toBeUndefined()
     expect(stats.onTrack).toBeUndefined()
     expect(stats.projectedFinishDate).toBeUndefined()
     expect(stats.requiredPerDay).toBeUndefined()
@@ -252,5 +253,202 @@ describe('computeWatchlistStats list_size', () => {
       remaining: 6,
       totalEligible: 10,
     })
+  })
+})
+
+describe('computeWatchlistStats list_size completion latch', () => {
+  const finishedAt = '2026-10-05T12:00:00.000Z'
+  const latched = { completedAt: finishedAt, completedTitleCount: 3 }
+
+  function threeDone() {
+    return [
+      membership({ listStatus: 'completed' }),
+      membership({ listStatus: 'completed' }),
+      membership({ listStatus: 'completed' }),
+    ]
+  }
+
+  function withPrevious(
+    memberships: StatsMembershipInput[],
+    previousStats: Parameters<typeof computeWatchlistStats>[0]['previousStats'],
+  ) {
+    return computeWatchlistStats({
+      challenge: listSizeChallenge(),
+      memberships,
+      previousStats,
+      referenceDate,
+    })
+  }
+
+  it('latches when every qualifying title on a non-empty list is done', () => {
+    const stats = statsFor(threeDone())
+
+    expect(stats).toMatchObject({
+      completedAt: referenceDate.toISOString(),
+      completedTitleCount: 3,
+      newTitlesSinceCompletion: 0,
+      remaining: 0,
+      status: 'completed',
+      unfinishedTitlesSinceCompletion: 0,
+    })
+  })
+
+  it('does not latch while a title is unfinished or the list is empty', () => {
+    const unfinished = statsFor([...threeDone(), membership({ listStatus: 'planned' })])
+
+    expect(unfinished.completedAt).toBeUndefined()
+    expect(unfinished.newTitlesSinceCompletion).toBeUndefined()
+    expect(unfinished.unfinishedTitlesSinceCompletion).toBeUndefined()
+    expect(statsFor([]).completedAt).toBeUndefined()
+  })
+
+  it('keeps the finish and counts titles added since', () => {
+    const stats = withPrevious(
+      [
+        ...threeDone(),
+        membership({ addedAt: '2026-10-06T00:00:00.000Z', listStatus: 'planned' }),
+        membership({ addedAt: '2026-10-07T00:00:00.000Z', listStatus: 'in_progress' }),
+      ],
+      latched,
+    )
+
+    expect(stats).toMatchObject({
+      completed: 3,
+      completedAt: finishedAt,
+      completedTitleCount: 3,
+      goalCount: 3,
+      inProgress: 1,
+      newTitlesSinceCompletion: 2,
+      percentComplete: 100,
+      remaining: 0,
+      status: 'completed',
+      totalEligible: 3,
+      unfinishedTitlesSinceCompletion: 2,
+    })
+  })
+
+  it('counts a title added after the finish when an earlier title was removed', () => {
+    const stats = withPrevious(
+      [
+        ...threeDone().slice(0, 2),
+        membership({ addedAt: '2026-10-06T00:00:00.000Z', listStatus: 'planned' }),
+      ],
+      latched,
+    )
+
+    expect(stats).toMatchObject({
+      completed: 3,
+      completedAt: finishedAt,
+      newTitlesSinceCompletion: 1,
+      status: 'completed',
+      unfinishedTitlesSinceCompletion: 1,
+    })
+  })
+
+  it('counts a watched title added after the finish as new but not unfinished', () => {
+    const stats = withPrevious(
+      [
+        ...threeDone(),
+        membership({ addedAt: '2026-10-06T00:00:00.000Z', listStatus: 'completed' }),
+      ],
+      latched,
+    )
+
+    expect(stats).toMatchObject({
+      completedAt: finishedAt,
+      newTitlesSinceCompletion: 1,
+      status: 'completed',
+      unfinishedTitlesSinceCompletion: 0,
+    })
+  })
+
+  it('keeps the original finish when reopening leaves every title watched', () => {
+    const stats = computeWatchlistStats({
+      challenge: listSizeChallenge(),
+      memberships: [
+        ...threeDone(),
+        membership({ addedAt: '2026-10-06T00:00:00.000Z', listStatus: 'completed' }),
+      ],
+      previousStats: latched,
+      referenceDate,
+      reopenCompletion: true,
+    })
+
+    expect(stats).toMatchObject({
+      completedAt: finishedAt,
+      completedTitleCount: 3,
+      newTitlesSinceCompletion: 1,
+      status: 'completed',
+      unfinishedTitlesSinceCompletion: 0,
+    })
+    expect(stats.completedAt).not.toBe(referenceDate.toISOString())
+  })
+
+  it('measures the goal live when reopening leaves a planned title', () => {
+    const stats = computeWatchlistStats({
+      challenge: listSizeChallenge(),
+      memberships: [
+        ...threeDone(),
+        membership({ addedAt: '2026-10-06T00:00:00.000Z', listStatus: 'planned' }),
+      ],
+      previousStats: latched,
+      referenceDate,
+      reopenCompletion: true,
+    })
+
+    expect(stats).toMatchObject({
+      completed: 3,
+      goalCount: 4,
+      remaining: 1,
+      status: 'active',
+      totalEligible: 4,
+    })
+    expect(stats.completedAt).toBeUndefined()
+    expect(stats.newTitlesSinceCompletion).toBeUndefined()
+    expect(stats.unfinishedTitlesSinceCompletion).toBeUndefined()
+  })
+
+  it('stays completed with no new titles after titles are removed', () => {
+    const stats = withPrevious(threeDone().slice(0, 2), latched)
+
+    expect(stats).toMatchObject({
+      completed: 3,
+      completedAt: finishedAt,
+      newTitlesSinceCompletion: 0,
+      status: 'completed',
+    })
+  })
+
+  it('measures the goal live again once the latch is dropped', () => {
+    const stats = withPrevious([...threeDone(), membership({ listStatus: 'planned' })], null)
+
+    expect(stats).toMatchObject({
+      completed: 3,
+      goalCount: 4,
+      percentComplete: 75,
+      remaining: 1,
+      status: 'active',
+      totalEligible: 4,
+    })
+    expect(stats.completedAt).toBeUndefined()
+    expect(stats.newTitlesSinceCompletion).toBeUndefined()
+  })
+
+  it('ignores a stored latch for other goal types and for a disabled challenge', () => {
+    const count = computeWatchlistStats({
+      challenge: listSizeChallenge({ goalCount: 5, goalType: 'count' }),
+      memberships: threeDone(),
+      previousStats: latched,
+      referenceDate,
+    })
+    const disabled = computeWatchlistStats({
+      challenge: listSizeChallenge({ enabled: false }),
+      memberships: threeDone(),
+      previousStats: latched,
+      referenceDate,
+    })
+
+    expect(count.completedAt).toBeUndefined()
+    expect(disabled.completedAt).toBeUndefined()
   })
 })

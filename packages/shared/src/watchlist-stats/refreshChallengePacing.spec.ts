@@ -6,9 +6,7 @@ import { refreshChallengePacing } from './refreshChallengePacing'
 
 const calculatedAt = '2026-10-11T15:00:00.000Z'
 
-function challenge(
-  overrides: Partial<WatchlistChallengeConfig> = {},
-): WatchlistChallengeConfig {
+function challenge(overrides: Partial<WatchlistChallengeConfig> = {}): WatchlistChallengeConfig {
   return {
     dueDate: '2026-10-31T00:00:00.000Z',
     enabled: true,
@@ -117,7 +115,7 @@ describe('refreshChallengePacing', () => {
     expect(pacing.lastCalculatedAt).toBe(calculatedAt)
   })
 
-  it('keeps an empty list-size goal not started after the due day', () => {
+  it('marks an empty list-size goal overdue after the due day', () => {
     const pacing = refreshChallengePacing({
       challenge: challenge({
         dueDate: '2026-10-01T00:00:00.000Z',
@@ -139,11 +137,36 @@ describe('refreshChallengePacing', () => {
       }),
     })
 
-    expect(pacing.status).toBe('not_started')
+    expect(pacing.status).toBe('overdue')
     expect(pacing.daysRemaining).toBe(0)
     expect(pacing.requiredPerDay).toBeUndefined()
     expect(pacing.onTrack).toBeUndefined()
     expect(pacing.projectedFinishDate).toBeUndefined()
+  })
+
+  it('keeps a latched list-size finish completed after the list is emptied', () => {
+    const pacing = refreshChallengePacing({
+      challenge: challenge({ goalCount: null, goalType: 'list_size' }),
+      referenceDate: new Date('2026-11-02T10:00:00.000Z'),
+      stats: stats({
+        completed: 8,
+        completedAt: '2026-10-05T12:00:00.000Z',
+        completedTitleCount: 8,
+        goalCount: 8,
+        newTitlesSinceCompletion: 2,
+        percentComplete: 100,
+        remaining: 0,
+        status: 'completed',
+        totalEligible: 8,
+      }),
+    })
+
+    expect(pacing).toMatchObject({
+      completedAt: '2026-10-05T12:00:00.000Z',
+      completedTitleCount: 8,
+      newTitlesSinceCompletion: 2,
+      status: 'completed',
+    })
   })
 
   it('leaves a disabled challenge on its stored pacing', () => {

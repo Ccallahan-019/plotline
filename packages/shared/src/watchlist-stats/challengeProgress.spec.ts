@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatChallengeProgress, getChallengeMetaLabels } from './challengeProgress'
+import {
+  formatChallengeProgress,
+  getChallengeMetaLabels,
+  isRuntimeChallengeGoal,
+} from './challengeProgress'
 
 describe('formatChallengeProgress', () => {
   it('formats a count goal for a card', () => {
@@ -145,6 +149,18 @@ describe('formatChallengeProgress', () => {
     ).toBe('12 / 40 films')
   })
 
+  it('ignores a stored count on a list size goal and reads the cached total', () => {
+    expect(
+      formatChallengeProgress({
+        completed: 12,
+        goalCount: 52,
+        goalType: 'list_size',
+        totalEligible: 40,
+        variant: 'card',
+      }),
+    ).toBe('12 of 40 titles')
+  })
+
   it('groups large counts', () => {
     expect(
       formatChallengeProgress({
@@ -224,5 +240,19 @@ describe('getChallengeMetaLabels', () => {
       label: 'Due date',
       value: '—',
     })
+  })
+})
+
+describe('isRuntimeChallengeGoal', () => {
+  it('follows the declared goal type', () => {
+    expect(isRuntimeChallengeGoal({ goalType: 'runtime_minutes' })).toBe(true)
+    expect(isRuntimeChallengeGoal({ goalRuntimeMinutes: 6000, goalType: 'count' })).toBe(false)
+    expect(isRuntimeChallengeGoal({ goalRuntimeMinutes: 6000, goalType: 'list_size' })).toBe(false)
+  })
+
+  it('infers runtime from stored minutes only when the type is omitted', () => {
+    expect(isRuntimeChallengeGoal({ goalRuntimeMinutes: 6000 })).toBe(true)
+    expect(isRuntimeChallengeGoal({ goalCount: 10, goalRuntimeMinutes: 6000 })).toBe(false)
+    expect(isRuntimeChallengeGoal({})).toBe(false)
   })
 })

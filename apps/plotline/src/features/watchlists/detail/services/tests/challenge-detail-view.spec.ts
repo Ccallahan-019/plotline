@@ -128,6 +128,45 @@ describe('getChallengeDetailView', () => {
     ])
   })
 
+  it('reports the titles added after a list size challenge finished', () => {
+    const latched = getChallengeDetailView(
+      watchlist({
+        challenge: { enabled: true, goalCount: null, goalType: 'list_size' },
+        statsCache: stats({
+          completed: 10,
+          completedAt: '2026-10-05T12:00:00.000Z',
+          completedTitleCount: 10,
+          goalCount: 10,
+          newTitlesSinceCompletion: 1,
+          percentComplete: 100,
+          remaining: 0,
+          status: 'completed',
+          totalEligible: 10,
+          unfinishedTitlesSinceCompletion: 1,
+        }),
+      }),
+    )
+    const watchedSince = getChallengeDetailView(
+      watchlist({
+        challenge: { enabled: true, goalCount: null, goalType: 'list_size' },
+        statsCache: stats({
+          newTitlesSinceCompletion: 2,
+          status: 'completed',
+          unfinishedTitlesSinceCompletion: 0,
+        }),
+      }),
+    )
+    const open = getChallengeDetailView(watchlist({}))
+
+    expect(latched.paceLabel).toBe('Completed - 1 New Title Added')
+    expect(latched.progressCompleted).toBe('10')
+    expect(latched.newTitlesSinceCompletion).toBe(1)
+    expect(latched.unfinishedTitlesSinceCompletion).toBe(1)
+    expect(watchedSince.unfinishedTitlesSinceCompletion).toBe(0)
+    expect(open.newTitlesSinceCompletion).toBe(0)
+    expect(open.unfinishedTitlesSinceCompletion).toBe(0)
+  })
+
   it('shows the starting daily rate and the rate still needed to finish on time', () => {
     const titles = getChallengeDetailView(
       watchlist({

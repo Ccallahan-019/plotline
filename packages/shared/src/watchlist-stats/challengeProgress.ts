@@ -31,12 +31,13 @@ const formatGoalType: Record<ChallengeGoalType, string> = {
  * Progress line for a challenge card (`31 of 52 titles`) or detail hero (`31 / 52 titles`).
  *
  * The denominator is `goalCount` or `goalRuntimeMinutes`, then `totalEligible`. Count and
- * list-size goals say titles, or films when the TV rule is movies only. A list-size caller
- * passes a null stored count and the cache's `totalEligible` (`12 of 40 titles`). Runtime
- * goals format stored minutes as hours, and a whole hour stays an integer.
+ * list-size goals say titles, or films when the TV rule is movies only. A list-size goal has
+ * no stored target, so any stored count is ignored and `totalEligible` is the denominator
+ * (`12 of 40 titles`). Runtime goals format stored minutes as hours, and a whole hour stays
+ * an integer.
  *
  * @param input.completed - `statsCache.completed`, in titles or minutes
- * @param input.goalCount - Count goal; falls back to `totalEligible`. Null for list size
+ * @param input.goalCount - Count goal; falls back to `totalEligible`. Ignored for list size
  * @param input.goalRuntimeMinutes - Runtime goal in minutes; falls back to `totalEligible`
  * @param input.goalType - Selects count, list size, or runtime. Inferred from which goal is set when omitted
  * @param input.totalEligible - Fallback denominator from `statsCache`
@@ -47,14 +48,15 @@ const formatGoalType: Record<ChallengeGoalType, string> = {
 export function formatChallengeProgress(input: ChallengeProgressInput): string {
   const separator = input.variant === 'detail' ? '/' : 'of'
 
-  if (isRuntimeGoal(input)) {
+  if (isRuntimeChallengeGoal(input)) {
     const completedHours = formatHoursFromMinutes(input.completed)
     const goalHours = formatHoursFromMinutes(input.goalRuntimeMinutes ?? input.totalEligible)
 
     return `${completedHours} ${separator} ${goalHours} hrs`
   }
 
-  const goal = input.goalCount ?? input.totalEligible
+  const goal =
+    input.goalType === 'list_size' ? input.totalEligible : (input.goalCount ?? input.totalEligible)
   const unit = input.tvCountRule === 'movies_only' ? 'films' : 'titles'
 
   return `${formatNumber(input.completed)} ${separator} ${formatNumber(goal)} ${unit}`
@@ -78,6 +80,37 @@ export function getChallengeMetaLabels(
     { label: 'TV counting', value: formatTvCountRule(challenge.tvCountRule) },
     { label: 'Rewatches', value: challenge.includeRewatches === true ? 'Included' : 'Excluded' },
   ]
+}
+
+/**
+ * Whether a challenge is measured in minutes rather than titles.
+ *
+ * Runtime when the type says so, or when the type is omitted and only minutes are stored.
+ * List size stays a title count even if a previous runtime value is still on the document.
+ *
+ * @param input.goalCount - Stored or cached title goal, if any
+ * @param input.goalRuntimeMinutes - Stored or cached runtime goal, if any
+ * @param input.goalType - Declared goal type. Inferred from the stored goals when omitted
+ * @returns True for a runtime goal
+ */
+export function isRuntimeChallengeGoal(
+  input: Pick<ChallengeProgressInput, 'goalCount' | 'goalRuntimeMinutes' | 'goalType'>,
+): boolean {
+  switch (input.goalType) {
+    case 'count':
+    case 'list_size':
+      return false
+    case null:
+    case undefined:
+      return input.goalRuntimeMinutes != null && input.goalCount == null
+    case 'runtime_minutes':
+      return true
+    default: {
+      const _exhaustive: never = input.goalType
+
+      return _exhaustive
+    }
+  }
 }
 
 function formatDueDate(dueDate: null | string | undefined): string {
@@ -113,26 +146,6 @@ function formatTvCountRule(rule: null | TvCountRule | undefined): string {
       return 'By season'
     default: {
       const _exhaustive: never = rule
-
-      return _exhaustive
-    }
-  }
-}
-
-// Runtime when the type says so, or when the type is omitted and only minutes are stored.
-// List size stays a title count even if a previous runtime value is still on the document.
-function isRuntimeGoal(input: ChallengeProgressInput): boolean {
-  switch (input.goalType) {
-    case 'count':
-    case 'list_size':
-      return false
-    case null:
-    case undefined:
-      return input.goalRuntimeMinutes != null && input.goalCount == null
-    case 'runtime_minutes':
-      return true
-    default: {
-      const _exhaustive: never = input.goalType
 
       return _exhaustive
     }

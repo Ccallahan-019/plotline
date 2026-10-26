@@ -1,9 +1,16 @@
-import { ChallengeGoalType } from '@plotline/shared/constants'
+import type { ChallengeGoalType } from '@plotline/shared/constants'
+
+import type { ToggleGroupFieldItem } from '@/features/forms/components/ToggleGroupField'
 
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
-import { ToggleGroupFieldItem } from '@/features/forms/components/ToggleGroupField'
 
-import { WatchlistFormApi } from '../hooks/use-watchlist-form'
+import type { WatchlistFormApi } from '../hooks/use-watchlist-form'
+
+const GOAL_TYPE_ITEMS: ToggleGroupFieldItem<ChallengeGoalType>[] = [
+  { label: 'Count', value: 'count' },
+  { label: 'List', value: 'list_size' },
+  { label: 'Runtime', value: 'runtime_minutes' },
+]
 
 type WatchlistChallengeGoalTypeFieldProps = {
   form: WatchlistFormApi
@@ -14,12 +21,6 @@ export function WatchlistChallengeGoalTypeField({
   form,
   isSubmitting,
 }: WatchlistChallengeGoalTypeFieldProps) {
-  const GOAL_TYPE_ITEMS: ToggleGroupFieldItem<ChallengeGoalType>[] = [
-    { label: 'Count', value: 'count' },
-    { label: 'List', value: 'list_size' },
-    { label: 'Runtime', value: 'runtime_minutes' },
-  ]
-
   return (
     <form.AppField name="goalType">
       {(field) => (

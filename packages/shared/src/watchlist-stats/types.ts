@@ -10,7 +10,14 @@ import type {
 export interface ComputeWatchlistStatsInput {
   challenge?: null | WatchlistChallengeConfig
   memberships: StatsMembershipInput[]
+  /** Completion latch from the stored cache. Reopen keeps it when the list is already fully watched. */
+  previousStats?: null | Pick<WatchlistStatsCache, 'completedAt' | 'completedTitleCount'>
   referenceDate?: Date
+  /**
+   * Measure a latched list-size goal live again.
+   * A list that is already fully watched keeps the stored finish.
+   */
+  reopenCompletion?: boolean
   watchlistCreatedAt?: string
 }
 
@@ -62,7 +69,11 @@ export interface WatchlistChallengeConfig {
 export interface WatchlistStatsCache {
   actualPerDay?: number
   completed: number
+  /** When a list-size challenge first finished. Kept until the user reopens it. */
+  completedAt?: string
   completedRuntimeMinutes?: number
+  /** Titles on the list when the latch was set. Progress reads `n of n` while latched. */
+  completedTitleCount?: number
   daysElapsed?: number
   daysRemaining?: number
   daysTotal?: number
@@ -70,6 +81,8 @@ export interface WatchlistStatsCache {
   goalRuntimeMinutes?: number
   inProgress: number
   lastCalculatedAt: string
+  /** Qualifying titles added after `completedAt`. Set only while latched. */
+  newTitlesSinceCompletion?: number
   onTrack?: boolean
   percentComplete: number
   projectedFinishDate?: string
@@ -78,4 +91,6 @@ export interface WatchlistStatsCache {
   requiredPerDay?: number
   status?: ChallengeStatsStatus
   totalEligible: number
+  /** Added titles that are not completed. Reopen is offered only when this is above zero. */
+  unfinishedTitlesSinceCompletion?: number
 }

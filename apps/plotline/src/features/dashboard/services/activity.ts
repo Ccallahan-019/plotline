@@ -1,5 +1,7 @@
 import type { ChallengeGoalType, MediaType, WatchEventType } from '@plotline/shared/constants'
 
+import { isRuntimeChallengeGoal } from '@plotline/shared/watchlist-stats'
+
 import type {
   ActivityChallengeProgress,
   DashboardActivityGroup,
@@ -633,29 +635,16 @@ function isAfterCursor(row: DashboardActivityRow, cursor: ActivityCursor): boole
   return row.id < cursor.id
 }
 
-// Runtime when the type says so, or when the type is omitted and only minutes are stored.
-// List size stays a title count even if a previous runtime value is still on the document.
+// The cache's goals win over the document's, the same order the snapshot reads them.
 function isRuntimeGoal(
   challenge: ActivityChallengeInput['challenge'],
   stats: ActivityChallengeInput['statsCache'],
 ): boolean {
-  const goalType = challenge?.goalType
-
-  switch (goalType) {
-    case 'count':
-    case 'list_size':
-      return false
-    case null:
-    case undefined:
-      return storedMinutesWithoutCount(challenge, stats)
-    case 'runtime_minutes':
-      return true
-    default: {
-      const _exhaustive: never = goalType
-
-      return _exhaustive
-    }
-  }
+  return isRuntimeChallengeGoal({
+    goalCount: stats?.goalCount ?? challenge?.goalCount,
+    goalRuntimeMinutes: stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes,
+    goalType: challenge?.goalType,
+  })
 }
 
 // Earliest and latest row dates in the collapsed previous week. One day omits the span.
@@ -860,16 +849,6 @@ function runtimeMinutes(value: null | number | undefined): number {
   }
 
   return value
-}
-
-// True when minutes are stored and neither the cache nor the document has a count goal.
-function storedMinutesWithoutCount(
-  challenge: ActivityChallengeInput['challenge'],
-  stats: ActivityChallengeInput['statsCache'],
-): boolean {
-  const goalMinutes = stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes
-
-  return goalMinutes != null && (stats?.goalCount ?? challenge?.goalCount) == null
 }
 
 // Each time a streak reaches a threshold, including a later streak after a gap.

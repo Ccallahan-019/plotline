@@ -3,7 +3,11 @@ export { getChallengeExclusion } from './challengeExclusion'
 export type { ChallengeExclusion } from './challengeExclusion'
 export { formatChallengePace } from './challengePace'
 export type { ChallengePaceBadge, ChallengePaceInput, ChallengePaceTone } from './challengePace'
-export { formatChallengeProgress, getChallengeMetaLabels } from './challengeProgress'
+export {
+  formatChallengeProgress,
+  getChallengeMetaLabels,
+  isRuntimeChallengeGoal,
+} from './challengeProgress'
 export type {
   ChallengeMetaLabel,
   ChallengeProgressInput,

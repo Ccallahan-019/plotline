@@ -11,7 +11,44 @@ describe('formatChallengePace', () => {
         onTrack: false,
         remaining: 0,
         requiredPerDay: 2,
+        status: 'completed',
+      }),
+    ).toEqual({ label: 'Complete', tone: 'default' })
+  })
+
+  it('labels a zero remainder overdue when the status says overdue, as for an empty list past due', () => {
+    expect(
+      formatChallengePace({
+        daysRemaining: 0,
+        remaining: 0,
         status: 'overdue',
+      }),
+    ).toEqual({ label: 'Overdue', tone: 'destructive' })
+  })
+
+  it('counts the titles added after a list-size challenge finished', () => {
+    expect(
+      formatChallengePace({
+        newTitlesSinceCompletion: 1,
+        remaining: 0,
+        status: 'completed',
+      }),
+    ).toEqual({ label: 'Completed - 1 New Title Added', tone: 'default' })
+    expect(
+      formatChallengePace({
+        newTitlesSinceCompletion: 3,
+        remaining: 0,
+        status: 'completed',
+      }),
+    ).toEqual({ label: 'Completed - 3 New Titles Added', tone: 'default' })
+  })
+
+  it('keeps a plain Complete label when no titles were added after the finish', () => {
+    expect(
+      formatChallengePace({
+        newTitlesSinceCompletion: 0,
+        remaining: 0,
+        status: 'completed',
       }),
     ).toEqual({ label: 'Complete', tone: 'default' })
   })

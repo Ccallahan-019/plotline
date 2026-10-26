@@ -87,6 +87,32 @@ describe('getChallengeCardView', () => {
     expect(films.progressLabel).toBe('12 of 16 films')
   })
 
+  it('labels the titles added after a list size challenge finished', () => {
+    const view = getChallengeCardView(
+      card({
+        challenge: { enabled: true, goalCount: null, goalType: 'list_size' },
+        statsCache: stats({
+          completed: 10,
+          completedAt: '2026-10-05T12:00:00.000Z',
+          completedTitleCount: 10,
+          goalCount: 10,
+          newTitlesSinceCompletion: 2,
+          percentComplete: 100,
+          remaining: 0,
+          status: 'completed',
+          totalEligible: 10,
+        }),
+      }),
+    )
+
+    expect(view).toEqual({
+      paceLabel: 'Completed - 2 New Titles Added',
+      paceTone: 'default',
+      percentComplete: 100,
+      progressLabel: '10 of 10 titles',
+    })
+  })
+
   it('keeps a challenge without stats neutral instead of complete', () => {
     const view = getChallengeCardView(
       card({

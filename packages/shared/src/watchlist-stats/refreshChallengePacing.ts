@@ -13,9 +13,12 @@ export type RefreshChallengePacingInput = {
  * Replaces cached pacing with the rate still required as of `referenceDate`.
  *
  * Completed, remaining, percent, goal totals, and `lastCalculatedAt` stay on
- * the cache. Days left, both daily rates, on-track, projected finish, and
- * status come from the challenge dates and that clock. An empty list-size
- * goal stays not started. A missing or disabled challenge is returned unchanged.
+ * the cache, as do the completion latch fields (`completedAt`,
+ * `completedTitleCount`, `newTitlesSinceCompletion`). Days left, both daily
+ * rates, on-track, projected finish, and status come from the challenge dates
+ * and that clock. A list-size goal that is empty and never finished is not
+ * started, or overdue once the due day passes. A missing or disabled challenge
+ * is returned unchanged.
  *
  * @param input.challenge - Stored challenge settings. Pacing is skipped when this is missing or disabled
  * @param input.referenceDate - Clock for days left and pace. Defaults to now
@@ -30,23 +33,18 @@ export function refreshChallengePacing(input: RefreshChallengePacingInput): Watc
     return input.stats
   }
 
-  const paced = replacePacing(
+  return replacePacing(
     input.stats,
     computeChallengePacing({
       challenge,
       completed: input.stats.completed,
+      goalIsEmpty: isEmptyListSizeGoal(challenge, input.stats),
       inProgress: input.stats.inProgress,
       referenceDate: input.referenceDate,
       remaining: input.stats.remaining,
       watchlistCreatedAt: input.watchlistCreatedAt,
     }),
   )
-
-  if (isEmptyListSizeGoal(challenge, input.stats)) {
-    return keepEmptyListSizeNotStarted(paced)
-  }
-
-  return paced
 }
 
 // Copies defined pacing fields onto a cache whose previous pacing fields are gone.
@@ -90,32 +88,15 @@ function definedPacing(
   return defined
 }
 
-// A list-size goal with no qualifying titles. A zero remainder would otherwise look finished.
+// A list-size goal with no qualifying titles that never finished. A zero remainder would
+// otherwise look complete. A latched finish keeps its completed state, even when emptied.
 function isEmptyListSizeGoal(
   challenge: WatchlistChallengeConfig,
   stats: WatchlistStatsCache,
 ): boolean {
   return (
-    challenge.goalType === 'list_size' &&
-    stats.completed === 0 &&
-    stats.inProgress === 0 &&
-    stats.totalEligible === 0
+    challenge.goalType === 'list_size' && stats.completedAt == null && stats.totalEligible === 0
   )
-}
-
-// Pacing treats a zero remainder as finished. An empty list has not started.
-function keepEmptyListSizeNotStarted(stats: WatchlistStatsCache): WatchlistStatsCache {
-  const next: WatchlistStatsCache = {
-    ...stats,
-    percentComplete: 0,
-    status: 'not_started',
-  }
-
-  delete next.onTrack
-  delete next.projectedFinishDate
-  delete next.requiredPerDay
-
-  return next
 }
 
 function replacePacing(

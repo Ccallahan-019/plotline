@@ -9,10 +9,13 @@ import {
   formatChallengePace,
   formatChallengeProgress,
   getChallengeMetaLabels,
+  isRuntimeChallengeGoal,
 } from '@plotline/shared/watchlist-stats'
 
 export type ChallengeDetailView = {
   meta: ChallengeMetaLabel[]
+  /** Titles added to a completed list-size challenge. Zero unless the challenge is latched. */
+  newTitlesSinceCompletion: number
   paceLabel: string
   paceRates: ChallengePaceRateLabel[]
   paceTone: ChallengePaceTone
@@ -20,6 +23,8 @@ export type ChallengeDetailView = {
   progressCompleted: string
   progressGoal: string
   progressLabel: string
+  /** Added titles that are not watched yet. Zero unless the challenge is latched. */
+  unfinishedTitlesSinceCompletion: number
 }
 
 export type ChallengePaceRateLabel = {
@@ -64,7 +69,7 @@ export function getChallengeDetailView(
   const pace = formatChallengePace(toPaceInput(stats))
   const progressLabel = formatChallengeProgress({
     completed: stats?.completed ?? 0,
-    goalCount: progressGoalCount(watchlist),
+    goalCount: watchlist.challenge?.goalCount,
     goalRuntimeMinutes: watchlist.challenge?.goalRuntimeMinutes,
     goalType: watchlist.challenge?.goalType,
     totalEligible: stats?.totalEligible ?? 0,
@@ -75,6 +80,7 @@ export function getChallengeDetailView(
 
   return {
     meta: getChallengeMetaLabels(watchlist.challenge ?? {}),
+    newTitlesSinceCompletion: stats?.newTitlesSinceCompletion ?? 0,
     paceLabel: pace.label,
     paceRates: getChallengePaceRates(watchlist),
     paceTone: pace.tone,
@@ -82,6 +88,7 @@ export function getChallengeDetailView(
     progressCompleted: progress.completed,
     progressGoal: progress.goal,
     progressLabel,
+    unfinishedTitlesSinceCompletion: stats?.unfinishedTitlesSinceCompletion ?? 0,
   }
 }
 
@@ -160,7 +167,7 @@ function getGoalUnits(watchlist: ChallengePaceSource, unit: PaceUnit): number | 
 
 // Runtime rates display as hours. Count and list-size rates follow the progress copy: films or titles.
 function getPaceUnit(watchlist: ChallengePaceSource): PaceUnit {
-  if (isRuntimePace(watchlist.challenge)) {
+  if (isRuntimeChallengeGoal(watchlist.challenge ?? {})) {
     return 'hrs'
   }
 
@@ -169,37 +176,6 @@ function getPaceUnit(watchlist: ChallengePaceSource): PaceUnit {
   }
 
   return 'titles'
-}
-
-// Runtime when the type says so, or when the type is omitted and only minutes are stored.
-// List size stays titles or films even if a previous runtime value is still on the document.
-function isRuntimePace(challenge: ChallengePaceSource['challenge']): boolean {
-  const goalType = challenge?.goalType
-
-  switch (goalType) {
-    case 'count':
-    case 'list_size':
-      return false
-    case null:
-    case undefined:
-      return challenge != null && challenge.goalRuntimeMinutes != null && challenge.goalCount == null
-    case 'runtime_minutes':
-      return true
-    default: {
-      const _exhaustive: never = goalType
-
-      return _exhaustive
-    }
-  }
-}
-
-// List size stores no target. The cached count is the denominator, then total eligible.
-function progressGoalCount(watchlist: ChallengePaceSource): null | number | undefined {
-  if (watchlist.challenge?.goalType === 'list_size') {
-    return watchlist.statsCache?.goalCount ?? null
-  }
-
-  return watchlist.challenge?.goalCount
 }
 
 // The hero styles the completed count apart from the goal (` / 52 titles`).
@@ -228,6 +204,7 @@ function toPaceInput(stats: null | undefined | Watchlist['statsCache']): Challen
   return {
     actualPerDay: stats.actualPerDay,
     daysRemaining: stats.daysRemaining,
+    newTitlesSinceCompletion: stats.newTitlesSinceCompletion,
     onTrack: stats.onTrack,
     remaining: stats.remaining,
     requiredPerDay: stats.requiredPerDay,

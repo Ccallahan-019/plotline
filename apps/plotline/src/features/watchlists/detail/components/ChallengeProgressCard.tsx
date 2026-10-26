@@ -2,10 +2,12 @@ import type { Watchlist } from '@plotline/payload-types'
 
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { ShowIf } from '@/components/utils/ShowIf'
 import { cn } from '@/lib/utils'
 
 import { ChallengePaceBadge } from '../../components/ChallengePaceBadge'
 import { getChallengeDetailView } from '../services/challenge-detail-view'
+import { ReopenChallengeAlert } from './ReopenChallengeAlert'
 
 type ChallengeProgressCardProps = {
   watchlist: Watchlist
@@ -22,8 +24,15 @@ export function ChallengeProgressCard({ watchlist }: ChallengeProgressCardProps)
           {view.progressCompleted}{' '}
           <span className="text-base text-muted-foreground">{view.progressGoal}</span>
         </CardTitle>
-        <CardAction>
+        <CardAction className="flex items-center gap-2">
           <ChallengePaceBadge label={view.paceLabel} tone={view.paceTone} />
+          <ShowIf condition={view.unfinishedTitlesSinceCompletion > 0}>
+            <ReopenChallengeAlert
+              newTitlesSinceCompletion={view.newTitlesSinceCompletion}
+              slug={watchlist.slug}
+              unfinishedTitlesSinceCompletion={view.unfinishedTitlesSinceCompletion}
+            />
+          </ShowIf>
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
