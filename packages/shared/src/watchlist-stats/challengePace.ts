@@ -23,9 +23,10 @@ export type ChallengePaceTone = 'ahead' | 'default' | 'destructive' | 'neutral'
 /**
  * Pace badge for a challenge card or detail hero.
  *
- * A challenge that has not started stays neutral. Overdue wins over a zero remainder, so an
- * empty list-size goal past due reads overdue. Complete and overdue win over the daily rate.
- * A completed list-size challenge with titles added since reads
+ * A stored `status` decides whether the challenge is finished, so an empty list-size goal
+ * (zero remaining, status `not_started` or `overdue`) is not read as complete. Without a
+ * status, a zero remainder is complete. Complete, not started and overdue win over the daily
+ * rate. A completed list-size challenge with titles added since reads
  * `Completed - 2 New Titles Added`. A rate that is not
  * computable yet (day zero) stays neutral so the challenge is not immediately behind.
  * Ahead is a faster rate than required (`tone` is `ahead`). On track includes an equal
@@ -35,16 +36,16 @@ export type ChallengePaceTone = 'ahead' | 'default' | 'destructive' | 'neutral'
  * @returns Label and tone for the badge
  */
 export function formatChallengePace(input: ChallengePaceInput): ChallengePaceBadge {
+  if (isFinished(input)) {
+    return { label: completeLabel(input.newTitlesSinceCompletion), tone: 'default' }
+  }
+
   if (input.status === 'not_started') {
     return { label: withDaysLeft('Not started', input.daysRemaining), tone: 'neutral' }
   }
 
   if (input.status === 'overdue') {
     return { label: 'Overdue', tone: 'destructive' }
-  }
-
-  if (input.remaining === 0 || input.status === 'completed') {
-    return { label: completeLabel(input.newTitlesSinceCompletion), tone: 'default' }
   }
 
   const { actualPerDay, requiredPerDay } = input
@@ -73,6 +74,11 @@ function completeLabel(newTitles: number | undefined): string {
   }
 
   return `Completed - ${formatNumber(newTitles)} New ${newTitles === 1 ? 'Title' : 'Titles'} Added`
+}
+
+// The stored status is authoritative. A zero remainder only counts when no status was cached.
+function isFinished(input: ChallengePaceInput): boolean {
+  return input.status == null ? input.remaining === 0 : input.status === 'completed'
 }
 
 function withDaysLeft(prefix: string, daysRemaining: number | undefined): string {

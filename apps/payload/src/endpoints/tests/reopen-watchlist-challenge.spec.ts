@@ -1,9 +1,11 @@
+import type { Watchlist } from '@plotline/payload-types'
 import type { PayloadRequest } from 'payload'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Watchlists } from '../../collections/watchlists'
 import { recalculateWatchlistStatsById } from '../../utilities/recalculateWatchlistStatsById'
+import { runInPayloadTransaction } from '../../utilities/runInPayloadTransaction'
 import { requireProfileContext, requireServiceAuth } from '../helpers'
 import { reopenWatchlistChallengeEndpoint } from '../reopen-watchlist-challenge'
 
@@ -16,6 +18,10 @@ vi.mock('../helpers', async (importOriginal) => {
     requireServiceAuth: vi.fn(async () => null),
   }
 })
+
+vi.mock('../../utilities/runInPayloadTransaction', () => ({
+  runInPayloadTransaction: vi.fn(async (_req: unknown, fn: () => Promise<unknown>) => fn()),
+}))
 
 vi.mock('../../utilities/recalculateWatchlistStatsById', () => ({
   recalculateWatchlistStatsById: vi.fn(async () => undefined),
@@ -31,13 +37,12 @@ const completedListSize = {
 
 function createReq(watchlist: null | Record<string, unknown>) {
   const find = vi.fn(async () => ({ docs: watchlist ? [watchlist] : [] }))
-  const findByID = vi.fn(async () => ({ ...completedListSize, statsCache: { remaining: 1 } }))
   const req = {
-    payload: { find, findByID },
+    payload: { find },
     routeParams: { slug: 'watchlist' },
   } as unknown as PayloadRequest
 
-  return { find, findByID, req }
+  return { find, req }
 }
 
 async function readResponse(req: PayloadRequest): Promise<Response> {
@@ -54,7 +59,12 @@ describe('reopenWatchlistChallengeEndpoint', () => {
   beforeEach(() => {
     vi.mocked(requireServiceAuth).mockResolvedValue(null)
     vi.mocked(requireProfileContext).mockResolvedValue({ profileId: 22 })
-    vi.mocked(recalculateWatchlistStatsById).mockClear()
+    vi.mocked(recalculateWatchlistStatsById).mockReset()
+    vi.mocked(recalculateWatchlistStatsById).mockResolvedValue({
+      ...completedListSize,
+      statsCache: { remaining: 1 },
+    } as unknown as Watchlist)
+    vi.mocked(runInPayloadTransaction).mockClear()
   })
 
   it('is a watchlists collection endpoint so Payload can route /api/watchlists/:slug/reopen-challenge', () => {
@@ -64,17 +74,15 @@ describe('reopenWatchlistChallengeEndpoint', () => {
   })
 
   it('recalculates without the stored completion and returns the watchlist', async () => {
-    const { findByID, req } = createReq(completedListSize)
+    const { req } = createReq(completedListSize)
 
     const response = await readResponse(req)
 
     expect(response.status).toBe(200)
+    expect(runInPayloadTransaction).toHaveBeenCalledOnce()
     expect(recalculateWatchlistStatsById).toHaveBeenCalledWith(req.payload, 7, req, {
       reopenCompletion: true,
     })
-    expect(findByID).toHaveBeenCalledWith(
-      expect.objectContaining({ collection: 'watchlists', id: 7 }),
-    )
     expect(await response.json()).toMatchObject({ id: 7, statsCache: { remaining: 1 } })
   })
 

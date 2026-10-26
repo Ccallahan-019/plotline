@@ -1,6 +1,7 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 
 import { recalculateWatchlistStatsById } from '@/utilities/recalculateWatchlistStatsById'
+import { runInPayloadTransaction } from '@/utilities/runInPayloadTransaction'
 
 import { findOwnedWatchlistBySlug } from './find-owned-watchlist-by-slug'
 import { requireProfileContext, requireServiceAuth } from './helpers'
@@ -35,33 +36,36 @@ export const reopenWatchlistChallengeEndpoint: Endpoint = {
       return Response.json({ error: 'Watchlist slug is required' }, { status: 400 })
     }
 
-    const watchlist = await findOwnedWatchlistBySlug(req, profileResult.profileId, slug)
+    // The ownership read, the `completedAt` check and the stats write join one transaction, and
+    // the recalculation returns the updated list so it is not read a second time.
+    return runInPayloadTransaction(req, async () => {
+      const watchlist = await findOwnedWatchlistBySlug(req, profileResult.profileId, slug)
 
-    if (!watchlist) {
-      return Response.json({ error: 'Watchlist not found' }, { status: 404 })
-    }
+      if (!watchlist) {
+        return Response.json({ error: 'Watchlist not found' }, { status: 404 })
+      }
 
-    if (watchlist.challenge?.enabled !== true || watchlist.challenge.goalType !== 'list_size') {
-      return Response.json({ error: 'Only a list-size challenge can be reopened' }, { status: 400 })
-    }
+      if (watchlist.challenge?.enabled !== true || watchlist.challenge.goalType !== 'list_size') {
+        return Response.json(
+          { error: 'Only a list-size challenge can be reopened' },
+          { status: 400 },
+        )
+      }
 
-    if (watchlist.statsCache?.completedAt == null) {
-      return Response.json({ error: 'Challenge is not completed' }, { status: 409 })
-    }
+      if (watchlist.statsCache?.completedAt == null) {
+        return Response.json({ error: 'Challenge is not completed' }, { status: 409 })
+      }
 
-    await recalculateWatchlistStatsById(req.payload, watchlist.id, req, {
-      reopenCompletion: true,
+      const reopened = await recalculateWatchlistStatsById(req.payload, watchlist.id, req, {
+        reopenCompletion: true,
+      })
+
+      if (!reopened) {
+        return Response.json({ error: 'Watchlist not found' }, { status: 404 })
+      }
+
+      return Response.json(reopened)
     })
-
-    const reopened = await req.payload.findByID({
-      collection: 'watchlists',
-      depth: 1,
-      id: watchlist.id,
-      overrideAccess: true,
-      req,
-    })
-
-    return Response.json(reopened)
   },
   method: 'post',
   path: '/:slug/reopen-challenge',

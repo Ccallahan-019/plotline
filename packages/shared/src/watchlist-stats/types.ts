@@ -18,6 +18,11 @@ export interface ComputeWatchlistStatsInput {
    * A list that is already fully watched keeps the stored finish.
    */
   reopenCompletion?: boolean
+  /**
+   * Discard the stored latch and measure live. A fully watched list latches a new finish.
+   * For a change to which titles qualify, such as the TV or prior-completion rule.
+   */
+  resetCompletion?: boolean
   watchlistCreatedAt?: string
 }
 

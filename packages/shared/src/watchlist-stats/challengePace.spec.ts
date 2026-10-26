@@ -26,6 +26,14 @@ describe('formatChallengePace', () => {
     ).toEqual({ label: 'Overdue', tone: 'destructive' })
   })
 
+  it('trusts the stored status over a zero remainder', () => {
+    expect(formatChallengePace({ remaining: 0, status: 'not_started' })).toEqual({
+      label: 'Not started',
+      tone: 'neutral',
+    })
+    expect(formatChallengePace({ remaining: 0 })).toEqual({ label: 'Complete', tone: 'default' })
+  })
+
   it('counts the titles added after a list-size challenge finished', () => {
     expect(
       formatChallengePace({

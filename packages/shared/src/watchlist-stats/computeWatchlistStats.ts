@@ -6,7 +6,9 @@ import { refreshChallengePacing } from './refreshChallengePacing'
 type CompletionLatch = Required<Pick<WatchlistStatsCache, 'completedAt' | 'completedTitleCount'>>
 
 type LatchedCompletion = CompletionLatch &
-  Required<Pick<WatchlistStatsCache, 'newTitlesSinceCompletion' | 'unfinishedTitlesSinceCompletion'>>
+  Required<
+    Pick<WatchlistStatsCache, 'newTitlesSinceCompletion' | 'unfinishedTitlesSinceCompletion'>
+  >
 
 type MembershipTotals = {
   completed: number
@@ -27,12 +29,15 @@ type TitlesAddedSinceCompletion = {
  * done, the cache latches `completedAt` and the title count, and keeps reporting
  * `n of n` complete. `newTitlesSinceCompletion` counts qualifying titles added
  * after that finish, and `unfinishedTitlesSinceCompletion` counts the ones still
- * open. The latch carries over from `previousStats`. Reopen measures the list
- * live, and keeps the stored finish when every current title is already watched.
+ * open. The latch carries over from `previousStats` while every title that was on the
+ * list at the finish is still watched; marking one unwatched drops it and measures live.
+ * Reopen measures the list live, and keeps the stored finish when every current title is
+ * already watched. Reset ignores the stored finish, for a change to which titles qualify.
  * An empty list-size goal that never finished is not started, or overdue past due.
  *
  * @param input.previousStats - Stored latch fields. A missing latch starts a new one when the list is fully watched
  * @param input.reopenCompletion - Measure live again. A fully watched list keeps `previousStats`
+ * @param input.resetCompletion - Discard `previousStats`. A fully watched list latches a new finish
  * @returns The stats cache, with pacing when the challenge is enabled
  */
 export function computeWatchlistStats(input: ComputeWatchlistStatsInput): WatchlistStatsCache {
@@ -65,12 +70,14 @@ export function computeWatchlistStats(input: ComputeWatchlistStatsInput): Watchl
     remainingRuntimeMinutes = Math.max(0, goalRuntimeMinutes - totals.completed)
     remaining = remainingRuntimeMinutes
   } else if (isListSizeGoal) {
-    const latch = resolveCompletionLatch(
-      input.previousStats,
-      totals,
+    const latch = resolveCompletionLatch({
+      memberships: qualifyingMemberships,
+      previous: input.previousStats,
       referenceDate,
-      input.reopenCompletion === true,
-    )
+      reopen: input.reopenCompletion === true,
+      reset: input.resetCompletion === true,
+      totals,
+    })
 
     if (latch) {
       // Finished once, so the target stays at the titles that were done.
@@ -148,6 +155,19 @@ function countUnweightedTitles(memberships: StatsMembershipInput[]): MembershipT
   )
 }
 
+// True when every title that was on the list at the finish is still watched. A title added
+// later may be open, but an older one going back to unwatched means the finish no longer holds.
+function finishedTitlesStillWatched(
+  memberships: readonly StatsMembershipInput[],
+  completedAt: string,
+): boolean {
+  return memberships.every(
+    (membership) =>
+      isAddedAfterCompletion(membership.addedAt, completedAt) ||
+      membership.listStatus === 'completed',
+  )
+}
+
 function getCompletedWeight(membership: StatsMembershipInput): number {
   if (membership.listStatus !== 'completed') {
     return 0
@@ -179,22 +199,27 @@ function isAddedAfterCompletion(addedAt: string, completedAt: string): boolean {
   return !Number.isNaN(added) && !Number.isNaN(completed) && added > completed
 }
 
-// The stored latch, or a new one when every qualifying title on a non-empty list is done.
-// Reopen drops the latch unless the list is already fully watched, so that finish time stays put.
-function resolveCompletionLatch(
-  previous: ComputeWatchlistStatsInput['previousStats'],
-  totals: MembershipTotals,
-  referenceDate: Date,
-  reopenCompletion: boolean,
-): CompletionLatch | null {
-  const stored = storedCompletionLatch(previous)
+// The stored latch while it still holds, or a new one when every qualifying title on a
+// non-empty list is done. Reopen drops the latch unless the list is already fully watched, so
+// that finish time stays put. Reset ignores the stored latch, for rule changes that alter
+// which titles qualify.
+function resolveCompletionLatch(options: {
+  memberships: readonly StatsMembershipInput[]
+  previous: ComputeWatchlistStatsInput['previousStats']
+  referenceDate: Date
+  reopen: boolean
+  reset: boolean
+  totals: MembershipTotals
+}): CompletionLatch | null {
+  const { memberships, referenceDate, reopen, reset, totals } = options
+  const stored = reset ? null : storedCompletionLatch(options.previous)
   const fullyWatched = totals.totalEligible > 0 && totals.completed >= totals.totalEligible
 
-  if (reopenCompletion) {
+  if (reopen) {
     return fullyWatched ? stored : null
   }
 
-  if (stored) {
+  if (stored && finishedTitlesStillWatched(memberships, stored.completedAt)) {
     return stored
   }
 

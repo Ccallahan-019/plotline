@@ -250,6 +250,8 @@ describe('removeLibraryItemEndpoint', () => {
 
     vi.mocked(recalculateWatchlistStatsById).mockImplementation(async (_payload, watchlistId) => {
       callOrder.push(`recalculate:${String(watchlistId)}`)
+
+      return undefined
     })
 
     vi.mocked(withLibraryItemRowLock).mockImplementationOnce(async (_req, _id, fn) => {

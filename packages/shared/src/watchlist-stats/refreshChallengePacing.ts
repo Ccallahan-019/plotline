@@ -2,6 +2,20 @@ import type { WatchlistChallengeConfig, WatchlistStatsCache } from './types'
 
 import { computeChallengePacing } from './computeChallengePacing'
 
+type ComputedPacing = ReturnType<typeof computeChallengePacing>
+
+// Every cache field `computeChallengePacing` owns. Stripping and copying both walk this list.
+const PACING_KEYS = [
+  'actualPerDay',
+  'daysElapsed',
+  'daysRemaining',
+  'daysTotal',
+  'onTrack',
+  'projectedFinishDate',
+  'requiredPerDay',
+  'status',
+] as const satisfies readonly (keyof ComputedPacing)[]
+
 export type RefreshChallengePacingInput = {
   challenge?: null | WatchlistChallengeConfig
   referenceDate?: Date
@@ -48,44 +62,10 @@ export function refreshChallengePacing(input: RefreshChallengePacingInput): Watc
 }
 
 // Copies defined pacing fields onto a cache whose previous pacing fields are gone.
-function definedPacing(
-  pacing: ReturnType<typeof computeChallengePacing>,
-): Partial<WatchlistStatsCache> {
-  const defined: Partial<WatchlistStatsCache> = {}
-
-  if (pacing.actualPerDay != null) {
-    defined.actualPerDay = pacing.actualPerDay
-  }
-
-  if (pacing.daysElapsed != null) {
-    defined.daysElapsed = pacing.daysElapsed
-  }
-
-  if (pacing.daysRemaining != null) {
-    defined.daysRemaining = pacing.daysRemaining
-  }
-
-  if (pacing.daysTotal != null) {
-    defined.daysTotal = pacing.daysTotal
-  }
-
-  if (pacing.onTrack != null) {
-    defined.onTrack = pacing.onTrack
-  }
-
-  if (pacing.projectedFinishDate != null) {
-    defined.projectedFinishDate = pacing.projectedFinishDate
-  }
-
-  if (pacing.requiredPerDay != null) {
-    defined.requiredPerDay = pacing.requiredPerDay
-  }
-
-  if (pacing.status != null) {
-    defined.status = pacing.status
-  }
-
-  return defined
+function definedPacing(pacing: ComputedPacing): Partial<WatchlistStatsCache> {
+  return Object.fromEntries(
+    PACING_KEYS.flatMap((key) => (pacing[key] == null ? [] : [[key, pacing[key]]])),
+  )
 }
 
 // A list-size goal with no qualifying titles that never finished. A zero remainder would
@@ -99,24 +79,16 @@ function isEmptyListSizeGoal(
   )
 }
 
-function replacePacing(
-  stats: WatchlistStatsCache,
-  pacing: ReturnType<typeof computeChallengePacing>,
-): WatchlistStatsCache {
+function replacePacing(stats: WatchlistStatsCache, pacing: ComputedPacing): WatchlistStatsCache {
   return { ...withoutPacing(stats), ...definedPacing(pacing) }
 }
 
 function withoutPacing(stats: WatchlistStatsCache): WatchlistStatsCache {
   const next: WatchlistStatsCache = { ...stats }
 
-  delete next.actualPerDay
-  delete next.daysElapsed
-  delete next.daysRemaining
-  delete next.daysTotal
-  delete next.onTrack
-  delete next.projectedFinishDate
-  delete next.requiredPerDay
-  delete next.status
+  for (const key of PACING_KEYS) {
+    delete next[key]
+  }
 
   return next
 }

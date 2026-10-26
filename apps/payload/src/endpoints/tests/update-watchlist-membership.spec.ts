@@ -172,6 +172,8 @@ describe('updateWatchlistMembershipEndpoint', () => {
     const { req, update, updates } = createReq({ body: { excludeFromGoal: true } })
     vi.mocked(recalculateWatchlistStatsById).mockImplementationOnce(async () => {
       expect(req.context[SKIP_WATCHLIST_STATS_RECALC]).toBeUndefined()
+
+      return undefined
     })
 
     const response = await readResponse(req)

@@ -300,4 +300,51 @@ describe('recalculateStatsAfterWatchlistChange', () => {
     expect(req.payload.find).not.toHaveBeenCalled()
     expect(updates).toEqual([])
   })
+
+  it('discards a stored list-size finish when a rule changes which titles qualify', async () => {
+    const storedCompletedAt = '2026-02-01T00:00:00.000Z'
+    const doc = {
+      challenge: challenge({ goalCount: null, goalType: 'list_size', tvCountRule: 'movies_only' }),
+      createdAt: '2026-01-01T00:00:00.000Z',
+      id: 3,
+      statsCache: { completedAt: storedCompletedAt, completedTitleCount: 5 },
+    }
+    const { req, updates } = createReq(
+      preJoinMovieMembership({
+        countsTowardGoal: true,
+        libraryItem: {
+          completedAt: '2026-07-01T00:00:00.000Z',
+          id: 11,
+          media: { id: 5, mediaType: 'movie', runtime: 120 },
+          progress: { type: 'movie', watched: true },
+          rewatchCount: 0,
+          status: 'completed',
+        },
+        listStatus: 'completed',
+      }),
+      doc,
+    )
+
+    await recalculateStatsAfterWatchlistChange(
+      hookArgs(req, {
+        doc,
+        previousDoc: {
+          challenge: challenge({
+            goalCount: null,
+            goalType: 'list_size',
+            tvCountRule: 'tv_as_series',
+          }),
+          id: 3,
+        },
+      }),
+    )
+
+    const statsUpdate = updates.find((update) => update.collection === 'watchlists')
+    const statsCache = statsUpdate?.data.statsCache as
+      | { completedAt?: string; completedTitleCount?: number }
+      | undefined
+
+    expect(statsCache?.completedTitleCount).toBe(1)
+    expect(statsCache?.completedAt).not.toBe(storedCompletedAt)
+  })
 })
