@@ -10,6 +10,7 @@ import { JSONSchema4 } from 'json-schema'
 
 import { createWatchlistEndpoint } from '../../endpoints/create-watchlist'
 import { removeWatchlistMembershipEndpoint } from '../../endpoints/remove-watchlist-membership'
+import { reopenWatchlistChallengeEndpoint } from '../../endpoints/reopen-watchlist-challenge'
 import { reorderWatchlistMembershipsEndpoint } from '../../endpoints/reorder-watchlist-memberships'
 import { updateWatchlistEndpoint } from '../../endpoints/update-watchlist'
 import { updateWatchlistMembershipEndpoint } from '../../endpoints/update-watchlist-membership'
@@ -30,6 +31,7 @@ export const Watchlists: CollectionConfig = {
     createWatchlistEndpoint,
     reorderWatchlistMembershipsEndpoint,
     removeWatchlistMembershipEndpoint,
+    reopenWatchlistChallengeEndpoint,
     updateWatchlistEndpoint,
     updateWatchlistMembershipEndpoint,
   ],

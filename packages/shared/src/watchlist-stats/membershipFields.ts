@@ -50,6 +50,15 @@ export function computeMembershipGoalWeight(input: {
     return (input.episodesCountedForList ?? 0) * runtime
   }
 
+  // List size is one qualifying title. Episode and season weights stay on count goals.
+  if (goalType === 'list_size') {
+    if (input.media.mediaType === 'tv' && tvCountRule === 'movies_only') {
+      return 0
+    }
+
+    return 1
+  }
+
   if (input.media.mediaType === 'movie') {
     return 1
   }

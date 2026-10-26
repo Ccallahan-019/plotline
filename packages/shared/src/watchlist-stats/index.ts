@@ -3,7 +3,11 @@ export { getChallengeExclusion } from './challengeExclusion'
 export type { ChallengeExclusion } from './challengeExclusion'
 export { formatChallengePace } from './challengePace'
 export type { ChallengePaceBadge, ChallengePaceInput, ChallengePaceTone } from './challengePace'
-export { formatChallengeProgress, getChallengeMetaLabels } from './challengeProgress'
+export {
+  formatChallengeProgress,
+  getChallengeMetaLabels,
+  isRuntimeChallengeGoal,
+} from './challengeProgress'
 export type {
   ChallengeMetaLabel,
   ChallengeProgressInput,
@@ -20,6 +24,8 @@ export {
   shouldCountPriorCompletion,
 } from './membershipFields'
 export type { MembershipRuleEligibility } from './membershipFields'
+export { refreshChallengePacing } from './refreshChallengePacing'
+export type { RefreshChallengePacingInput } from './refreshChallengePacing'
 export type {
   ComputeWatchlistStatsInput,
   StatsLibraryItem,

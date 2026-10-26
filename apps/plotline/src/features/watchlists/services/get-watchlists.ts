@@ -1,5 +1,7 @@
 import type { Watchlist } from '@plotline/payload-types'
 
+import { refreshChallengePacing } from '@plotline/shared/watchlist-stats'
+
 import { fetchAllPages } from '@/lib/payload/fetch-all-pages'
 import { payloadFetch, type PayloadPaginatedDocs } from '@/lib/payload/payload-fetch'
 
@@ -15,7 +17,8 @@ export type WatchlistQueryFilters = {
  * Loads one watchlist by slug for the signed-in profile.
  *
  * Payload's read access limits the lookup to the profile's own lists, so a
- * slug another profile also uses cannot match.
+ * slug another profile also uses cannot match. Challenge pacing on `statsCache`
+ * uses the current date. Totals and `lastCalculatedAt` stay as stored.
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
  * @param slug - Watchlist slug from the route
@@ -36,7 +39,9 @@ export async function getWatchlistBySlug(
     },
   })
 
-  return result.docs[0] ?? null
+  const watchlist = result.docs[0]
+
+  return watchlist ? withCurrentChallengePacing(watchlist) : null
 }
 
 /**
@@ -44,7 +49,8 @@ export async function getWatchlistBySlug(
  *
  * Follows Payload paging until all lists are loaded, so a profile with more
  * than one page of lists is not truncated. The optional filter narrows to
- * system, custom, challenge, or non-challenge lists.
+ * system, custom, challenge, or non-challenge lists. Challenge pacing on
+ * `statsCache` uses the current date. Totals and `lastCalculatedAt` stay as stored.
  *
  * @param clerkUserId - Clerk user id forwarded to Payload
  * @param filters - Optional list-kind filter
@@ -58,7 +64,7 @@ export async function getWatchlists(
   const filterParams = toWatchlistFilterSearchParams(filters?.filter)
 
   // `id` breaks `sortOrder` ties so offset paging cannot skip or repeat a list.
-  return fetchAllPages<Watchlist>(
+  const watchlists = await fetchAllPages<Watchlist>(
     (page) =>
       payloadFetch<PayloadPaginatedDocs<Watchlist>>('/api/watchlists', {
         clerkUserId,
@@ -67,4 +73,24 @@ export async function getWatchlists(
       }),
     '/api/watchlists',
   )
+
+  return watchlists.map(withCurrentChallengePacing)
+}
+
+// Recomputes challenge pacing from the current date. Totals and lastCalculatedAt stay cached.
+function withCurrentChallengePacing(watchlist: Watchlist): Watchlist {
+  const stats = watchlist.statsCache
+
+  if (stats == null) {
+    return watchlist
+  }
+
+  return {
+    ...watchlist,
+    statsCache: refreshChallengePacing({
+      challenge: watchlist.challenge,
+      stats,
+      watchlistCreatedAt: watchlist.createdAt,
+    }),
+  }
 }

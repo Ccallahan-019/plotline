@@ -54,9 +54,10 @@ export type WatchlistWrite = {
  *
  * Requires `name`, `description`, `visibility`, `coverMedia`, and `challenge`.
  * Any other key is rejected so owner, slug, and system flags cannot be set here.
- * An enabled challenge needs a due date and exactly one positive goal: titles
- * for count, minutes for runtime. The inactive goal must be null. Dates are
- * calendar days (`YYYY-MM-DD`) stored as UTC midnight.
+ * An enabled challenge needs a due date. Count goals need a positive number of
+ * titles and runtime goals need a positive number of minutes. A list-size goal
+ * leaves both numbers null; setting either one is rejected. The inactive goal
+ * must be null. Dates are calendar days (`YYYY-MM-DD`) stored as UTC midnight.
  *
  * @param body - Parsed JSON body
  * @returns Fields to write, or a 400 response
@@ -223,7 +224,10 @@ function readChallenge(value: unknown): Response | WatchlistChallengeWrite {
   }
 
   if (!isOneOf(CHALLENGE_GOAL_TYPES, value.goalType)) {
-    return Response.json({ error: 'goalType must be count or runtime_minutes' }, { status: 400 })
+    return Response.json(
+      { error: 'goalType must be count, list_size, or runtime_minutes' },
+      { status: 400 },
+    )
   }
 
   if (!isOneOf(TV_COUNT_RULES, value.tvCountRule)) {
@@ -293,7 +297,7 @@ function readDescription(value: unknown): null | Response | string {
   return description.length === 0 ? null : description
 }
 
-// The selected goal is a positive whole number. The other goal stays null.
+// Count and runtime keep one positive goal. List size keeps both numbers null.
 function readGoals(
   goalType: ChallengeGoalType,
   goalCount: unknown,
@@ -312,6 +316,14 @@ function readGoals(
     }
 
     return { goalCount, goalRuntimeMinutes: null }
+  }
+
+  if (goalType === 'list_size') {
+    if (goalCount !== null || goalRuntimeMinutes !== null) {
+      return Response.json({ error: 'Only the active goal can be set' }, { status: 400 })
+    }
+
+    return { goalCount: null, goalRuntimeMinutes: null }
   }
 
   if (goalCount !== null) {

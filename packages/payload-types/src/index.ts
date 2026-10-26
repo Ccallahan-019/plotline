@@ -281,7 +281,7 @@ export interface Watchlist {
     enabled?: boolean | null;
     startDate?: string | null;
     dueDate?: string | null;
-    goalType?: ('count' | 'runtime_minutes') | null;
+    goalType?: ('count' | 'list_size' | 'runtime_minutes') | null;
     goalCount?: number | null;
     goalRuntimeMinutes?: number | null;
     tvCountRule?: ('movies_only' | 'tv_as_series' | 'tv_by_episode' | 'tv_by_season') | null;
@@ -293,7 +293,9 @@ export interface Watchlist {
   statsCache?: null | {
     actualPerDay?: number;
     completed: number;
+    completedAt?: string;
     completedRuntimeMinutes?: number;
+    completedTitleCount?: number;
     daysElapsed?: number;
     daysRemaining?: number;
     daysTotal?: number;
@@ -301,6 +303,7 @@ export interface Watchlist {
     goalRuntimeMinutes?: number;
     inProgress: number;
     lastCalculatedAt: string;
+    newTitlesSinceCompletion?: number;
     onTrack?: boolean;
     percentComplete: number;
     projectedFinishDate?: string;
@@ -309,6 +312,7 @@ export interface Watchlist {
     requiredPerDay?: number;
     status?: 'not_started' | 'active' | 'completed' | 'overdue';
     totalEligible: number;
+    unfinishedTitlesSinceCompletion?: number;
   };
   updatedAt: string;
   createdAt: string;

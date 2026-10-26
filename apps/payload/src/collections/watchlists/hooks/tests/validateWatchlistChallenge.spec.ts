@@ -65,6 +65,41 @@ describe('validateWatchlistChallenge', () => {
     ).toThrow('Challenge goalRuntimeMinutes must be greater than zero')
   })
 
+  it('accepts a list size challenge with a due date and no goal number', () => {
+    const withNullGoals = {
+      challenge: {
+        dueDate: '2026-12-31T00:00:00.000Z',
+        enabled: true,
+        goalCount: null,
+        goalRuntimeMinutes: null,
+        goalType: 'list_size',
+      },
+    }
+    const withoutGoals = {
+      challenge: {
+        dueDate: '2026-12-31T00:00:00.000Z',
+        enabled: true,
+        goalType: 'list_size',
+      },
+    }
+
+    expect(run(withNullGoals)).toBe(withNullGoals)
+    expect(run(withoutGoals)).toBe(withoutGoals)
+  })
+
+  it('still requires a due date for a list size challenge', () => {
+    expect(() =>
+      run({
+        challenge: {
+          enabled: true,
+          goalCount: null,
+          goalRuntimeMinutes: null,
+          goalType: 'list_size',
+        },
+      }),
+    ).toThrow('Challenge dueDate is required when challenge mode is enabled')
+  })
+
   it('accepts a positive goal for the selected type', () => {
     const data = {
       challenge: {
@@ -76,6 +111,77 @@ describe('validateWatchlistChallenge', () => {
     }
 
     expect(run(data)).toBe(data)
+  })
+
+  it('clears a runtime goal submitted with a count challenge', () => {
+    expect(
+      run({
+        challenge: {
+          dueDate: '2026-12-31T00:00:00.000Z',
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: 6000,
+          goalType: 'count',
+        },
+      }),
+    ).toEqual({
+      challenge: {
+        dueDate: '2026-12-31T00:00:00.000Z',
+        enabled: true,
+        goalCount: 52,
+        goalRuntimeMinutes: null,
+        goalType: 'count',
+      },
+    })
+  })
+
+  it('clears a count goal submitted with a runtime challenge', () => {
+    expect(
+      run({
+        challenge: {
+          dueDate: '2026-12-31T00:00:00.000Z',
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: 6000,
+          goalType: 'runtime_minutes',
+        },
+      }),
+    ).toEqual({
+      challenge: {
+        dueDate: '2026-12-31T00:00:00.000Z',
+        enabled: true,
+        goalCount: null,
+        goalRuntimeMinutes: 6000,
+        goalType: 'runtime_minutes',
+      },
+    })
+  })
+
+  it('clears stored goal numbers when a partial update switches to list size', () => {
+    expect(
+      run(
+        {
+          challenge: {
+            goalType: 'list_size',
+          },
+        },
+        {
+          challenge: {
+            dueDate: '2026-12-31T00:00:00.000Z',
+            enabled: true,
+            goalCount: 52,
+            goalRuntimeMinutes: 6000,
+            goalType: 'count',
+          },
+        },
+      ),
+    ).toEqual({
+      challenge: {
+        goalCount: null,
+        goalRuntimeMinutes: null,
+        goalType: 'list_size',
+      },
+    })
   })
 
   it('keeps a stored goal when a later update does not send one', () => {
@@ -91,5 +197,86 @@ describe('validateWatchlistChallenge', () => {
         },
       }),
     ).toBe(data)
+  })
+
+  it('keeps stored goal numbers when a name-only update follows a list size challenge', () => {
+    const data = { name: 'Queue' }
+
+    expect(
+      run(data, {
+        challenge: {
+          dueDate: '2026-12-31T00:00:00.000Z',
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+        },
+      }),
+    ).toBe(data)
+  })
+})
+
+describe('validateWatchlistChallenge goal cleanup edge cases', () => {
+  const dueDate = '2026-12-31T00:00:00.000Z'
+
+  it('leaves stored goals alone when the write turns challenge mode off', () => {
+    const data = { challenge: { enabled: false } }
+
+    expect(
+      run(data, {
+        challenge: {
+          dueDate,
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+        },
+      }),
+    ).toBe(data)
+  })
+
+  it('clears leftover goals when a disabled list-size challenge is turned back on', () => {
+    expect(
+      run(
+        { challenge: { enabled: true } },
+        {
+          challenge: {
+            dueDate,
+            enabled: false,
+            goalCount: 52,
+            goalRuntimeMinutes: 6000,
+            goalType: 'list_size',
+          },
+        },
+      ),
+    ).toEqual({
+      challenge: {
+        enabled: true,
+        goalCount: null,
+        goalRuntimeMinutes: null,
+      },
+    })
+  })
+
+  it('clears the runtime goal left on a list-size challenge that switches to count', () => {
+    expect(
+      run(
+        { challenge: { goalCount: 10, goalType: 'count' } },
+        {
+          challenge: {
+            dueDate,
+            enabled: true,
+            goalRuntimeMinutes: 6000,
+            goalType: 'list_size',
+          },
+        },
+      ),
+    ).toEqual({
+      challenge: {
+        goalCount: 10,
+        goalRuntimeMinutes: null,
+        goalType: 'count',
+      },
+    })
   })
 })

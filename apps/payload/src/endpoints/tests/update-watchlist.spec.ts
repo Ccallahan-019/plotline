@@ -176,6 +176,71 @@ describe('updateWatchlistEndpoint', () => {
     )
   })
 
+  it('saves a list size challenge without a goal number', async () => {
+    const { req, update } = createReq({
+      body: {
+        ...validBody,
+        challenge: {
+          dueDate: '2026-12-31',
+          enabled: true,
+          goalCount: null,
+          goalRuntimeMinutes: null,
+          goalType: 'list_size',
+          includeRewatches: false,
+          priorCompletionRule: 'exclude_if_already_completed',
+          startDate: null,
+          tvCountRule: 'movies_only',
+        },
+      },
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(200)
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          challenge: {
+            dueDate: '2026-12-31T00:00:00.000Z',
+            enabled: true,
+            goalCount: null,
+            goalRuntimeMinutes: null,
+            goalType: 'list_size',
+            includeRewatches: false,
+            priorCompletionRule: 'exclude_if_already_completed',
+            startDate: null,
+            tvCountRule: 'movies_only',
+          },
+        }),
+      }),
+    )
+  })
+
+  it('rejects a list size challenge that sets a goal number', async () => {
+    const { req, update } = createReq({
+      body: {
+        ...validBody,
+        challenge: {
+          dueDate: '2026-12-31',
+          enabled: true,
+          goalCount: 10,
+          goalRuntimeMinutes: null,
+          goalType: 'list_size',
+          includeRewatches: false,
+          priorCompletionRule: 'exclude_if_already_completed',
+          startDate: null,
+          tvCountRule: 'tv_as_series',
+        },
+      },
+    })
+
+    const response = await readResponse(req)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: 'Only the active goal can be set' })
+    expect(update).not.toHaveBeenCalled()
+  })
+
   it('rejects an enabled challenge without the active goal', async () => {
     const { req, update } = createReq({
       body: {

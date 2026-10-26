@@ -72,7 +72,6 @@ export function WatchlistMembershipGridItem({
                 slug={slug}
                 title={media.title}
                 triggerSize="icon"
-                triggerVariant="secondary"
               />
             </div>
           </div>

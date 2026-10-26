@@ -58,6 +58,61 @@ describe('getChallengeCardView', () => {
     expect(hours.progressLabel).toBe('38 of 100 hrs')
   })
 
+  it('counts a list size goal from the cache and ignores a leftover runtime', () => {
+    const titles = getChallengeCardView(
+      card({
+        challenge: {
+          enabled: true,
+          goalCount: 52,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+        },
+        statsCache: stats({ completed: 12, goalCount: 40, totalEligible: 40 }),
+      }),
+    )
+    const films = getChallengeCardView(
+      card({
+        challenge: {
+          enabled: true,
+          goalCount: null,
+          goalRuntimeMinutes: 6000,
+          goalType: 'list_size',
+          tvCountRule: 'movies_only',
+        },
+        statsCache: stats({ completed: 12, goalRuntimeMinutes: 6000, totalEligible: 16 }),
+      }),
+    )
+
+    expect(titles.progressLabel).toBe('12 of 40 titles')
+    expect(films.progressLabel).toBe('12 of 16 films')
+  })
+
+  it('labels the titles added after a list size challenge finished', () => {
+    const view = getChallengeCardView(
+      card({
+        challenge: { enabled: true, goalCount: null, goalType: 'list_size' },
+        statsCache: stats({
+          completed: 10,
+          completedAt: '2026-10-05T12:00:00.000Z',
+          completedTitleCount: 10,
+          goalCount: 10,
+          newTitlesSinceCompletion: 2,
+          percentComplete: 100,
+          remaining: 0,
+          status: 'completed',
+          totalEligible: 10,
+        }),
+      }),
+    )
+
+    expect(view).toEqual({
+      paceLabel: 'Completed - 2 New Titles Added',
+      paceTone: 'default',
+      percentComplete: 100,
+      progressLabel: '10 of 10 titles',
+    })
+  })
+
   it('keeps a challenge without stats neutral instead of complete', () => {
     const view = getChallengeCardView(
       card({

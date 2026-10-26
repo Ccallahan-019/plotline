@@ -6,7 +6,7 @@ export const LIST_STATUSES = ['planned', 'in_progress', 'completed', 'skipped'] 
 
 export type ListStatus = (typeof LIST_STATUSES)[number]
 
-export const CHALLENGE_GOAL_TYPES = ['count', 'runtime_minutes'] as const
+export const CHALLENGE_GOAL_TYPES = ['count', 'list_size', 'runtime_minutes'] as const
 
 export type ChallengeGoalType = (typeof CHALLENGE_GOAL_TYPES)[number]
 

@@ -134,6 +134,55 @@ describe('buildActivityRows', () => {
     expect(hours[0]?.progress).toEqual({ completed: 38, goal: 100, label: '38 / 100' })
   })
 
+  it('uses the cached title count for a list size challenge', () => {
+    const fromCache = build({
+      challenges: [
+        challenge({
+          challenge: {
+            dueDate: '2026-12-31',
+            enabled: true,
+            goalCount: 52,
+            goalRuntimeMinutes: 6000,
+            goalType: 'list_size',
+            tvCountRule: 'tv_as_series',
+          },
+          statsCache: {
+            completed: 12,
+            goalCount: 40,
+            goalRuntimeMinutes: 6000,
+            lastCalculatedAt: '2026-10-01T12:00:00.000Z',
+            totalEligible: 99,
+          },
+        }),
+      ],
+    })
+    const fromEligible = build({
+      challenges: [
+        challenge({
+          challenge: {
+            dueDate: '2026-12-31',
+            enabled: true,
+            goalCount: null,
+            goalRuntimeMinutes: 6000,
+            goalType: 'list_size',
+            tvCountRule: 'movies_only',
+          },
+          statsCache: {
+            completed: 12,
+            goalRuntimeMinutes: 6000,
+            lastCalculatedAt: '2026-10-01T12:00:00.000Z',
+            totalEligible: 40,
+          },
+        }),
+      ],
+    })
+
+    expect(fromCache[0]?.detail).toBe('40 titles in 2026 · 12 / 40')
+    expect(fromCache[0]?.progress).toEqual({ completed: 12, goal: 40, label: '12 / 40' })
+    expect(fromEligible[0]?.detail).toBe('40 films in 2026 · 12 / 40')
+    expect(fromEligible[0]?.progress).toEqual({ completed: 12, goal: 40, label: '12 / 40' })
+  })
+
   it('emits film milestones for completed movies and ignores series', () => {
     const movies = Array.from({ length: 10 }, (_, index) =>
       watch({

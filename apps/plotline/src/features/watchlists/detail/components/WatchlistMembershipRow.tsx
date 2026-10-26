@@ -7,6 +7,7 @@ import Link from 'next/link'
 
 import { MediaBackdropCard } from '@/components/media/MediaBackdropCard'
 import { MediaPoster } from '@/components/media/MediaPoster'
+import { RatingBadge } from '@/components/ratings/RatingsBadge'
 import { CardContent } from '@/components/ui/card'
 import {
   Item,
@@ -112,24 +113,28 @@ export function WatchlistMembershipRow({
             </ItemMedia>
 
             <ItemContent className="min-w-0">
-              <MembershipTitle media={media} title={title} />
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <MembershipTitle media={media} title={title} />
+                <RatingBadge className="relative top-0 right-0" rating={media?.voteAverage} />
+              </div>
               <ShowIf condition={description != null}>
-                <ItemDescription className="text-xs">{description}</ItemDescription>
+                <ItemDescription className="text-xs line-clamp-1">{description}</ItemDescription>
               </ShowIf>
-            </ItemContent>
-
-            <ItemActions className="ml-auto shrink-0">
-              <div className="flex items-center gap-3">
-                <LibraryItemStatus libraryItem={libraryItem} />
-                <ShowIf condition={showGoalCounts}>
+              <ShowIf condition={showGoalCounts}>
+                <div className="mt-0.5">
                   <MembershipCountsControl
                     challenge={challenge}
                     membership={membership}
                     slug={slug}
                     title={title}
                   />
-                </ShowIf>
-              </div>
+                </div>
+              </ShowIf>
+            </ItemContent>
+
+            <ItemActions className="ml-auto shrink-0">
+              <LibraryItemStatus libraryItem={libraryItem} />
+
               <WatchlistMembershipMenu
                 membership={membership}
                 onLogWatch={onLogWatch}
@@ -157,12 +162,12 @@ function MembershipTitle({ media, title }: { media: Media | null; title: string 
   const titleLinkProps = useTitleBreadcrumbLinkProps()
 
   if (!media) {
-    return <ItemTitle>{title}</ItemTitle>
+    return <ItemTitle className="line-clamp-1">{title}</ItemTitle>
   }
 
   return (
     <Link className="w-fit hover:underline" href={membershipTitleHref(media)} {...titleLinkProps}>
-      <ItemTitle>{title}</ItemTitle>
+      <ItemTitle className="line-clamp-1">{title}</ItemTitle>
     </Link>
   )
 }

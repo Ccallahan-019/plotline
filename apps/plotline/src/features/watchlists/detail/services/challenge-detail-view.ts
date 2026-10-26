@@ -9,10 +9,13 @@ import {
   formatChallengePace,
   formatChallengeProgress,
   getChallengeMetaLabels,
+  isRuntimeChallengeGoal,
 } from '@plotline/shared/watchlist-stats'
 
 export type ChallengeDetailView = {
   meta: ChallengeMetaLabel[]
+  /** Titles added to a completed list-size challenge. Zero unless the challenge is latched. */
+  newTitlesSinceCompletion: number
   paceLabel: string
   paceRates: ChallengePaceRateLabel[]
   paceTone: ChallengePaceTone
@@ -20,6 +23,8 @@ export type ChallengeDetailView = {
   progressCompleted: string
   progressGoal: string
   progressLabel: string
+  /** Added titles that are not watched yet. Zero unless the challenge is latched. */
+  unfinishedTitlesSinceCompletion: number
 }
 
 export type ChallengePaceRateLabel = {
@@ -37,7 +42,7 @@ type PaceUnit = 'films' | 'hrs' | 'titles'
 /**
  * Daily rate still needed to finish the challenge by its due date.
  *
- * Runtime goals show hours. Count goals show films or titles. A missing rate is an em dash.
+ * Runtime goals show hours. Count and list-size goals show films or titles. A missing rate is an em dash.
  *
  * @param watchlist - Challenge settings plus cached pacing
  * @returns Copy such as `~ 1.5 titles / day`
@@ -75,6 +80,7 @@ export function getChallengeDetailView(
 
   return {
     meta: getChallengeMetaLabels(watchlist.challenge ?? {}),
+    newTitlesSinceCompletion: stats?.newTitlesSinceCompletion ?? 0,
     paceLabel: pace.label,
     paceRates: getChallengePaceRates(watchlist),
     paceTone: pace.tone,
@@ -82,14 +88,15 @@ export function getChallengeDetailView(
     progressCompleted: progress.completed,
     progressGoal: progress.goal,
     progressLabel,
+    unfinishedTitlesSinceCompletion: stats?.unfinishedTitlesSinceCompletion ?? 0,
   }
 }
 
 /**
  * Required daily rate in the units pace copy displays.
  *
- * Runtime cache values are minutes per day and come back as hours. Count goals
- * come back unchanged. A missing or non-finite rate is omitted.
+ * Runtime cache values are minutes per day and come back as hours. Count and list-size
+ * goals come back unchanged. A missing or non-finite rate is omitted.
  *
  * @param watchlist - Challenge settings plus cached pacing
  * @returns Hours for a runtime goal, otherwise the cached count rate
@@ -142,6 +149,7 @@ function getChallengePaceRates(watchlist: ChallengePaceSource): ChallengePaceRat
 }
 
 // Goal size in the same units the cache uses for per-day rates (minutes or titles).
+// List size uses the cached target, which changes as titles are added or removed.
 function getGoalUnits(watchlist: ChallengePaceSource, unit: PaceUnit): number | undefined {
   const challenge = watchlist.challenge
   const stats = watchlist.statsCache
@@ -150,26 +158,20 @@ function getGoalUnits(watchlist: ChallengePaceSource, unit: PaceUnit): number | 
     return challenge?.goalRuntimeMinutes ?? stats?.goalRuntimeMinutes ?? stats?.totalEligible
   }
 
+  if (challenge?.goalType === 'list_size') {
+    return stats?.goalCount ?? stats?.totalEligible
+  }
+
   return challenge?.goalCount ?? stats?.goalCount ?? stats?.totalEligible
 }
 
-// Runtime rates display as hours. Count rates follow the progress copy: films or titles.
+// Runtime rates display as hours. Count and list-size rates follow the progress copy: films or titles.
 function getPaceUnit(watchlist: ChallengePaceSource): PaceUnit {
-  const challenge = watchlist.challenge
-
-  if (challenge?.goalType === 'runtime_minutes') {
+  if (isRuntimeChallengeGoal(watchlist.challenge ?? {})) {
     return 'hrs'
   }
 
-  if (
-    challenge?.goalType !== 'count' &&
-    challenge?.goalRuntimeMinutes != null &&
-    challenge.goalCount == null
-  ) {
-    return 'hrs'
-  }
-
-  if (challenge?.tvCountRule === 'movies_only') {
+  if (watchlist.challenge?.tvCountRule === 'movies_only') {
     return 'films'
   }
 
@@ -202,6 +204,7 @@ function toPaceInput(stats: null | undefined | Watchlist['statsCache']): Challen
   return {
     actualPerDay: stats.actualPerDay,
     daysRemaining: stats.daysRemaining,
+    newTitlesSinceCompletion: stats.newTitlesSinceCompletion,
     onTrack: stats.onTrack,
     remaining: stats.remaining,
     requiredPerDay: stats.requiredPerDay,

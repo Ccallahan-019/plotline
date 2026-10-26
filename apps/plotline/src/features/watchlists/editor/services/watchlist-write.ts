@@ -61,6 +61,26 @@ const enabledChallengeSchema = z
       return
     }
 
+    if (challenge.goalType === 'list_size') {
+      if (challenge.goalCount != null) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Only the active goal can be set',
+          path: ['goalCount'],
+        })
+      }
+
+      if (challenge.goalRuntimeMinutes != null) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Only the active goal can be set',
+          path: ['goalRuntimeMinutes'],
+        })
+      }
+
+      return
+    }
+
     if (challenge.goalCount != null) {
       ctx.addIssue({
         code: 'custom',
@@ -102,7 +122,8 @@ export type WatchlistWriteInput = z.infer<typeof watchlistWriteSchema>
 /**
  * Parses a create or update body for the watchlist BFF.
  *
- * Trims the name. Challenge mode requires a due date and only the active goal.
+ * Trims the name. Challenge mode requires a due date. Count and runtime goals
+ * require only the active goal. A list-size goal leaves both numbers null.
  *
  * @param body - JSON body from the route
  * @returns The write payload, or the first validation message

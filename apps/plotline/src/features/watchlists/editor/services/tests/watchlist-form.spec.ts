@@ -59,6 +59,22 @@ describe('watchlist form', () => {
     ).toBe(false)
   })
 
+  it('keeps a list size goal when editing', () => {
+    expect(
+      toWatchlistFormValues({
+        challenge: {
+          enabled: true,
+          goalCount: null,
+          goalRuntimeMinutes: null,
+          goalType: 'list_size',
+        },
+        description: null,
+        name: 'Queue',
+        visibility: 'private',
+      }).goalType,
+    ).toBe('list_size')
+  })
+
   it('shows stored minutes as hours', () => {
     expect(
       toWatchlistFormValues({
@@ -182,6 +198,56 @@ describe('watchlist form', () => {
       tvCountRule: 'tv_as_series',
     })
     expect(parseWatchlistWriteBody(input).ok).toBe(true)
+  })
+
+  it('accepts a list size challenge without a goal number and submits both goals empty', () => {
+    const values = formValues({
+      challengeEnabled: true,
+      dueDate: new Date(2026, 11, 31),
+      goalCount: 52,
+      goalHours: 10,
+      goalType: 'list_size',
+      includeRewatches: true,
+    })
+
+    expect(watchlistFormSchema.safeParse(values).success).toBe(true)
+
+    const input = toWatchlistWriteInput(values)
+
+    expect(input.challenge).toEqual({
+      dueDate: '2026-12-31',
+      enabled: true,
+      goalCount: null,
+      goalRuntimeMinutes: null,
+      goalType: 'list_size',
+      includeRewatches: true,
+      priorCompletionRule: 'exclude_if_already_completed',
+      startDate: null,
+      tvCountRule: 'tv_as_series',
+    })
+    expect(parseWatchlistWriteBody(input).ok).toBe(true)
+  })
+
+  it('rejects a list size write that sets a goal number', () => {
+    const result = parseWatchlistWriteBody({
+      challenge: {
+        dueDate: '2026-12-31',
+        enabled: true,
+        goalCount: 10,
+        goalRuntimeMinutes: null,
+        goalType: 'list_size',
+        includeRewatches: false,
+        priorCompletionRule: 'exclude_if_already_completed',
+        startDate: null,
+        tvCountRule: 'tv_as_series',
+      },
+      coverMedia: null,
+      description: null,
+      name: 'Queue',
+      visibility: 'private',
+    })
+
+    expect(result).toEqual({ error: 'Only the active goal can be set', ok: false })
   })
 
   it('submits the count goal and leaves the runtime goal empty', () => {

@@ -1,14 +1,5 @@
 'use client'
 
-import type {
-  ChallengeGoalType,
-  PriorCompletionRule,
-  TvCountRule,
-} from '@plotline/shared/constants'
-
-import type { SelectFieldItem } from '@/features/forms/components/SelectField'
-import type { ToggleGroupFieldItem } from '@/features/forms/components/ToggleGroupField'
-
 import {
   Field,
   FieldContent,
@@ -20,23 +11,9 @@ import {
 
 import type { WatchlistFormApi } from '../hooks/use-watchlist-form'
 
-const GOAL_TYPE_ITEMS: ToggleGroupFieldItem<ChallengeGoalType>[] = [
-  { label: 'Count', value: 'count' },
-  { label: 'Runtime', value: 'runtime_minutes' },
-]
-
-const TV_COUNT_ITEMS: SelectFieldItem<TvCountRule>[] = [
-  { label: 'Movies Only', value: 'movies_only' },
-  { label: 'As a Series', value: 'tv_as_series' },
-  { label: 'By Episode', value: 'tv_by_episode' },
-  { label: 'By Season', value: 'tv_by_season' },
-]
-
-const PRIOR_COMPLETION_ITEMS: SelectFieldItem<PriorCompletionRule>[] = [
-  { label: 'Exclude Already-Completed Titles', value: 'exclude_if_already_completed' },
-  { label: 'Count If Completed After Joining', value: 'count_if_completed_after_join' },
-  { label: 'Count All On Joining', value: 'count_all_on_join' },
-]
+import { WatchlistChallengeGoalTypeField } from './WatchlistChallengeGoalTypeField'
+import { WatchlistChallengePriorCompletionRuleField } from './WatchlistChallengePriorCompletionRuleField'
+import { WatchlistChallengeTvCountRuleField } from './WatchlistChallengeTvCountRuleField'
 
 type WatchlistChallengeFieldsProps = {
   form: WatchlistFormApi
@@ -77,98 +54,63 @@ export function WatchlistChallengeFields({ form, isSubmitting }: WatchlistChalle
         </form.AppField>
       </div>
 
-      <form.AppField name="goalType">
-        {(field) => (
-          <Field data-disabled={isSubmitting}>
-            <FieldLabel>Goal Type</FieldLabel>
-            <FieldContent>
-              <field.ToggleGroupField<ChallengeGoalType>
-                disabled={isSubmitting}
-                itemClassName="flex-1"
-                items={GOAL_TYPE_ITEMS}
-                spacing={0}
-                variant="outline"
-              />
-            </FieldContent>
-            <field.FormFieldError />
-          </Field>
-        )}
-      </form.AppField>
+      <WatchlistChallengeGoalTypeField form={form} isSubmitting={isSubmitting} />
 
       <form.Subscribe selector={(state) => state.values.goalType}>
-        {(goalType) => (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <form.AppField name="goalCount">
-              {(field) => {
-                const countDisabled = isSubmitting || goalType !== 'count'
+        {(goalType) => {
+          if (goalType === 'list_size') return null
 
-                return (
-                  <Field data-disabled={countDisabled}>
-                    <FieldLabel htmlFor={field.name}>Titles</FieldLabel>
-                    <FieldContent>
-                      <field.NumberField
-                        disabled={countDisabled}
-                        min={1}
-                        placeholder="52"
-                        step={1}
-                      />
-                    </FieldContent>
-                    <field.FormFieldError />
-                  </Field>
-                )
-              }}
-            </form.AppField>
+          return (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <form.AppField name="goalCount">
+                {(field) => {
+                  const countDisabled = isSubmitting || goalType !== 'count'
 
-            <form.AppField name="goalHours">
-              {(field) => {
-                const runtimeDisabled = isSubmitting || goalType !== 'runtime_minutes'
+                  return (
+                    <Field data-disabled={countDisabled}>
+                      <FieldLabel htmlFor={field.name}>Titles</FieldLabel>
+                      <FieldContent>
+                        <field.NumberField
+                          disabled={countDisabled}
+                          min={1}
+                          placeholder="52"
+                          step={1}
+                        />
+                      </FieldContent>
+                      <field.FormFieldError />
+                    </Field>
+                  )
+                }}
+              </form.AppField>
 
-                return (
-                  <Field data-disabled={runtimeDisabled}>
-                    <FieldLabel htmlFor={field.name}>Hours</FieldLabel>
-                    <FieldContent>
-                      <field.NumberField
-                        disabled={runtimeDisabled}
-                        min={0}
-                        placeholder="100"
-                        step="any"
-                      />
-                    </FieldContent>
-                    <field.FormFieldError />
-                  </Field>
-                )
-              }}
-            </form.AppField>
-          </div>
-        )}
+              <form.AppField name="goalHours">
+                {(field) => {
+                  const runtimeDisabled = isSubmitting || goalType !== 'runtime_minutes'
+
+                  return (
+                    <Field data-disabled={runtimeDisabled}>
+                      <FieldLabel htmlFor={field.name}>Hours</FieldLabel>
+                      <FieldContent>
+                        <field.NumberField
+                          disabled={runtimeDisabled}
+                          min={0}
+                          placeholder="100"
+                          step="any"
+                        />
+                      </FieldContent>
+                      <field.FormFieldError />
+                    </Field>
+                  )
+                }}
+              </form.AppField>
+            </div>
+          )
+        }}
       </form.Subscribe>
 
-      <form.AppField name="tvCountRule">
-        {(field) => (
-          <Field data-disabled={isSubmitting}>
-            <FieldLabel htmlFor={field.name}>TV Counting</FieldLabel>
-            <FieldContent>
-              <field.SelectField<TvCountRule> disabled={isSubmitting} items={TV_COUNT_ITEMS} />
-            </FieldContent>
-            <field.FormFieldError />
-          </Field>
-        )}
-      </form.AppField>
+      <WatchlistChallengeTvCountRuleField form={form} isSubmitting={isSubmitting} />
 
-      <form.AppField name="priorCompletionRule">
-        {(field) => (
-          <Field data-disabled={isSubmitting}>
-            <FieldLabel htmlFor={field.name}>Prior Completions</FieldLabel>
-            <FieldContent>
-              <field.SelectField<PriorCompletionRule>
-                disabled={isSubmitting}
-                items={PRIOR_COMPLETION_ITEMS}
-              />
-            </FieldContent>
-            <field.FormFieldError />
-          </Field>
-        )}
-      </form.AppField>
+      <WatchlistChallengePriorCompletionRuleField form={form} isSubmitting={isSubmitting} />
 
       <form.AppField name="includeRewatches">
         {(field) => (

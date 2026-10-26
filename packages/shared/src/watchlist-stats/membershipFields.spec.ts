@@ -289,3 +289,67 @@ describe('disabled challenge', () => {
     ).toEqual({ badge: null, note: null })
   })
 })
+
+describe('list_size goal weight', () => {
+  it('counts a movie or series as one title', () => {
+    expect(
+      deriveMembershipChallengeFields({
+        addedAt,
+        challenge: challenge({ goalType: 'list_size', tvCountRule: 'tv_by_episode' }),
+        episodesAtJoin: 0,
+        libraryItem: libraryItem({
+          progress: { episodesWatched: 4, type: 'tv' },
+          status: 'watching',
+        }),
+        media: series,
+      }).goalWeight,
+    ).toBe(1)
+
+    expect(
+      deriveMembershipChallengeFields({
+        addedAt,
+        challenge: challenge({ goalType: 'list_size', tvCountRule: 'tv_by_season' }),
+        libraryItem: libraryItem({
+          progress: { seasonsCompleted: [1, 2, 3], type: 'tv' },
+          status: 'watching',
+        }),
+        media: series,
+      }).goalWeight,
+    ).toBe(1)
+
+    expect(
+      deriveMembershipChallengeFields({
+        addedAt,
+        challenge: challenge({ goalType: 'list_size' }),
+        libraryItem: libraryItem(),
+        media: movie,
+      }).goalWeight,
+    ).toBe(1)
+  })
+
+  it('gives a series no weight when the TV rule is movies only', () => {
+    expect(
+      deriveMembershipChallengeFields({
+        addedAt,
+        challenge: challenge({ goalType: 'list_size', tvCountRule: 'movies_only' }),
+        libraryItem: libraryItem(),
+        media: series,
+      }).goalWeight,
+    ).toBe(0)
+  })
+
+  it('keeps episode weights on a count goal', () => {
+    expect(
+      deriveMembershipChallengeFields({
+        addedAt,
+        challenge: challenge({ tvCountRule: 'tv_by_episode' }),
+        episodesAtJoin: 0,
+        libraryItem: libraryItem({
+          progress: { episodesWatched: 4, type: 'tv' },
+          status: 'watching',
+        }),
+        media: series,
+      }).goalWeight,
+    ).toBe(4)
+  })
+})

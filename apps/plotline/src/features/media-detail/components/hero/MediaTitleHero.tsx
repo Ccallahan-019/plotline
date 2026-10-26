@@ -42,7 +42,11 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
     <section>
       <div className="relative h-72 overflow-hidden">
         <MediaTitleHeroBackdrop backdropUrl={backdropUrl} />
-        <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-background/5" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-transparent" />
+        <div className="hidden 2xl:block">
+          <div className="absolute w-1/7 right-0 top-0 h-full bg-linear-to-l from-background via-background/60 to-transparent" />
+          <div className="absolute w-1/7 left-0 top-0 h-full bg-linear-to-r from-background via-background/60 to-transparent" />
+        </div>
       </div>
 
       <div

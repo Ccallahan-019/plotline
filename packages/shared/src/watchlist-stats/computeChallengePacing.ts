@@ -6,6 +6,8 @@ import { parseReleaseDate } from '../utils/dates'
 export function computeChallengePacing(input: {
   challenge: WatchlistChallengeConfig
   completed: number
+  /** A list-size goal with nothing on the list yet. Zero remaining is not a finish. */
+  goalIsEmpty?: boolean
   inProgress: number
   referenceDate?: Date
   remaining: number
@@ -36,8 +38,21 @@ export function computeChallengePacing(input: {
   const daysElapsed = Math.min(daysTotal, diffCalendarDays(startDate, referenceDate))
   const daysRemaining = diffCalendarDays(referenceDate, dueDate)
 
-  const requiredPerDay = daysRemaining > 0 ? input.remaining / daysRemaining : undefined
   const actualPerDay = daysElapsed > 0 ? input.completed / daysElapsed : undefined
+
+  if (input.goalIsEmpty) {
+    // Nothing to finish yet, so there is no required rate, forecast or finish. The
+    // challenge is not started until the due day passes, then it is overdue.
+    return {
+      actualPerDay,
+      daysElapsed,
+      daysRemaining,
+      daysTotal,
+      status: isAfterCalendarDay(referenceDate, dueDate) ? 'overdue' : 'not_started',
+    }
+  }
+
+  const requiredPerDay = daysRemaining > 0 ? input.remaining / daysRemaining : undefined
 
   const onTrack =
     input.remaining === 0

@@ -1,4 +1,4 @@
-import { LibraryItem, Media, WatchlistMembership } from '@plotline/payload-types'
+import { LibraryItem, Media, Watchlist, WatchlistMembership } from '@plotline/payload-types'
 import {
   computeWatchlistStats,
   StatsMembershipInput,
@@ -8,13 +8,27 @@ import { Payload, PayloadRequest } from 'payload'
 
 import { SKIP_WATCHLIST_STATS_RECALC } from '@/collections/watchlists/context'
 
+/**
+ * Recomputes and stores `statsCache` for one watchlist from its memberships.
+ *
+ * A list-size challenge that already finished keeps its completion latch from the
+ * stored cache, so titles added later show as new instead of undoing the finish.
+ *
+ * @param payload - Payload instance
+ * @param watchlistId - Watchlist to recalculate
+ * @param req - Request whose transaction the reads and write join
+ * @param options.reopenCompletion - Measure a latched list live again. A fully watched list keeps its finish
+ * @param options.resetCompletion - Discard the stored latch, after a change to which titles qualify
+ * @returns The updated watchlist at depth 1, or `undefined` when the recalculation is skipped or the list is gone
+ */
 export async function recalculateWatchlistStatsById(
   payload: Payload,
   watchlistId: number | string,
   req?: PayloadRequest,
-): Promise<void> {
+  options?: { reopenCompletion?: boolean; resetCompletion?: boolean },
+): Promise<undefined | Watchlist> {
   if (req?.context?.[SKIP_WATCHLIST_STATS_RECALC]) {
-    return
+    return undefined
   }
 
   const watchlist = await payload.findByID({
@@ -26,7 +40,7 @@ export async function recalculateWatchlistStatsById(
   })
 
   if (!watchlist) {
-    return
+    return undefined
   }
 
   // Challenge sync rewrites every membership. A 1000-row page would undercount
@@ -65,10 +79,13 @@ export async function recalculateWatchlistStatsById(
   const statsCache = computeWatchlistStats({
     challenge: watchlist.challenge as null | undefined | WatchlistChallengeConfig,
     memberships: statsMemberships,
+    previousStats: watchlist.statsCache,
+    reopenCompletion: options?.reopenCompletion === true,
+    resetCompletion: options?.resetCompletion === true,
     watchlistCreatedAt: watchlist.createdAt,
   })
 
-  await payload.update({
+  return payload.update({
     collection: 'watchlists',
     context: {
       [SKIP_WATCHLIST_STATS_RECALC]: true,
@@ -76,6 +93,7 @@ export async function recalculateWatchlistStatsById(
     data: {
       statsCache,
     },
+    depth: 1,
     id: watchlistId,
     overrideAccess: true,
     req,

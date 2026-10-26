@@ -1,4 +1,6 @@
-import type { MediaType, WatchEventType } from '@plotline/shared/constants'
+import type { ChallengeGoalType, MediaType, WatchEventType } from '@plotline/shared/constants'
+
+import { isRuntimeChallengeGoal } from '@plotline/shared/watchlist-stats'
 
 import type {
   ActivityChallengeProgress,
@@ -41,7 +43,7 @@ export type ActivityChallengeInput = {
     enabled?: boolean | null
     goalCount?: null | number
     goalRuntimeMinutes?: null | number
-    goalType?: 'count' | 'runtime_minutes' | null
+    goalType?: ChallengeGoalType | null
     startDate?: null | string
     tvCountRule?: 'movies_only' | 'tv_as_series' | 'tv_by_episode' | 'tv_by_season' | null
   } | null
@@ -351,6 +353,18 @@ function activityRowDate(row: DashboardActivityRow, timeZone: string): CalendarD
   return calendarDateInTimeZone(new Date(occurredAt), timeZone)
 }
 
+// List size has no stored target, so the cache's count wins over a leftover document goal.
+function challengeGoalCount(
+  challenge: ActivityChallengeInput['challenge'],
+  stats: ActivityChallengeInput['statsCache'],
+): number {
+  if (challenge?.goalType === 'list_size') {
+    return stats?.goalCount ?? stats?.totalEligible ?? 0
+  }
+
+  return stats?.goalCount ?? challenge?.goalCount ?? stats?.totalEligible ?? 0
+}
+
 // Enabled challenges with a calculated snapshot. There is no challenge history.
 function challengeRows(challenges: readonly ActivityChallengeInput[]): DashboardActivityRow[] {
   const rows: DashboardActivityRow[] = []
@@ -390,7 +404,8 @@ function challengeRows(challenges: readonly ActivityChallengeInput[]): Dashboard
 }
 
 // `52 films in 2026 · 31 / 52` plus the same fraction as numbers, so the bar never re-reads
-// the text. Runtime goals use hours on both sides of the fraction.
+// the text. Runtime goals use hours on both sides of the fraction. A list-size goal uses
+// the cached title count, even when a previous runtime value is still stored.
 function challengeSnapshot(watchlist: ActivityChallengeInput): {
   detail: string
   progress: ActivityChallengeProgress
@@ -414,7 +429,7 @@ function challengeSnapshot(watchlist: ActivityChallengeInput): {
     }
   }
 
-  const goal = stats?.goalCount ?? challenge?.goalCount ?? stats?.totalEligible ?? 0
+  const goal = challengeGoalCount(challenge, stats)
   const completed = stats?.completed ?? 0
   const unit = challenge?.tvCountRule === 'movies_only' ? 'films' : 'titles'
   const label = `${completed} / ${goal}`
@@ -620,22 +635,16 @@ function isAfterCursor(row: DashboardActivityRow, cursor: ActivityCursor): boole
   return row.id < cursor.id
 }
 
-// Runtime when the goal type says so, or when only a minute goal is stored.
+// The cache's goals win over the document's, the same order the snapshot reads them.
 function isRuntimeGoal(
   challenge: ActivityChallengeInput['challenge'],
   stats: ActivityChallengeInput['statsCache'],
 ): boolean {
-  if (challenge?.goalType === 'runtime_minutes') {
-    return true
-  }
-
-  if (challenge?.goalType === 'count') {
-    return false
-  }
-
-  const goalMinutes = stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes
-
-  return goalMinutes != null && (stats?.goalCount ?? challenge?.goalCount) == null
+  return isRuntimeChallengeGoal({
+    goalCount: stats?.goalCount ?? challenge?.goalCount,
+    goalRuntimeMinutes: stats?.goalRuntimeMinutes ?? challenge?.goalRuntimeMinutes,
+    goalType: challenge?.goalType,
+  })
 }
 
 // Earliest and latest row dates in the collapsed previous week. One day omits the span.

@@ -7,7 +7,9 @@ export const watchlistStatsCacheObjectSchema: JSONSchema4 = {
   properties: {
     actualPerDay: { type: 'number' },
     completed: { type: 'number' },
+    completedAt: { type: 'string' },
     completedRuntimeMinutes: { type: 'number' },
+    completedTitleCount: { type: 'number' },
     daysElapsed: { type: 'number' },
     daysRemaining: { type: 'number' },
     daysTotal: { type: 'number' },
@@ -15,6 +17,7 @@ export const watchlistStatsCacheObjectSchema: JSONSchema4 = {
     goalRuntimeMinutes: { type: 'number' },
     inProgress: { type: 'number' },
     lastCalculatedAt: { type: 'string' },
+    newTitlesSinceCompletion: { type: 'number' },
     onTrack: { type: 'boolean' },
     percentComplete: { type: 'number' },
     projectedFinishDate: { type: 'string' },
@@ -26,6 +29,7 @@ export const watchlistStatsCacheObjectSchema: JSONSchema4 = {
       type: 'string',
     },
     totalEligible: { type: 'number' },
+    unfinishedTitlesSinceCompletion: { type: 'number' },
   },
   required: [
     'totalEligible',
