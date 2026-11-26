@@ -1,5 +1,5 @@
 ---
-description: Standard coding practices — keep logic in pure helper functions
+description: Standard coding practices — pure helpers and object destructuring
 alwaysApply: true
 ---
 
@@ -16,7 +16,8 @@ Name the helper for the result the caller gets (`episodesRemaining`, `formatActi
 ```typescript
 // ❌ BAD — progress math and copy are trapped in the component
 export function ContinueWatchingRow({ item }: { item: ContinueWatchingItem }) {
-  const remaining = Math.max(item.episodeCount - item.episodesWatched, 0)
+  const { episodeCount, episodesWatched } = item
+  const remaining = Math.max(episodeCount - episodesWatched, 0)
   const label = remaining === 1 ? '1 episode left' : `${remaining} episodes left`
 
   return <CardDescription>{label}</CardDescription>
@@ -34,9 +35,32 @@ export function episodesRemainingLabel(remaining: number): string {
 }
 
 export function ContinueWatchingRow({ item }: { item: ContinueWatchingItem }) {
-  const label = episodesRemainingLabel(episodesRemaining(item.episodeCount, item.episodesWatched))
+  const { episodeCount, episodesWatched } = item
+  const label = episodesRemainingLabel(episodesRemaining(episodeCount, episodesWatched))
 
   return <CardDescription>{label}</CardDescription>
+}
+```
+
+## Read fields by destructuring
+
+When a function uses an object's fields, take them with destructuring. Name the values once, then use those bindings. Destructure the parameter when the function only needs those fields. Destructure a local when the object arrives whole.
+
+Property access stays for a single field, optional chaining, a computed key, or a write. Destructuring there adds noise or changes what the line does.
+
+```typescript
+// ❌ BAD — the same record is dotted through the function
+export function formatContinueWatching(item: ContinueWatchingItem): string {
+  const remaining = episodesRemaining(item.episodeCount, item.episodesWatched)
+  return `${item.title}: ${episodesRemainingLabel(remaining)}`
+}
+
+// ✅ GOOD — fields are named once, then used as values
+export function formatContinueWatching(item: ContinueWatchingItem): string {
+  const { episodeCount, episodesWatched, title } = item
+  const remaining = episodesRemaining(episodeCount, episodesWatched)
+
+  return `${title}: ${episodesRemainingLabel(remaining)}`
 }
 ```
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { Film, Tv } from 'lucide-react'
+import { Film, TvMinimal } from 'lucide-react'
 
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
@@ -42,7 +42,7 @@ export function TitleSearchMediaTypeToggle({
         Film
       </ToggleGroupItem>
       <ToggleGroupItem className="flex flex-1 items-center justify-center gap-2" value="tv">
-        <Tv />
+        <TvMinimal />
         TV
       </ToggleGroupItem>
     </ToggleGroup>

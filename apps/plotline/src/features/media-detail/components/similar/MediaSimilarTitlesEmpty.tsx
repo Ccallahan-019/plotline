@@ -1,6 +1,6 @@
 import type { MediaType } from '@plotline/shared/constants'
 
-import { Film, Tv } from 'lucide-react'
+import { Film, TvMinimal } from 'lucide-react'
 
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 
@@ -17,7 +17,7 @@ const EMPTY_COPY: Record<MediaType, { description: string; icon: React.ReactNode
     },
     tv: {
       description: 'No similar TV shows were found for this title.',
-      icon: <Tv />,
+      icon: <TvMinimal />,
       title: 'No Similar TV Shows',
     },
   }

@@ -154,6 +154,7 @@ describe('mapTvTitleDetails', () => {
         airDate: null,
         episodeCount: 2,
         name: 'Specials',
+        overview: null,
         posterPath: null,
         seasonNumber: 0,
       },
@@ -161,9 +162,32 @@ describe('mapTvTitleDetails', () => {
         airDate: '2022-02-18',
         episodeCount: 9,
         name: 'Season 1',
+        overview: null,
         posterPath: '/s1.jpg',
         seasonNumber: 1,
       },
+    ])
+  })
+
+  it('trims a season overview and drops a blank one', () => {
+    const details = tmdbTvTitleDetailsSchema.parse({
+      id: 95396,
+      name: 'Severance',
+      seasons: [
+        {
+          name: 'Season 1',
+          overview: '  Mark leads a team of office workers.  ',
+          season_number: 1,
+        },
+        { name: 'Season 2', overview: '   ', season_number: 2 },
+        { name: 'Season 3', season_number: 3 },
+      ],
+    })
+
+    expect(mapTvTitleDetails(details, 'US').seasons.map((season) => season.overview)).toEqual([
+      'Mark leads a team of office workers.',
+      null,
+      null,
     ])
   })
 
@@ -180,6 +204,7 @@ describe('mapTvTitleDetails', () => {
         airDate: null,
         episodeCount: 9,
         name: 'Season 1',
+        overview: null,
         posterPath: null,
         seasonNumber: 1,
       },

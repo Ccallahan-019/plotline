@@ -1,4 +1,5 @@
 import type { WatchedEpisodePair } from '@plotline/shared/log-watch'
+import type { TmdbTvSeasonEpisode } from '@plotline/shared/tmdb'
 
 import { formatReleaseYear } from '@/features/media-grid/grid/services/media-display-helpers'
 
@@ -38,7 +39,32 @@ export function countSeasonEpisodesWatched(
 }
 
 /**
- * Episode title for a season row.
+ * Episodes ordered by episode number.
+ *
+ * @param episodes - TMDB episodes for one season
+ * @returns A new array sorted by `episode_number`
+ */
+export function episodesInSeasonOrder(
+  episodes: readonly TmdbTvSeasonEpisode[],
+): TmdbTvSeasonEpisode[] {
+  return [...episodes].sort((left, right) => left.episode_number - right.episode_number)
+}
+
+/**
+ * Compact season and episode code for an episode card.
+ *
+ * The season number comes from the selected season. Episode payloads do not store it.
+ *
+ * @param seasonNumber - Season the episode belongs to
+ * @param episodeNumber - Episode number within that season
+ * @returns `S1E1`
+ */
+export function formatEpisodeCode(seasonNumber: number, episodeNumber: number): string {
+  return `S${seasonNumber} · E${episodeNumber}`
+}
+
+/**
+ * Episode title for the still strip and the selected-episode heading.
  *
  * @param name - TMDB episode name
  * @param episodeNumber - Episode number used when the name is blank
@@ -54,7 +80,18 @@ export function formatEpisodeDisplayName(
 }
 
 /**
- * Release date and runtime shown on the right of an episode row.
+ * Season and episode line under the selected episode title.
+ *
+ * @param seasonNumber - Season the episode belongs to
+ * @param episodeNumber - Episode number within that season
+ * @returns `Season 1 - Episode 1`
+ */
+export function formatEpisodeHeading(seasonNumber: number, episodeNumber: number): string {
+  return `Season ${seasonNumber} · Episode ${episodeNumber}`
+}
+
+/**
+ * Air date and runtime shown under the selected episode.
  *
  * @param airDate - TMDB air date, or empty when the episode has not aired
  * @param runtimeMinutes - Runtime in minutes
@@ -72,7 +109,26 @@ export function formatEpisodeMeta(
 }
 
 /**
- * Short runtime for an episode row.
+ * Synopsis under the selected episode.
+ *
+ * A season cached before `overview` was stored has no field, so those episodes
+ * hide the synopsis until that cache refreshes.
+ *
+ * @param overview - TMDB episode overview
+ * @returns Trimmed text, or `null` when the overview is missing or blank
+ */
+export function formatEpisodeOverview(overview: null | string | undefined): null | string {
+  const trimmed = overview?.trim()
+
+  if (!trimmed) {
+    return null
+  }
+
+  return trimmed
+}
+
+/**
+ * Short runtime for an episode.
  *
  * Under an hour this is minutes only (`48m`). Longer runtimes include hours (`1h 2m`).
  *
@@ -131,6 +187,30 @@ export function formatSeasonReleaseYear(airDate: null | string | undefined): nul
  */
 export function formatSeasonWatchedLabel(watchedCount: number, episodeCount: number): string {
   return `${watchedCount} / ${episodeCount} Watched`
+}
+
+/**
+ * Episode shown under the still strip.
+ *
+ * Keeps `selectedEpisodeNumber` when that episode is still in the list.
+ * Otherwise the first episode from `episodesInSeasonOrder` is used.
+ * An empty list returns nothing.
+ *
+ * @param episodes - TMDB episodes for the selected season
+ * @param selectedEpisodeNumber - Episode the user picked; `null` before any click
+ * @returns The episode to detail, or `undefined` when the season has no episodes
+ */
+export function resolveSelectedEpisode(
+  episodes: readonly TmdbTvSeasonEpisode[],
+  selectedEpisodeNumber: null | number,
+): TmdbTvSeasonEpisode | undefined {
+  const ordered = episodesInSeasonOrder(episodes)
+  const chosen =
+    selectedEpisodeNumber == null
+      ? undefined
+      : ordered.find((episode) => episode.episode_number === selectedEpisodeNumber)
+
+  return chosen ?? ordered[0]
 }
 
 /**

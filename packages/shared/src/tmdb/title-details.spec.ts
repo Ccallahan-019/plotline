@@ -59,6 +59,22 @@ describe('tmdb title detail schemas', () => {
     expect(details.content_ratings?.results[0]?.rating).toBe('TV-MA')
   })
 
+  it('keeps a season overview', () => {
+    const details = tmdbTvTitleDetailsSchema.parse({
+      id: 95396,
+      name: 'Severance',
+      seasons: [
+        { overview: ' The work is mysterious. ', season_number: 1 },
+        { overview: null, season_number: 2 },
+        { season_number: 3 },
+      ],
+    })
+
+    expect(details.seasons?.[0]?.overview).toBe(' The work is mysterious. ')
+    expect(details.seasons?.[1]?.overview).toBeNull()
+    expect(details.seasons?.[2]?.overview).toBeUndefined()
+  })
+
   it('keeps aggregate cast roles and crew jobs', () => {
     const details = tmdbTvTitleDetailsSchema.parse({
       aggregate_credits: {

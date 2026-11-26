@@ -15,13 +15,17 @@ import {
   toLogWatchBatchInput,
   toLogWatchInput,
 } from '../services/log-watch-form'
-import { createLogWatchFormSchema } from '../services/log-watch-form-schema'
+import {
+  createLogWatchFormSchema,
+  type LogWatchEpisodeInput,
+} from '../services/log-watch-form-schema'
 import { useLogWatch } from './use-log-watch'
 import { useLogWatchBatch } from './use-log-watch-batch'
 
 export type LogWatchFormApi = ReturnType<typeof useLogWatchForm>['form']
 
 type UseLogWatchFormOptions = {
+  episode?: LogWatchEpisodeInput
   libraryItem: LibraryItem
   media: Media
   onSuccess?: (libraryItem: LibraryItem) => void
@@ -30,18 +34,26 @@ type UseLogWatchFormOptions = {
 /**
  * Shared log-watch form for the popover and dialog so field values survive escalation.
  *
- * Defaults the next TV episode from library progress, validates on submit, and posts a
- * single watch event or a multi-episode batch when more than one episode is selected.
- * Success toasts, resets the form to the following episode (and updated status) so a later
- * log in the same mounted session does not reuse stale defaults, then calls `onSuccess`
- * with that row. Submit failures are shown in the toast and are not rethrown.
+ * Defaults the next TV episode from library progress, or an explicit episode when the
+ * caller passes one. That episode is read once, when the form mounts; a different
+ * episode needs a remount. Validates on submit, and posts a single watch event or a
+ * multi-episode batch when more than one episode is selected. Success toasts, resets
+ * the form to the following episode (and updated status) so a later log in the same
+ * mounted session does not reuse the prefilled episode, then calls `onSuccess` with
+ * that row. Submit failures are shown in the toast and are not rethrown.
  *
+ * @param options.episode - Episode to prefill instead of the suggested next one; applied only on mount
  * @param options.libraryItem - Library row used for progress defaults and status transitions
  * @param options.media - Title being logged; supplies media type and id
  * @param options.onSuccess - Called with the post-log library row (real id and progress) so the caller can close the UI and patch its cache
  * @returns `form` (TanStack form API) and `isSubmitting` (mutation or form pending)
  */
-export function useLogWatchForm({ libraryItem, media, onSuccess }: UseLogWatchFormOptions) {
+export function useLogWatchForm({
+  episode,
+  libraryItem,
+  media,
+  onSuccess,
+}: UseLogWatchFormOptions) {
   const logWatchMutation = useLogWatch()
   const logWatchBatchMutation = useLogWatchBatch()
   const mediaType = media.mediaType
@@ -58,7 +70,8 @@ export function useLogWatchForm({ libraryItem, media, onSuccess }: UseLogWatchFo
   onSuccessRef.current = onSuccess
 
   const form = useAppForm({
-    defaultValues: getDefaultLogWatchFormValues({ libraryItem, mediaType }),
+    // `episode` is applied only on this mount. Callers remount the hook to prefill another one.
+    defaultValues: getDefaultLogWatchFormValues({ episode, libraryItem, mediaType }),
     onSubmit: async ({ formApi, value }) => {
       try {
         const mediaId = getMediaId(media)

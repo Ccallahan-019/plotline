@@ -52,6 +52,7 @@ export type MediaTitleSeason = {
   airDate: null | string
   episodeCount: null | number
   name: string
+  overview: null | string
   posterPath: null | string
   seasonNumber: number
 }

@@ -1,49 +1,42 @@
 import type { TmdbTvSeasonEpisode } from '@plotline/shared/tmdb'
 
-import { cn } from 'cn'
+import { MediaSeasonEpisodesEmpty } from './MediaSeasonEpisodesEmpty'
+import { MediaSeasonEpisodeStrip } from './MediaSeasonEpisodeStrip'
 
-import { Item, ItemActions, ItemContent, ItemTitle } from '@/components/ui/item'
-import { ShowIf } from '@/components/utils/ShowIf'
+export const seasonEpisodeStripClassName = 'flex w-max items-start gap-3 px-1 pt-1 pb-4'
 
-import { formatEpisodeDisplayName, formatEpisodeMeta } from '../../services/format-media-season'
-
-type MediaSeasonEpisodesProps = {
+export type MediaSeasonEpisodesProps = {
+  backdropPath: null | string
   episodes: TmdbTvSeasonEpisode[]
+  logWatchSubmitting: boolean
+  onLogEpisode: (seasonNumber: number, episodeNumber: number) => void
+  seasonNumber: number
+  title: string
 }
 
-export function MediaSeasonEpisodes({ episodes }: MediaSeasonEpisodesProps) {
-  const rows = [...episodes].sort((left, right) => left.episode_number - right.episode_number)
-
-  if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">No episodes are listed for this season.</p>
+export function MediaSeasonEpisodes({
+  backdropPath,
+  episodes,
+  logWatchSubmitting,
+  onLogEpisode,
+  seasonNumber,
+  title,
+}: MediaSeasonEpisodesProps) {
+  if (episodes.length === 0) {
+    return <MediaSeasonEpisodesEmpty />
   }
 
+  // Remounting on seasonNumber clears the previous season's selection, so the
+  // new season opens on its first episode.
   return (
-    <div className="flex flex-col">
-      {rows.map((episode, index) => {
-        const meta = formatEpisodeMeta(episode.air_date, episode.runtime)
-
-        return (
-          <Item
-            className={cn('rounded-none', index !== rows.length - 1 && 'border-b border-b-border')}
-            key={episode.episode_number}
-          >
-            <ItemContent className="min-w-0">
-              <ItemTitle className=" w-auto shrink-0 min-w-0 truncate line-clamp-1">
-                <span className="shrink-0 tabular-nums text-muted-foreground mr-1.5">
-                  E{episode.episode_number}
-                </span>
-
-                {formatEpisodeDisplayName(episode.name, episode.episode_number)}
-              </ItemTitle>
-            </ItemContent>
-
-            <ShowIf condition={meta != null}>
-              <ItemActions className="shrink-0 text-sm text-muted-foreground">{meta}</ItemActions>
-            </ShowIf>
-          </Item>
-        )
-      })}
-    </div>
+    <MediaSeasonEpisodeStrip
+      backdropPath={backdropPath}
+      episodes={episodes}
+      key={seasonNumber}
+      logWatchSubmitting={logWatchSubmitting}
+      onLogEpisode={onLogEpisode}
+      seasonNumber={seasonNumber}
+      title={title}
+    />
   )
 }

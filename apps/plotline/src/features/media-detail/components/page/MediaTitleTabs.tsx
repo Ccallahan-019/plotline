@@ -1,6 +1,6 @@
 'use client'
 
-import { Activity, Search, Star, Tv, UsersRound } from 'lucide-react'
+import { Activity, Search, Star, TvMinimal, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
@@ -18,11 +18,25 @@ import { MediaSimilarTab } from '../similar/MediaSimilarTab'
 
 type MediaTitleTabsProps = {
   data: MediaTitlePageData
+  logWatchSubmitting: boolean
+  onLogEpisode: (seasonNumber: number, episodeNumber: number) => void
 }
 
-export function MediaTitleTabs({ data }: MediaTitleTabsProps) {
+export function MediaTitleTabs({ data, logWatchSubmitting, onLogEpisode }: MediaTitleTabsProps) {
+  const {
+    cast,
+    crew,
+    keyCredits,
+    libraryItem,
+    media,
+    seasons,
+    voteAverage,
+    voteCount,
+    watchEvents,
+  } = data
+  const { backdropPath, mediaType, posterPath, title, tmdbId } = media
   const [tab, setTab] = useState('overview')
-  const showSeasons = data.media.mediaType === 'tv'
+  const showSeasons = mediaType === 'tv'
 
   const handleTabChange = (value: null | string) => {
     if (value) {
@@ -30,15 +44,19 @@ export function MediaTitleTabs({ data }: MediaTitleTabsProps) {
     }
   }
 
+  function handleShowCast() {
+    setTab('cast')
+  }
+
   return (
     <Tabs onValueChange={handleTabChange} value={tab}>
       <ScrollArea>
-        <div className="pb-3.5">
+        <div className="pb-5">
           <TabsList className="w-max min-w-full justify-start" variant="line">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             {showSeasons ? (
               <TabsTrigger value="seasons">
-                <Tv />
+                <TvMinimal />
                 Seasons
               </TabsTrigger>
             ) : null}
@@ -64,40 +82,40 @@ export function MediaTitleTabs({ data }: MediaTitleTabsProps) {
       </ScrollArea>
 
       <TabsContent className="pt-4" value="overview">
-        <MediaOverviewTab data={data} onShowCast={() => setTab('cast')} />
+        <MediaOverviewTab data={data} onShowCast={handleShowCast} />
       </TabsContent>
       <ShowIf condition={showSeasons}>
         <TabsContent className="pt-4" value="seasons">
           <MediaSeasonsTab
+            backdropPath={backdropPath ?? null}
             enabled={tab === 'seasons'}
-            fallbackPosterPath={data.media.posterPath ?? null}
-            lastSeason={data.libraryItem?.progress.lastSeason ?? null}
-            libraryItemId={data.libraryItem?.id ?? null}
-            seasons={data.seasons}
-            tmdbId={data.media.tmdbId}
+            fallbackPosterPath={posterPath ?? null}
+            lastSeason={libraryItem?.progress.lastSeason ?? null}
+            libraryItemId={libraryItem?.id ?? null}
+            logWatchSubmitting={logWatchSubmitting}
+            onLogEpisode={onLogEpisode}
+            seasons={seasons}
+            title={title}
+            tmdbId={tmdbId}
           />
         </TabsContent>
       </ShowIf>
       <TabsContent className="pt-4" value="cast">
-        <MediaCastTab cast={data.cast} crew={data.crew} keyCredits={data.keyCredits} />
+        <MediaCastTab cast={cast} crew={crew} keyCredits={keyCredits} />
       </TabsContent>
       <TabsContent className="pt-4" value="activity">
-        <MediaActivityTab watchEvents={data.watchEvents} />
+        <MediaActivityTab watchEvents={watchEvents} />
       </TabsContent>
       <TabsContent className="pt-4" value="reviews">
         <MediaReviewsTab
-          mediaType={data.media.mediaType}
-          tmdbId={data.media.tmdbId}
-          voteAverage={data.voteAverage}
-          voteCount={data.voteCount}
+          mediaType={mediaType}
+          tmdbId={tmdbId}
+          voteAverage={voteAverage}
+          voteCount={voteCount}
         />
       </TabsContent>
       <TabsContent className="pt-4" value="similar">
-        <MediaSimilarTab
-          enabled={tab === 'similar'}
-          mediaType={data.media.mediaType}
-          tmdbId={data.media.tmdbId}
-        />
+        <MediaSimilarTab enabled={tab === 'similar'} mediaType={mediaType} tmdbId={tmdbId} />
       </TabsContent>
     </Tabs>
   )

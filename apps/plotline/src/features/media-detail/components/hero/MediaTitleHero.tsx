@@ -1,5 +1,7 @@
 'use client'
 
+import type { MediaStatus } from '@plotline/shared/constants'
+
 import { MediaPoster } from '@/components/media/MediaPoster'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { cn } from '@/lib/utils'
@@ -16,25 +18,38 @@ import { MediaTitleYourRating } from './MediaTitleYourRating'
 
 type MediaTitleHeroProps = {
   data: MediaTitlePageData
+  isPending: boolean
+  logWatchSubmitting: boolean
+  onMarkWatched: () => void
+  onStatusChange: (status: MediaStatus) => void
 }
 
-export function MediaTitleHero({ data }: MediaTitleHeroProps) {
-  const backdropUrl = titleBackdropUrl(data.media.backdropPath)
-  const posterUrl = mediaImageUrl(data.media.posterPath, 'w342')
+export function MediaTitleHero({
+  data,
+  isPending,
+  logWatchSubmitting,
+  onMarkWatched,
+  onStatusChange,
+}: MediaTitleHeroProps) {
+  const { certification, libraryItem, media } = data
+  const { backdropPath, mediaType, posterPath, title, tvMeta } = media
+  const progressFields = libraryItem?.progress
+  const backdropUrl = titleBackdropUrl(backdropPath)
+  const posterUrl = mediaImageUrl(posterPath, 'w342')
   const metaLine = formatMediaTitleMetaLine({
-    certification: data.certification,
-    media: data.media,
+    certification,
+    media,
   })
   const progress =
-    data.media.mediaType === 'tv'
+    mediaType === 'tv'
       ? getTvWatchProgress({
-          episodeCount: data.media.tvMeta?.episodeCount,
-          episodesWatched: data.libraryItem?.progress.episodesWatched,
-          lastEpisode: data.libraryItem?.progress.lastEpisode,
-          lastSeason: data.libraryItem?.progress.lastSeason,
-          media: data.media,
-          seasonsCompleted: data.libraryItem?.progress.seasonsCompleted,
-          status: data.libraryItem?.status,
+          episodeCount: tvMeta?.episodeCount,
+          episodesWatched: progressFields?.episodesWatched,
+          lastEpisode: progressFields?.lastEpisode,
+          lastSeason: progressFields?.lastSeason,
+          media,
+          seasonsCompleted: progressFields?.seasonsCompleted,
+          status: libraryItem?.status,
         })
       : null
 
@@ -69,7 +84,7 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
 
             <div className="flex min-w-0 flex-1 flex-col gap-2 md:col-start-2 md:row-start-1">
               <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-                {data.media.title}
+                {title}
               </h1>
               <ShowIf condition={metaLine.length > 0}>
                 <p className="text-sm text-muted-foreground">{metaLine}</p>
@@ -78,7 +93,13 @@ export function MediaTitleHero({ data }: MediaTitleHeroProps) {
           </div>
 
           <div className="flex flex-col gap-3 self-start md:col-start-2 md:row-start-2">
-            <MediaTitleActions data={data} />
+            <MediaTitleActions
+              data={data}
+              isPending={isPending}
+              logWatchSubmitting={logWatchSubmitting}
+              onMarkWatched={onMarkWatched}
+              onStatusChange={onStatusChange}
+            />
             <MediaTitleYourRating className="md:hidden" />
             <MediaTitleTvProgress progress={progress} />
           </div>

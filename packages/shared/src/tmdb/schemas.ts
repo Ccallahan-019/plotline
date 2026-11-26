@@ -102,7 +102,9 @@ const tvSeasonEpisodeSchema = z.object({
   air_date: z.string().nullable().optional(),
   episode_number: z.number(),
   name: z.string().nullable(),
+  overview: z.string().nullable().optional(),
   runtime: z.number().nullable().optional(),
+  still_path: z.string().nullable().optional(),
 })
 
 export const tmdbTvSeasonDetailsSchema = z.object({
@@ -245,6 +247,7 @@ const tmdbTitleSeasonSchema = z.object({
   air_date: z.string().nullable().optional(),
   episode_count: z.number().nullable().optional(),
   name: z.string().nullable().optional(),
+  overview: z.string().nullable().optional(),
   poster_path: z.string().nullable().optional(),
   season_number: z.number().nullable().optional(),
 })

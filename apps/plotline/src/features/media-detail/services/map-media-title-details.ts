@@ -162,13 +162,14 @@ export function mapTvTitleDetails(
  * Season list for a cached series when TMDB details are unavailable.
  *
  * @param media - Stored catalog row
- * @returns One entry per stored season length. Names come from the season number; air dates are unknown.
+ * @returns One entry per stored season length. Names come from the season number; air dates and synopses are unknown.
  */
 export function seasonsFromMedia(media: Media): MediaTitleSeason[] {
   return (media.tvMeta?.seasonEpisodeCounts ?? []).map((season) => ({
     airDate: null,
     episodeCount: season.episodeCount,
     name: seasonName(season.season, null),
+    overview: null,
     posterPath: null,
     seasonNumber: season.season,
   }))
@@ -319,6 +320,8 @@ function mapKeyCreditGroups(
 /**
  * Season cards for the title page, ordered by season number.
  *
+ * Overview text is trimmed. A blank or missing synopsis is `null`.
+ *
  * @param seasons - TMDB season summaries, including specials when present
  * @returns Seasons with a number, dropping entries TMDB left unnumbered
  */
@@ -333,13 +336,16 @@ function mapSeasons(seasons: TmdbTvTitleDetails['seasons']): MediaTitleSeason[] 
         return []
       }
 
+      const { air_date, episode_count, name, overview, poster_path, season_number } = season
+
       return [
         {
-          airDate: season.air_date ?? null,
-          episodeCount: season.episode_count ?? null,
-          name: seasonName(season.season_number, season.name),
-          posterPath: season.poster_path ?? null,
-          seasonNumber: season.season_number,
+          airDate: air_date ?? null,
+          episodeCount: episode_count ?? null,
+          name: seasonName(season_number, name),
+          overview: seasonOverview(overview),
+          posterPath: poster_path ?? null,
+          seasonNumber: season_number,
         },
       ]
     })
@@ -407,6 +413,13 @@ function seasonName(seasonNumber: number, name: null | string | undefined): stri
   }
 
   return seasonNumber === 0 ? 'Specials' : `Season ${seasonNumber}`
+}
+
+// Trimmed season synopsis, or `null` when TMDB omitted it or sent only whitespace.
+function seasonOverview(overview: null | string | undefined): null | string {
+  const trimmed = overview?.trim()
+
+  return trimmed || null
 }
 
 /**
