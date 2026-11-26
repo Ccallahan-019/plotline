@@ -43,6 +43,7 @@ export type MediaTitlePageData = {
   region: string
   releaseStatusLabel: null | string
   seasons: MediaTitleSeason[]
+  trailer: MediaTitleTrailer | null
   voteAverage: null | number
   voteCount: null | number
   watchEvents: MediaTitleWatchEvent[]
@@ -55,6 +56,12 @@ export type MediaTitleSeason = {
   overview: null | string
   posterPath: null | string
   seasonNumber: number
+}
+
+/** Official YouTube trailer or teaser selected for this title. */
+export type MediaTitleTrailer = {
+  key: string
+  name: string
 }
 
 export type MediaTitleWatchEvent = {

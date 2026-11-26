@@ -1,5 +1,6 @@
 import type { MediaType } from '../constants/media'
 
+import { includeVideoLanguage } from './include-video-language'
 import {
   type TmdbGenreList,
   tmdbGenreListSchema,
@@ -78,9 +79,20 @@ export class TmdbClient {
     })
   }
 
-  async getMovieTitleDetails(id: number): Promise<TmdbMovieTitleDetails> {
+  /**
+   * Movie details for the title page, including credits, ratings, and videos.
+   *
+   * @param id - TMDB movie id
+   * @param videoLanguages - Extra trailer languages, requested with English and untagged videos
+   * @returns Parsed movie title details
+   */
+  async getMovieTitleDetails(
+    id: number,
+    videoLanguages?: readonly string[],
+  ): Promise<TmdbMovieTitleDetails> {
     return this.fetchValidated(`/movie/${id}`, tmdbMovieTitleDetailsSchema, {
-      append_to_response: 'credits,external_ids,release_dates',
+      append_to_response: 'credits,external_ids,release_dates,videos',
+      include_video_language: includeVideoLanguage(videoLanguages),
     })
   }
 
@@ -150,9 +162,20 @@ export class TmdbClient {
     return this.fetchValidated(`/tv/${tvId}/season/${seasonNumber}`, tmdbTvSeasonDetailsSchema)
   }
 
-  async getTvTitleDetails(id: number): Promise<TmdbTvTitleDetails> {
+  /**
+   * Series details for the title page, including credits, ratings, and videos.
+   *
+   * @param id - TMDB series id
+   * @param videoLanguages - Extra trailer languages, requested with English and untagged videos
+   * @returns Parsed series title details
+   */
+  async getTvTitleDetails(
+    id: number,
+    videoLanguages?: readonly string[],
+  ): Promise<TmdbTvTitleDetails> {
     return this.fetchValidated(`/tv/${id}`, tmdbTvTitleDetailsSchema, {
-      append_to_response: 'aggregate_credits,content_ratings,external_ids',
+      append_to_response: 'aggregate_credits,content_ratings,external_ids,videos',
+      include_video_language: includeVideoLanguage(videoLanguages),
     })
   }
 

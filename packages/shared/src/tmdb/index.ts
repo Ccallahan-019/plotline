@@ -16,6 +16,7 @@ export {
   type TmdbSearchResponse,
   tmdbSearchResponseSchema,
   type TmdbSearchResultItem,
+  type TmdbTitleVideo,
   type TmdbTitleWatchProviderCountry,
   type TmdbTitleWatchProviders,
   tmdbTitleWatchProvidersSchema,

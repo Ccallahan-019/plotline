@@ -115,6 +115,36 @@ describe('mapMovieTitleDetails', () => {
       { label: 'Editors', names: ['James Haygood'] },
     ])
   })
+
+  it('maps a videos array to a trailer and leaves a missing array null', () => {
+    const withVideos = tmdbMovieTitleDetailsSchema.parse({
+      id: 1,
+      title: 'Perfect Days',
+      videos: {
+        results: [
+          {
+            iso_3166_1: 'US',
+            key: 'yt-key',
+            name: 'Official Trailer',
+            official: true,
+            published_at: '2023-05-01T00:00:00.000Z',
+            site: 'YouTube',
+            type: 'Trailer',
+          },
+        ],
+      },
+    })
+    const withoutVideos = tmdbMovieTitleDetailsSchema.parse({
+      id: 1,
+      title: 'Perfect Days',
+    })
+
+    expect(mapMovieTitleDetails(withVideos, 'US').trailer).toEqual({
+      key: 'yt-key',
+      name: 'Official Trailer',
+    })
+    expect(mapMovieTitleDetails(withoutVideos, 'US').trailer).toBeNull()
+  })
 })
 
 describe('mapTvTitleDetails', () => {
@@ -349,6 +379,36 @@ describe('mapTvTitleDetails', () => {
       { label: 'Music', names: ['Dave Porter'] },
     ])
   })
+
+  it('maps a videos array to a trailer and leaves a missing array null', () => {
+    const withVideos = tmdbTvTitleDetailsSchema.parse({
+      id: 95396,
+      name: 'Severance',
+      videos: {
+        results: [
+          {
+            iso_3166_1: 'US',
+            key: 'yt-key',
+            name: 'Official Trailer',
+            official: true,
+            published_at: '2022-01-01T00:00:00.000Z',
+            site: 'YouTube',
+            type: 'Trailer',
+          },
+        ],
+      },
+    })
+    const withoutVideos = tmdbTvTitleDetailsSchema.parse({
+      id: 95396,
+      name: 'Severance',
+    })
+
+    expect(mapTvTitleDetails(withVideos, 'US').trailer).toEqual({
+      key: 'yt-key',
+      name: 'Official Trailer',
+    })
+    expect(mapTvTitleDetails(withoutVideos, 'US').trailer).toBeNull()
+  })
 })
 
 describe('formatMediaTitleMetaLine', () => {
@@ -572,6 +632,7 @@ function pageData(overrides: Partial<MediaTitlePageData> = {}): MediaTitlePageDa
     region: 'US',
     releaseStatusLabel: null,
     seasons: [],
+    trailer: null,
     voteAverage: null,
     voteCount: null,
     watchEvents: [],

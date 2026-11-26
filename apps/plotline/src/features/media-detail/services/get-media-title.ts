@@ -104,8 +104,10 @@ type LoadedTmdbTitle =
 /**
  * Overview fields available from the catalog row alone.
  *
+ * The catalog row does not store videos, so the trailer stays empty until TMDB details load.
+ *
  * @param media - Stored catalog row used when TMDB details were not loaded
- * @returns Empty credits, certification, and review ratings, with the stored vote average and seasons
+ * @returns Empty credits, certification, review ratings, and trailer, with the stored vote average and seasons
  */
 function detailsFromCachedMedia(media: Media): MappedMediaTitleDetails {
   return {
@@ -119,6 +121,7 @@ function detailsFromCachedMedia(media: Media): MappedMediaTitleDetails {
     networks: [],
     releaseStatusLabel: null,
     seasons: seasonsFromMedia(media),
+    trailer: null,
     voteAverage: media.voteAverage ?? null,
     voteCount: null,
   }
@@ -227,7 +230,7 @@ function isCatalogStale(media: Media): boolean {
 }
 
 /**
- * Fetches movie or series details, including credits and ratings.
+ * Fetches movie or series details, including credits, ratings, and videos.
  *
  * A TMDB error is returned instead of thrown so a cached catalog row can still render.
  *

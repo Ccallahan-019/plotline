@@ -91,6 +91,7 @@ function pageData(media: Media): MediaTitlePageData {
     region: 'US',
     releaseStatusLabel: null,
     seasons: [],
+    trailer: null,
     voteAverage: null,
     voteCount: null,
     watchEvents: [],

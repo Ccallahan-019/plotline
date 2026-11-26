@@ -6,9 +6,11 @@ import type {
   MediaTitleCrewMember,
   MediaTitleKeyCreditGroup,
   MediaTitleSeason,
+  MediaTitleTrailer,
 } from '../types'
 
 import { formatPersonInitials } from './format-person-initials'
+import { selectTitleTrailer } from './select-title-trailer'
 
 const MAX_DISPLAYED_CREDITS = 50
 
@@ -35,6 +37,7 @@ export type MappedMediaTitleDetails = {
   networks: string[]
   releaseStatusLabel: null | string
   seasons: MediaTitleSeason[]
+  trailer: MediaTitleTrailer | null
   voteAverage: null | number
   voteCount: null | number
 }
@@ -98,9 +101,9 @@ export function formatLanguageName(code: null | string | undefined): null | stri
  *
  * Certification prefers the viewer's region, then the US listing, then any rated release.
  *
- * @param details - Movie details, including credits and release dates when TMDB sent them
+ * @param details - Movie details, including credits, release dates, and videos when TMDB sent them
  * @param region - Profile watch region, such as `US`
- * @returns Directors, certification, language, cast, and community vote fields
+ * @returns Directors, certification, language, cast, community vote fields, and one trailer when a qualifying video exists
  */
 export function mapMovieTitleDetails(
   details: TmdbMovieTitleDetails,
@@ -121,6 +124,7 @@ export function mapMovieTitleDetails(
     networks: [],
     releaseStatusLabel: details.status ?? null,
     seasons: [],
+    trailer: selectTitleTrailer(details.videos?.results, region),
     voteAverage: details.vote_average ?? null,
     voteCount: details.vote_count ?? null,
   }
@@ -132,9 +136,9 @@ export function mapMovieTitleDetails(
  * Prefers `aggregate_credits`, which lists everyone who worked on the series.
  * `credits` is the shorter series-regulars list and is used when aggregate credits are absent.
  *
- * @param details - Series details, including creators, networks, seasons, and ratings
+ * @param details - Series details, including creators, networks, seasons, ratings, and videos
  * @param region - Profile watch region, such as `US`
- * @returns Creators, network, certification, seasons, cast, and community vote fields
+ * @returns Creators, network, certification, seasons, cast, community vote fields, and one trailer when a qualifying video exists
  */
 export function mapTvTitleDetails(
   details: TmdbTvTitleDetails,
@@ -153,6 +157,7 @@ export function mapTvTitleDetails(
     networks: uniqueNames((details.networks ?? []).map((network) => network.name)),
     releaseStatusLabel: details.status ?? null,
     seasons: mapSeasons(details.seasons),
+    trailer: selectTitleTrailer(details.videos?.results, region),
     voteAverage: details.vote_average ?? null,
     voteCount: details.vote_count ?? null,
   }

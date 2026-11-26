@@ -252,10 +252,50 @@ const tmdbTitleSeasonSchema = z.object({
   season_number: z.number().nullable().optional(),
 })
 
+const tmdbTitleVideoSchema = z.object({
+  iso_3166_1: z.string().nullable().optional(),
+  key: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
+  official: z.boolean().nullable().optional(),
+  published_at: z.string().nullable().optional(),
+  site: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
+})
+
+export type TmdbTitleVideo = z.infer<typeof tmdbTitleVideoSchema>
+
+function isTitleVideoBlock(value: unknown): value is { results?: unknown } {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+// Missing, null, and malformed video rows become an empty list so title details still parse.
+function titleVideosFromUnknown(value: unknown): { results: TmdbTitleVideo[] } {
+  if (!isTitleVideoBlock(value)) {
+    return { results: [] }
+  }
+
+  const { results } = value
+
+  if (!Array.isArray(results)) {
+    return { results: [] }
+  }
+
+  return {
+    results: results.flatMap((item) => {
+      const parsed = tmdbTitleVideoSchema.safeParse(item)
+
+      return parsed.success ? [parsed.data] : []
+    }),
+  }
+}
+
+const tmdbTitleVideosSchema = z.unknown().transform(titleVideosFromUnknown)
+
 export const tmdbMovieTitleDetailsSchema = tmdbMovieDetailsSchema.extend({
   credits: tmdbCreditsSchema.optional(),
   original_language: z.string().optional(),
   release_dates: tmdbReleaseDatesSchema.optional(),
+  videos: tmdbTitleVideosSchema.nullish(),
   vote_count: z.number().optional(),
 })
 
@@ -281,6 +321,7 @@ export const tmdbTvTitleDetailsSchema = tmdbTvDetailsSchema.extend({
     .optional(),
   original_language: z.string().optional(),
   seasons: z.array(tmdbTitleSeasonSchema).optional(),
+  videos: tmdbTitleVideosSchema.nullish(),
   vote_count: z.number().optional(),
 })
 

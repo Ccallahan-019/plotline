@@ -75,6 +75,62 @@ describe('tmdb title detail schemas', () => {
     expect(details.seasons?.[2]?.overview).toBeUndefined()
   })
 
+  it('keeps a videos array', () => {
+    const video = {
+      iso_3166_1: 'US',
+      key: 'yt-key',
+      name: 'Official Trailer',
+      official: true,
+      published_at: '2023-05-01T00:00:00.000Z',
+      site: 'YouTube',
+      type: 'Trailer',
+    }
+
+    const movie = tmdbMovieTitleDetailsSchema.parse({
+      id: 1,
+      title: 'Perfect Days',
+      videos: { results: [video] },
+    })
+    const series = tmdbTvTitleDetailsSchema.parse({
+      id: 2,
+      name: 'Severance',
+      videos: { results: [video] },
+    })
+
+    expect(movie.videos?.results).toEqual([video])
+    expect(series.videos?.results).toEqual([video])
+  })
+
+  it('treats a missing or malformed videos block as no videos', () => {
+    const movie = (videos: unknown) =>
+      tmdbMovieTitleDetailsSchema.parse({
+        credits: { cast: [{ id: 1, name: 'Koji Yakusho' }] },
+        id: 1,
+        title: 'Perfect Days',
+        videos,
+        vote_count: 4,
+      })
+    const series = tmdbTvTitleDetailsSchema.parse({
+      id: 2,
+      name: 'Severance',
+      videos: null,
+      vote_count: 9,
+    })
+    const withBadRow = movie({
+      results: [{ key: 1 }, { key: 'ok', site: 'YouTube' }],
+    })
+
+    expect(movie({}).videos?.results).toEqual([])
+    expect(movie({}).credits?.cast?.[0]?.name).toBe('Koji Yakusho')
+    expect(movie({}).vote_count).toBe(4)
+    expect(movie(null).videos?.results ?? []).toEqual([])
+    expect(movie({ results: null }).videos?.results).toEqual([])
+    expect(withBadRow.videos?.results).toEqual([{ key: 'ok', site: 'YouTube' }])
+    expect(withBadRow.vote_count).toBe(4)
+    expect(series.videos?.results ?? []).toEqual([])
+    expect(series.vote_count).toBe(9)
+  })
+
   it('keeps aggregate cast roles and crew jobs', () => {
     const details = tmdbTvTitleDetailsSchema.parse({
       aggregate_credits: {
