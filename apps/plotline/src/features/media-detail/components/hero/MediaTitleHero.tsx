@@ -2,7 +2,6 @@
 
 import type { MediaStatus } from '@plotline/shared/constants'
 
-import { MediaPoster } from '@/components/media/MediaPoster'
 import { ShowIf } from '@/components/utils/ShowIf'
 import { cn } from '@/lib/utils'
 
@@ -13,6 +12,7 @@ import { mediaImageUrl, titleBackdropUrl } from '../../services/media-image-url'
 import { MediaTitleActions } from './MediaTitleActions'
 import { MediaTitleBackButton } from './MediaTitleBackButton'
 import { MediaTitleHeroBackdrop } from './MediaTitleHeroBackdrop'
+import { MediaTitlePoster } from './MediaTitlePoster'
 import { MediaTitleTvProgress } from './MediaTitleTvProgress'
 import { MediaTitleYourRating } from './MediaTitleYourRating'
 
@@ -31,7 +31,7 @@ export function MediaTitleHero({
   onMarkWatched,
   onStatusChange,
 }: MediaTitleHeroProps) {
-  const { certification, libraryItem, media } = data
+  const { certification, homepage, libraryItem, media } = data
   const { backdropPath, mediaType, posterPath, title, tvMeta } = media
   const progressFields = libraryItem?.progress
   const backdropUrl = titleBackdropUrl(backdropPath)
@@ -74,13 +74,7 @@ export function MediaTitleHero({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[10rem_minmax(0,1fr)] md:items-end">
           <div className="flex items-end gap-4 md:contents">
-            <MediaPoster
-              className="w-24 shrink-0 rounded-md shadow-lg md:col-start-1 md:row-span-2 md:w-40"
-              fallbackIconClassName="size-6"
-              ratio={2 / 3}
-              sizes="160px"
-              src={posterUrl}
-            />
+            <MediaTitlePoster homepage={homepage} posterUrl={posterUrl} title={title} />
 
             <div className="flex min-w-0 flex-1 flex-col gap-2 md:col-start-2 md:row-start-1">
               <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl">

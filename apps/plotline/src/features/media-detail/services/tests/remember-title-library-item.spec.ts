@@ -83,6 +83,7 @@ function pageData(media: Media): MediaTitlePageData {
     createdBy: [],
     crew: [],
     directors: [],
+    homepage: null,
     keyCredits: [],
     language: null,
     libraryItem: null,

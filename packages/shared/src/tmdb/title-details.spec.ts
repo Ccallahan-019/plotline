@@ -75,6 +75,22 @@ describe('tmdb title detail schemas', () => {
     expect(details.seasons?.[2]?.overview).toBeUndefined()
   })
 
+  it('keeps a homepage string', () => {
+    const movie = tmdbMovieTitleDetailsSchema.parse({
+      homepage: 'https://example.com/film',
+      id: 1,
+      title: 'Perfect Days',
+    })
+    const series = tmdbTvTitleDetailsSchema.parse({
+      homepage: '',
+      id: 2,
+      name: 'Severance',
+    })
+
+    expect(movie.homepage).toBe('https://example.com/film')
+    expect(series.homepage).toBe('')
+  })
+
   it('keeps a videos array', () => {
     const video = {
       iso_3166_1: 'US',

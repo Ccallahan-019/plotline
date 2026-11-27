@@ -57,27 +57,38 @@ export function MediaSeasonEpisodeCard({
   return (
     <Card
       className={cn(
-        'w-full min-w-0 pt-0 focus-within:ring-2 focus-within:ring-ring',
+        'relative w-full min-w-0 pt-0 focus-within:ring-2 focus-within:ring-ring',
         selected && 'ring-2 ring-foreground',
       )}
-      onClick={handleSelect}
-      role="button"
       size="sm"
     >
+      {/* Covers the still without wrapping the log button, which must stay a separate control. */}
+      <button
+        aria-label={`${displayName}, ${episodeCode}`}
+        aria-pressed={selected}
+        className="absolute inset-0 z-0 bg-transparent outline-none"
+        onClick={handleSelect}
+        type="button"
+      />
       <MediaPoster
-        className="w-full"
+        className="pointer-events-none w-full"
         ratio={EPISODE_STILL_RATIO}
         sizes={EPISODE_STILL_SIZES}
         src={stillUrl}
       />
-      <CardHeader>
-        <CardTitle className="line-clamp-2">{displayName}</CardTitle>
-        <CardDescription className="text-xs tabular-nums">{episodeCode}</CardDescription>
+      <CardHeader className="pointer-events-none relative z-10">
+        <CardTitle aria-hidden className="line-clamp-2">
+          {displayName}
+        </CardTitle>
+        <CardDescription aria-hidden className="text-xs tabular-nums">
+          {episodeCode}
+        </CardDescription>
 
-        {/* Sits over the spacer, outside the select button, so logging keeps the current episode selected. */}
-        <CardAction>
+        {/* Above the select overlay so logging does not change the selected episode. */}
+        <CardAction className="pointer-events-auto">
           <Button
             aria-label={accessibleName}
+            className="pointer-events-auto"
             disabled={logWatchSubmitting}
             onClick={handleLogEpisode}
             size="icon-sm"

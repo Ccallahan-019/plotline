@@ -9,10 +9,7 @@ import { useWatchedEpisodes } from '@/features/library/watch-events/hooks/use-wa
 
 import type { MediaTitleSeason } from '../../types'
 
-import {
-  countSeasonEpisodesWatched,
-  resolveSelectedSeason,
-} from '../../services/format-media-season'
+import { resolveSelectedSeason, seasonWatchedProgress } from '../../services/format-media-season'
 import { MediaSeasonCard } from './MediaSeasonCard'
 import { MediaSeasonEpisodeList } from './MediaSeasonEpisodeList'
 import { MediaSeasonsEmpty } from './MediaSeasonsEmpty'
@@ -46,6 +43,11 @@ export function MediaSeasonsTab({
   const selected = resolveSelectedSeason(seasons, selectedSeasonNumber, lastSeason)
   const { overview = null, seasonNumber: activeSeasonNumber } = selected ?? {}
   const watchedQuery = useWatchedEpisodes(libraryItemId, { enabled })
+  const {
+    data: watchedEpisodes,
+    isError: watchedEpisodesFailed,
+    isSuccess: watchedEpisodesLoaded,
+  } = watchedQuery
   const episodesQuery = useTvSeasonEpisodes(tmdbId, activeSeasonNumber, {
     enabled: enabled && selected != null,
   })
@@ -59,16 +61,27 @@ export function MediaSeasonsTab({
       <div className="flex flex-col gap-3">
         <ScrollArea>
           <div className="flex w-max gap-3 px-1 pt-1 pb-4">
-            {seasons.map((season) => (
-              <MediaSeasonCard
-                fallbackPosterPath={fallbackPosterPath}
-                key={season.seasonNumber}
-                onSelect={setSelectedSeasonNumber}
-                season={season}
-                selected={season.seasonNumber === activeSeasonNumber}
-                watchedCount={watchedCountForSeason(season, libraryItemId, watchedQuery)}
-              />
-            ))}
+            {seasons.map((season) => {
+              const { episodeCount, seasonNumber } = season
+
+              return (
+                <MediaSeasonCard
+                  fallbackPosterPath={fallbackPosterPath}
+                  key={seasonNumber}
+                  onSelect={setSelectedSeasonNumber}
+                  progress={seasonWatchedProgress({
+                    episodeCount,
+                    episodes: watchedEpisodes,
+                    isError: watchedEpisodesFailed,
+                    isSuccess: watchedEpisodesLoaded,
+                    libraryItemId,
+                    seasonNumber,
+                  })}
+                  season={season}
+                  selected={seasonNumber === activeSeasonNumber}
+                />
+              )
+            })}
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
@@ -92,27 +105,4 @@ export function MediaSeasonsTab({
       />
     </div>
   )
-}
-
-function watchedCountForSeason(
-  season: MediaTitleSeason,
-  libraryItemId: null | number,
-  watchedQuery: ReturnType<typeof useWatchedEpisodes>,
-): null | number {
-  if (libraryItemId == null) {
-    return 0
-  }
-
-  const { episodeCount, seasonNumber } = season
-  const { data, isError, isSuccess } = watchedQuery
-
-  if (isSuccess) {
-    return countSeasonEpisodesWatched(data, seasonNumber, episodeCount)
-  }
-
-  if (isError) {
-    return 0
-  }
-
-  return null
 }

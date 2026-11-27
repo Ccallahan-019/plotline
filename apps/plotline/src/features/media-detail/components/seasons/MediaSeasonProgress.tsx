@@ -1,15 +1,19 @@
+import { CardDescription } from '@/components/ui/card'
 import { Progress, ProgressLabel } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 
-import { formatSeasonWatchedLabel } from '../../services/format-media-season'
+import {
+  formatSeasonWatchedLabel,
+  type SeasonWatchedProgress,
+} from '../../services/format-media-season'
 
 type MediaSeasonProgressProps = {
   episodeCount: number
-  watchedCount: null | number
+  progress: SeasonWatchedProgress
 }
 
-export function MediaSeasonProgress({ episodeCount, watchedCount }: MediaSeasonProgressProps) {
-  if (watchedCount == null) {
+export function MediaSeasonProgress({ episodeCount, progress }: MediaSeasonProgressProps) {
+  if (progress.status === 'unknown') {
     return (
       <div className="flex flex-col gap-1">
         <Skeleton className="h-1 w-full" />
@@ -18,6 +22,11 @@ export function MediaSeasonProgress({ episodeCount, watchedCount }: MediaSeasonP
     )
   }
 
+  if (progress.status === 'error') {
+    return <CardDescription className="text-xs">Could not load progress</CardDescription>
+  }
+
+  const { watchedCount } = progress
   const label = formatSeasonWatchedLabel(watchedCount, episodeCount)
 
   return (

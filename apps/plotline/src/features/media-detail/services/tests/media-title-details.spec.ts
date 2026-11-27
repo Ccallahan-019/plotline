@@ -53,6 +53,22 @@ describe('mapMovieTitleDetails', () => {
     })
   })
 
+  it('keeps an https homepage and drops an insecure one', () => {
+    const https = tmdbMovieTitleDetailsSchema.parse({
+      homepage: 'https://example.com/film',
+      id: 1,
+      title: 'Perfect Days',
+    })
+    const insecure = tmdbMovieTitleDetailsSchema.parse({
+      homepage: 'http://example.com/film',
+      id: 1,
+      title: 'Perfect Days',
+    })
+
+    expect(mapMovieTitleDetails(https, 'US').homepage).toBe('https://example.com/film')
+    expect(mapMovieTitleDetails(insecure, 'US').homepage).toBeNull()
+  })
+
   it('groups crew onto one card per person and keeps the first 50', () => {
     const details = tmdbMovieTitleDetailsSchema.parse({
       credits: {
@@ -157,6 +173,7 @@ describe('mapTvTitleDetails', () => {
         ],
       },
       created_by: [{ name: 'Dan Erickson' }],
+      homepage: 'https://tv.example/severance',
       id: 95396,
       name: 'Severance',
       networks: [{ name: 'Apple TV+' }],
@@ -177,6 +194,7 @@ describe('mapTvTitleDetails', () => {
 
     expect(mapped.certification).toBe('15')
     expect(mapped.createdBy).toEqual(['Dan Erickson'])
+    expect(mapped.homepage).toBe('https://tv.example/severance')
     expect(mapped.networks).toEqual(['Apple TV+'])
     expect(mapped.releaseStatusLabel).toBe('Returning Series')
     expect(mapped.seasons).toEqual([
@@ -624,6 +642,7 @@ function pageData(overrides: Partial<MediaTitlePageData> = {}): MediaTitlePageDa
     createdBy: [],
     crew: [],
     directors: [],
+    homepage: null,
     keyCredits: [],
     language: null,
     libraryItem: null,

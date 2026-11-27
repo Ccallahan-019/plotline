@@ -15,6 +15,7 @@ import {
   formatSeasonWatchedLabel,
   resolveSelectedEpisode,
   resolveSelectedSeason,
+  seasonWatchedProgress,
 } from '../format-media-season'
 import { formatReleaseDateLabel } from '../format-media-title'
 
@@ -132,6 +133,78 @@ describe('formatSeasonEpisodeCount', () => {
 describe('formatSeasonWatchedLabel', () => {
   it('labels watched episodes over the season length', () => {
     expect(formatSeasonWatchedLabel(3, 9)).toBe('3 / 9 Watched')
+  })
+})
+
+describe('seasonWatchedProgress', () => {
+  const episodes = [
+    { episode: 1, season: 1 },
+    { episode: 2, season: 1 },
+  ]
+
+  it('is zero when the title is not in the library', () => {
+    expect(
+      seasonWatchedProgress({
+        episodeCount: 9,
+        episodes,
+        isError: false,
+        isSuccess: true,
+        libraryItemId: null,
+        seasonNumber: 1,
+      }),
+    ).toEqual({ status: 'ready', watchedCount: 0 })
+  })
+
+  it('counts episodes after a successful fetch', () => {
+    expect(
+      seasonWatchedProgress({
+        episodeCount: 9,
+        episodes,
+        isError: false,
+        isSuccess: true,
+        libraryItemId: 4,
+        seasonNumber: 1,
+      }),
+    ).toEqual({ status: 'ready', watchedCount: 2 })
+  })
+
+  it('stays unknown while watched episodes are loading', () => {
+    expect(
+      seasonWatchedProgress({
+        episodeCount: 9,
+        episodes: undefined,
+        isError: false,
+        isSuccess: false,
+        libraryItemId: 4,
+        seasonNumber: 1,
+      }),
+    ).toEqual({ status: 'unknown' })
+  })
+
+  it('is an error when the watched-episodes fetch fails before any episodes load', () => {
+    expect(
+      seasonWatchedProgress({
+        episodeCount: 9,
+        episodes: undefined,
+        isError: true,
+        isSuccess: false,
+        libraryItemId: 4,
+        seasonNumber: 1,
+      }),
+    ).toEqual({ status: 'error' })
+  })
+
+  it('keeps a loaded count when a later refresh fails', () => {
+    expect(
+      seasonWatchedProgress({
+        episodeCount: 9,
+        episodes,
+        isError: true,
+        isSuccess: false,
+        libraryItemId: 4,
+        seasonNumber: 1,
+      }),
+    ).toEqual({ status: 'ready', watchedCount: 2 })
   })
 })
 

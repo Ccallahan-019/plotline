@@ -293,6 +293,7 @@ const tmdbTitleVideosSchema = z.unknown().transform(titleVideosFromUnknown)
 
 export const tmdbMovieTitleDetailsSchema = tmdbMovieDetailsSchema.extend({
   credits: tmdbCreditsSchema.optional(),
+  homepage: z.string().nullable().optional(),
   original_language: z.string().optional(),
   release_dates: tmdbReleaseDatesSchema.optional(),
   videos: tmdbTitleVideosSchema.nullish(),
@@ -311,6 +312,7 @@ export const tmdbTvTitleDetailsSchema = tmdbTvDetailsSchema.extend({
     )
     .optional(),
   credits: tmdbCreditsSchema.optional(),
+  homepage: z.string().nullable().optional(),
   networks: z
     .array(
       z.object({

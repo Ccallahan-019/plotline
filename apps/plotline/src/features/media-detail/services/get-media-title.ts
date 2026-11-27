@@ -33,8 +33,10 @@ const ACTIVITY_LIMIT = 20
  * Loads the title page for one TMDB id.
  *
  * Refreshes the catalog row from TMDB when it is missing or older than a day, then
- * attaches the signed-in user's library item and recent watch events. Trailer videos
- * include the watch region's language along with English and untagged videos.
+ * attaches the signed-in user's library item and recent watch events. When that
+ * read fails, the page still renders with an empty library item and no activity.
+ * Trailer videos include the watch
+ * region's language along with English and untagged videos.
  * Metadata and page loads in the same request share one call.
  * A TMDB miss with no cached row throws `MediaTitleNotFoundError`. When TMDB fails
  * and a cached row exists, the page still renders from that row.
@@ -64,10 +66,9 @@ export const getMediaTitlePage = cache(async function getMediaTitlePage(
     : Promise.resolve({ details: null, error: new Error('TMDB is not configured') })
 
   const cached = await cachedPromise
-  // A cached row already names the catalog id, so the viewer's rows load alongside TMDB.
-  const viewerStatePromise = cached ? loadViewerState(clerkUserId, cached.id) : null
-  // Keep a rejection from going unhandled if the page throws before it is awaited below.
-  viewerStatePromise?.catch(() => undefined)
+  // A cached row already names the catalog id, so the viewer's rows start alongside TMDB.
+  // This promise never rejects. The uncached path uses the same recovery after upsert.
+  const viewerStatePromise = cached ? loadViewerStateOrEmpty(clerkUserId, cached.id) : null
 
   const loaded = await loadedPromise
   const region = await regionPromise
@@ -92,7 +93,7 @@ export const getMediaTitlePage = cache(async function getMediaTitlePage(
     : detailsFromCachedMedia(media)
 
   const { libraryItem, watchEvents } = await (viewerStatePromise ??
-    loadViewerState(clerkUserId, media.id))
+    loadViewerStateOrEmpty(clerkUserId, media.id))
 
   return {
     ...detailFields,
@@ -111,10 +112,10 @@ type LoadedTmdbTitle =
 /**
  * Overview fields available from the catalog row alone.
  *
- * The catalog row does not store videos, so the trailer stays empty until TMDB details load.
+ * The catalog row does not store videos or a homepage, so those stay empty until TMDB details load.
  *
  * @param media - Stored catalog row used when TMDB details were not loaded
- * @returns Empty credits, certification, review ratings, and trailer, with the stored vote average and seasons
+ * @returns Empty credits, certification, homepage, review ratings, and trailer, with the stored vote average and seasons
  */
 function detailsFromCachedMedia(media: Media): MappedMediaTitleDetails {
   return {
@@ -123,6 +124,7 @@ function detailsFromCachedMedia(media: Media): MappedMediaTitleDetails {
     createdBy: [],
     crew: [],
     directors: [],
+    homepage: null,
     keyCredits: [],
     language: null,
     networks: [],
@@ -132,6 +134,20 @@ function detailsFromCachedMedia(media: Media): MappedMediaTitleDetails {
     voteAverage: media.voteAverage ?? null,
     voteCount: null,
   }
+}
+
+/**
+ * Viewer rows used when the library or activity read fails.
+ *
+ * The title page still renders from the catalog row and any TMDB payload already loaded.
+ *
+ * @returns An empty library item and no watch events
+ */
+function emptyViewerState(): {
+  libraryItem: null
+  watchEvents: MediaTitleWatchEvent[]
+} {
+  return { libraryItem: null, watchEvents: [] }
 }
 
 /**
@@ -285,6 +301,23 @@ async function loadViewerState(
   ])
 
   return { libraryItem, watchEvents }
+}
+
+/**
+ * Loads the viewer's library row and recent activity, or empty viewer state when that read fails.
+ *
+ * The title page still renders from the catalog row and any TMDB payload already loaded.
+ * The returned promise never rejects, so it can start before the page awaits it.
+ *
+ * @param clerkUserId - Clerk user id forwarded to Payload
+ * @param mediaId - Payload media id
+ * @returns The library item and activity list, or an empty library item and no events
+ */
+function loadViewerStateOrEmpty(
+  clerkUserId: string,
+  mediaId: number,
+): Promise<{ libraryItem: LibraryItem | null; watchEvents: MediaTitleWatchEvent[] }> {
+  return loadViewerState(clerkUserId, mediaId).catch(() => emptyViewerState())
 }
 
 /**

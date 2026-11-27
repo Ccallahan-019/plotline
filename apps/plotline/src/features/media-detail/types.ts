@@ -35,6 +35,7 @@ export type MediaTitlePageData = {
   createdBy: string[]
   crew: MediaTitleCrewMember[]
   directors: string[]
+  homepage: null | string
   keyCredits: MediaTitleKeyCreditGroup[]
   language: null | string
   libraryItem: LibraryItem | null

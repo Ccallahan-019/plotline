@@ -11,6 +11,7 @@ import type {
 
 import { formatPersonInitials } from './format-person-initials'
 import { selectTitleTrailer } from './select-title-trailer'
+import { titleHomepageUrl } from './title-homepage-url'
 
 const MAX_DISPLAYED_CREDITS = 50
 
@@ -32,6 +33,7 @@ export type MappedMediaTitleDetails = {
   createdBy: string[]
   crew: MediaTitleCrewMember[]
   directors: string[]
+  homepage: null | string
   keyCredits: MediaTitleKeyCreditGroup[]
   language: null | string
   networks: string[]
@@ -103,7 +105,7 @@ export function formatLanguageName(code: null | string | undefined): null | stri
  *
  * @param details - Movie details, including credits, release dates, and videos when TMDB sent them
  * @param region - Profile watch region, such as `US`
- * @returns Directors, certification, language, cast, community vote fields, and one trailer when a qualifying video exists
+ * @returns Directors, certification, language, homepage, cast, community vote fields, and one trailer when a qualifying video exists
  */
 export function mapMovieTitleDetails(
   details: TmdbMovieTitleDetails,
@@ -119,6 +121,7 @@ export function mapMovieTitleDetails(
         .filter((member) => member.job === 'Director')
         .map((member) => member.name),
     ),
+    homepage: titleHomepageUrl(details.homepage),
     keyCredits: mapKeyCreditGroups(FILM_KEY_CREDITS, details.credits?.crew),
     language: formatLanguageName(details.original_language),
     networks: [],
@@ -138,7 +141,7 @@ export function mapMovieTitleDetails(
  *
  * @param details - Series details, including creators, networks, seasons, ratings, and videos
  * @param region - Profile watch region, such as `US`
- * @returns Creators, network, certification, seasons, cast, community vote fields, and one trailer when a qualifying video exists
+ * @returns Creators, network, certification, homepage, seasons, cast, community vote fields, and one trailer when a qualifying video exists
  */
 export function mapTvTitleDetails(
   details: TmdbTvTitleDetails,
@@ -152,6 +155,7 @@ export function mapTvTitleDetails(
     createdBy: uniqueNames((details.created_by ?? []).map((person) => person.name)),
     crew: mapCrew(crewCredits),
     directors: [],
+    homepage: titleHomepageUrl(details.homepage),
     keyCredits: mapTvKeyCredits(details, crewCredits),
     language: formatLanguageName(details.original_language),
     networks: uniqueNames((details.networks ?? []).map((network) => network.name)),

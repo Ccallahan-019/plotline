@@ -8,6 +8,7 @@ import type { MediaTitleSeason } from '../../types'
 import {
   formatSeasonEpisodeCount,
   formatSeasonReleaseYear,
+  type SeasonWatchedProgress,
 } from '../../services/format-media-season'
 import { mediaImageUrl } from '../../services/media-image-url'
 import { MediaSeasonProgress } from './MediaSeasonProgress'
@@ -15,22 +16,27 @@ import { MediaSeasonProgress } from './MediaSeasonProgress'
 type MediaSeasonCardProps = {
   fallbackPosterPath: null | string
   onSelect: (seasonNumber: number) => void
+  progress: SeasonWatchedProgress
   season: MediaTitleSeason
   selected: boolean
-  watchedCount: null | number
 }
 
 export function MediaSeasonCard({
   fallbackPosterPath,
   onSelect,
+  progress,
   season,
   selected,
-  watchedCount,
 }: MediaSeasonCardProps) {
-  const posterUrl = mediaImageUrl(season.posterPath ?? fallbackPosterPath, 'w342')
-  const episodeCountLabel = formatSeasonEpisodeCount(season.episodeCount)
-  const year = formatSeasonReleaseYear(season.airDate)
-  const showProgress = season.episodeCount != null && season.episodeCount > 0
+  const { airDate, episodeCount, name, posterPath, seasonNumber } = season
+  const posterUrl = mediaImageUrl(posterPath ?? fallbackPosterPath, 'w342')
+  const episodeCountLabel = formatSeasonEpisodeCount(episodeCount)
+  const year = formatSeasonReleaseYear(airDate)
+  const showProgress = episodeCount != null && episodeCount > 0
+
+  function handleSelect() {
+    onSelect(seasonNumber)
+  }
 
   return (
     <Card
@@ -42,12 +48,12 @@ export function MediaSeasonCard({
       <button
         aria-pressed={selected}
         className="flex w-full text-left outline-none"
-        onClick={() => onSelect(season.seasonNumber)}
+        onClick={handleSelect}
         type="button"
       >
         <MediaPoster className="min-h-36 w-24 shrink-0 self-stretch" sizes="96px" src={posterUrl} />
         <CardContent className="flex flex-1 flex-col justify-center gap-1">
-          <CardTitle className="text-sm">{season.name}</CardTitle>
+          <CardTitle className="text-sm">{name}</CardTitle>
           <ShowIf condition={episodeCountLabel != null}>
             <CardDescription>{episodeCountLabel}</CardDescription>
           </ShowIf>
@@ -55,10 +61,7 @@ export function MediaSeasonCard({
             <CardDescription>{year}</CardDescription>
           </ShowIf>
           <ShowIf condition={showProgress}>
-            <MediaSeasonProgress
-              episodeCount={season.episodeCount ?? 0}
-              watchedCount={watchedCount}
-            />
+            <MediaSeasonProgress episodeCount={episodeCount ?? 0} progress={progress} />
           </ShowIf>
         </CardContent>
       </button>
