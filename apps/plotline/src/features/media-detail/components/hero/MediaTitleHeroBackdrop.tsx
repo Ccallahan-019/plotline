@@ -6,12 +6,11 @@ type MediaTitleHeroBackdropProps = {
 
 export function MediaTitleHeroBackdrop({ backdropUrl }: MediaTitleHeroBackdropProps) {
   return (
-    <div className="relative h-72 overflow-hidden md:block">
+    <div aria-hidden className="absolute inset-0 bg-background">
       {backdropUrl ? (
-        <Image alt="" className="object-cover" fill sizes="100vw" src={backdropUrl} />
-      ) : (
-        <div className="absolute inset-0 bg-muted" />
-      )}
+        <Image alt="" className="object-cover" fill priority sizes="100vw" src={backdropUrl} />
+      ) : null}
+      <div className="absolute inset-0 bg-background/80" />
     </div>
   )
 }

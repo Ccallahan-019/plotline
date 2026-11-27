@@ -10,16 +10,17 @@ type MediaTitlePosterProps = {
   title: string
 }
 
-const POSTER_PLACEMENT_CLASSNAME = 'w-24 shrink-0 rounded-md md:col-start-1 md:row-span-2 md:w-40'
+const POSTER_PLACEMENT_CLASSNAME = 'w-32 shrink-0 rounded-md md:col-start-1 md:row-span-2 md:w-56'
+const POSTER_SIZES = '(min-width: 768px) 224px, 128px'
 
 export function MediaTitlePoster({ homepage, posterUrl, title }: MediaTitlePosterProps) {
   if (homepage == null) {
     return (
       <MediaPoster
-        className={cn(POSTER_PLACEMENT_CLASSNAME, 'shadow-lg')}
-        fallbackIconClassName="size-6"
+        className={cn(POSTER_PLACEMENT_CLASSNAME, 'shadow-xl')}
+        fallbackIconClassName="size-8"
         ratio={2 / 3}
-        sizes="160px"
+        sizes={POSTER_SIZES}
         src={posterUrl}
       />
     )
@@ -37,10 +38,10 @@ export function MediaTitlePoster({ homepage, posterUrl, title }: MediaTitlePoste
       target="_blank"
     >
       <MediaPoster
-        className="w-full rounded-md shadow-lg transition-[filter] duration-200 group-hover:grayscale-25 group-focus-visible:grayscale-25"
-        fallbackIconClassName="size-6"
+        className="w-full rounded-md shadow-xl transition-[filter] duration-200 group-hover:grayscale-25 group-focus-visible:grayscale-25"
+        fallbackIconClassName="size-8"
         ratio={2 / 3}
-        sizes="160px"
+        sizes={POSTER_SIZES}
         src={posterUrl}
       />
       <span
