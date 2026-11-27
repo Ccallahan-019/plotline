@@ -73,6 +73,11 @@ function compareTitleTrailers(
   return rightPublishedAt - leftPublishedAt
 }
 
+// True when TMDB labeled the video as YouTube, ignoring letter case.
+function isYouTubeSite(site: null | string | undefined): boolean {
+  return site?.toLowerCase() === 'youtube'
+}
+
 // Epoch milliseconds for an upload time. A missing or invalid date sorts as the oldest.
 function publishedAtTime(publishedAt: null | string | undefined): number {
   if (!publishedAt) {
@@ -94,7 +99,7 @@ function toPlayableTitleVideo(video: TmdbTitleVideo): null | PlayableTitleVideo 
   const { iso_3166_1, key, name, official, published_at, site, type } = video
   const trimmedKey = key?.trim()
 
-  if (official !== true || site !== 'YouTube' || !trimmedKey) {
+  if (official !== true || !isYouTubeSite(site) || !trimmedKey) {
     return null
   }
 

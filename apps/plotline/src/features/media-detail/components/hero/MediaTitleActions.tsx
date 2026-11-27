@@ -19,6 +19,8 @@ import { OpenStateProvider } from '@/providers/OpenStateProvider'
 
 import type { MediaTitlePageData } from '../../types'
 
+import { MediaTitleTrailerDialog } from './MediaTitleTrailerDialog'
+
 type MediaTitleActionsProps = {
   data: MediaTitlePageData
   isPending: boolean
@@ -34,35 +36,22 @@ export function MediaTitleActions({
   onMarkWatched,
   onStatusChange,
 }: MediaTitleActionsProps) {
-  const { libraryItem, media } = data
+  const { libraryItem, media, trailer } = data
   const mediaDisplay = toMediaDisplayFromMedia(media)
 
   return (
     <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
       <div className="flex flex-wrap w-full gap-2 md:w-auto">
-        <Button
-          className="w-full md:w-auto"
-          disabled={isPending || logWatchSubmitting}
-          onClick={onMarkWatched}
-          type="button"
-        >
+        <Button disabled={isPending || logWatchSubmitting} onClick={onMarkWatched} type="button">
           <Check />
           Mark Watched
         </Button>
-        <OpenStateProvider>
-          <AddToLibraryPopover
-            appearance="button"
-            className="min-w-0 flex-1 md:flex-none"
-            existingLibraryItem={libraryItem ?? undefined}
-            media={mediaDisplay}
-          />
-        </OpenStateProvider>
 
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
               <Button
-                className="min-w-0 flex-1 md:flex-none"
+                className="min-w-0 md:flex-none"
                 disabled={isPending}
                 type="button"
                 variant="secondary"
@@ -81,6 +70,16 @@ export function MediaTitleActions({
             />
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <OpenStateProvider>
+          <AddToLibraryPopover
+            className="min-w-0 md:flex-none"
+            existingLibraryItem={libraryItem ?? undefined}
+            media={mediaDisplay}
+          />
+        </OpenStateProvider>
+
+        <MediaTitleTrailerDialog trailer={trailer} />
 
         <Button className="hidden md:inline-flex" disabled type="button" variant="outline">
           {Array.from({ length: 5 }).map((_, index) => (

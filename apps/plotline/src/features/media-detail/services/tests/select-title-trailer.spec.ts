@@ -85,6 +85,16 @@ describe('selectTitleTrailer', () => {
     ).toBeNull()
   })
 
+  it('accepts a YouTube site regardless of letter case', () => {
+    expect(
+      selectTitleTrailer([video({ key: 'lower', name: 'Lower', site: 'youtube' })], 'US'),
+    ).toEqual({ key: 'lower', name: 'Lower' })
+
+    expect(
+      selectTitleTrailer([video({ key: 'upper', name: 'Upper', site: 'YOUTUBE' })], 'US'),
+    ).toEqual({ key: 'upper', name: 'Upper' })
+  })
+
   it('returns null for an empty list', () => {
     expect(selectTitleTrailer([], 'US')).toBeNull()
     expect(selectTitleTrailer(undefined, 'US')).toBeNull()

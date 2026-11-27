@@ -24,6 +24,7 @@ import {
   seasonsFromMedia,
 } from './map-media-title-details'
 import { MediaTitleNotFoundError } from './media-title-errors'
+import { videoLanguagesForWatchRegion } from './video-languages-for-watch-region'
 
 const CATALOG_REFRESH_MS = 24 * 60 * 60 * 1000
 const ACTIVITY_LIMIT = 20
@@ -32,7 +33,9 @@ const ACTIVITY_LIMIT = 20
  * Loads the title page for one TMDB id.
  *
  * Refreshes the catalog row from TMDB when it is missing or older than a day, then
- * attaches the signed-in user's library item and recent watch events. Metadata and page loads in the same request share one call.
+ * attaches the signed-in user's library item and recent watch events. Trailer videos
+ * include the watch region's language along with English and untagged videos.
+ * Metadata and page loads in the same request share one call.
  * A TMDB miss with no cached row throws `MediaTitleNotFoundError`. When TMDB fails
  * and a cached row exists, the page still renders from that row.
  *
@@ -51,9 +54,13 @@ export const getMediaTitlePage = cache(async function getMediaTitlePage(
   const accessToken = process.env.TMDB_READ_ACCESS_TOKEN
   const regionPromise = getProfileWatchRegion(clerkUserId)
   const cachedPromise = findCachedMedia(clerkUserId, mediaType, tmdbId)
+  const client = accessToken ? createTmdbClient(accessToken) : null
 
-  const loadedPromise: Promise<LoadedTmdbTitle> = accessToken
-    ? loadTmdbTitle(createTmdbClient(accessToken), mediaType, tmdbId)
+  // The region decides which trailer languages to request, so the TMDB call waits for it.
+  const loadedPromise: Promise<LoadedTmdbTitle> = client
+    ? regionPromise.then((watchRegion) =>
+        loadTmdbTitle(client, mediaType, tmdbId, videoLanguagesForWatchRegion(watchRegion)),
+      )
     : Promise.resolve({ details: null, error: new Error('TMDB is not configured') })
 
   const cached = await cachedPromise
@@ -237,19 +244,25 @@ function isCatalogStale(media: Media): boolean {
  * @param client - Configured TMDB client
  * @param mediaType - Which details endpoint to call
  * @param tmdbId - TMDB title id
+ * @param videoLanguages - Extra ISO 639-1 codes for the viewer's watch region
  * @returns The parsed details, or the error that prevented the fetch
  */
 async function loadTmdbTitle(
   client: ReturnType<typeof createTmdbClient>,
   mediaType: MediaType,
   tmdbId: number,
+  videoLanguages: readonly string[],
 ): Promise<LoadedTmdbTitle> {
   try {
     if (mediaType === 'movie') {
-      return { details: { details: await client.getMovieTitleDetails(tmdbId), mediaType } }
+      return {
+        details: { details: await client.getMovieTitleDetails(tmdbId, videoLanguages), mediaType },
+      }
     }
 
-    return { details: { details: await client.getTvTitleDetails(tmdbId), mediaType } }
+    return {
+      details: { details: await client.getTvTitleDetails(tmdbId, videoLanguages), mediaType },
+    }
   } catch (error) {
     return { details: null, error }
   }
