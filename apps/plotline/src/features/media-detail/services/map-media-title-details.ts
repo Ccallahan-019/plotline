@@ -9,7 +9,6 @@ import type {
   MediaTitleTrailer,
 } from '../types'
 
-import { formatPersonInitials } from './format-person-initials'
 import { selectTitleTrailer } from './select-title-trailer'
 import { titleHomepageUrl } from './title-homepage-url'
 
@@ -47,7 +46,6 @@ export type MappedMediaTitleDetails = {
 type GroupedCredit = {
   detail: null | string
   id: number
-  initials: string
   name: string
   profilePath: null | string
 }
@@ -212,7 +210,6 @@ function mapCast(cast: readonly TmdbCastCredit[] | undefined): MediaTitleCastMem
   ).map((person) => ({
     character: person.detail,
     id: person.id,
-    initials: person.initials,
     name: person.name,
     profilePath: person.profilePath,
   }))
@@ -234,7 +231,6 @@ function mapCrew(crew: readonly TmdbCrewCredit[] | undefined): MediaTitleCrewMem
     })),
   ).map((person) => ({
     id: person.id,
-    initials: person.initials,
     jobs: person.detail,
     name: person.name,
     profilePath: person.profilePath,
@@ -288,7 +284,6 @@ function mapGroupedCredits(credits: readonly RawCredit[]): GroupedCredit[] {
       {
         detail: person.details.join(', ') || null,
         id,
-        initials: formatPersonInitials(person.name),
         name: person.name,
         profilePath: person.profilePath,
       },

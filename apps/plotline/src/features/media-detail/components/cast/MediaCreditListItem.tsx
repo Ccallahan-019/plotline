@@ -1,4 +1,4 @@
-import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item'
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { ShowIf } from '@/components/utils/ShowIf'
 
 import type { MediaTitleCreditCard } from '../../types'
@@ -10,19 +10,16 @@ type MediaCreditListItemProps = {
 }
 
 export function MediaCreditListItem({ member }: MediaCreditListItemProps) {
-  return (
-    <li>
-      <Item className="p-0 flex-nowrap">
-        <ItemMedia>
-          <MediaCastAvatar initials={member.initials} profilePath={member.profilePath} />
-        </ItemMedia>
+  const { name, profilePath, subtitle } = member
 
-        <ItemContent className="min-w-0">
-          <ItemTitle className="w-auto truncate line-clamp-1">{member.name}</ItemTitle>
-          <ShowIf condition={member.subtitle != null}>
-            <ItemDescription className="w-auto truncate line-clamp-1">
-              {member.subtitle}
-            </ItemDescription>
+  return (
+    <li className="min-w-0">
+      <Item className="flex-col items-start h-full p-0">
+        <MediaCastAvatar profilePath={profilePath} />
+        <ItemContent className="min-w-0 gap-0">
+          <ItemTitle className="line-clamp-2">{name}</ItemTitle>
+          <ShowIf condition={subtitle != null}>
+            <ItemDescription className="line-clamp-2">{subtitle}</ItemDescription>
           </ShowIf>
         </ItemContent>
       </Item>

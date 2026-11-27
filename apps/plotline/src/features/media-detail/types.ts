@@ -3,14 +3,12 @@ import type { LibraryItem, Media, WatchEvent } from '@plotline/payload-types'
 export type MediaTitleCastMember = {
   character: null | string
   id: number
-  initials: string
   name: string
   profilePath: null | string
 }
 
 export type MediaTitleCreditCard = {
   id: number
-  initials: string
   name: string
   profilePath: null | string
   subtitle: null | string
@@ -18,7 +16,6 @@ export type MediaTitleCreditCard = {
 
 export type MediaTitleCrewMember = {
   id: number
-  initials: string
   jobs: null | string
   name: string
   profilePath: null | string

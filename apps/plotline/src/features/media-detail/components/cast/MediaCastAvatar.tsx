@@ -1,23 +1,25 @@
-import { UserRound } from 'lucide-react'
-
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { MediaPoster } from '@/components/media/MediaPoster'
 
 import { mediaImageUrl } from '../../services/media-image-url'
 
 type MediaCastAvatarProps = {
-  initials: string
   profilePath: null | string
 }
 
-export function MediaCastAvatar({ initials, profilePath }: MediaCastAvatarProps) {
-  const src = mediaImageUrl(profilePath, 'w185')
+/**
+ * Portrait still for one person, in the same 2:3 frame as a title poster.
+ *
+ * `h632` is the large TMDB profile size. `w342` is a poster size and 404s for people.
+ */
+export function MediaCastAvatar({ profilePath }: MediaCastAvatarProps) {
+  const src = mediaImageUrl(profilePath, 'h632')
 
   return (
-    <Avatar className="size-18">
-      {src ? <AvatarImage alt="" src={src} /> : null}
-      <AvatarFallback className="text-base font-medium">
-        {initials || <UserRound aria-hidden />}
-      </AvatarFallback>
-    </Avatar>
+    <MediaPoster
+      className="w-full rounded-md"
+      ratio={2 / 3}
+      sizes="(max-width: 639px) 30vw, (max-width: 1023px) 22vw, 160px"
+      src={src}
+    />
   )
 }

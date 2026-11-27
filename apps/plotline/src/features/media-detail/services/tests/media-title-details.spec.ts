@@ -92,7 +92,6 @@ describe('mapMovieTitleDetails', () => {
     expect(crew).toHaveLength(50)
     expect(crew[0]).toEqual({
       id: 1,
-      initials: 'AD',
       jobs: 'Director, Writer',
       name: 'Ava DuVernay',
       profilePath: '/a.jpg',
@@ -259,24 +258,6 @@ describe('mapTvTitleDetails', () => {
     ])
   })
 
-  it('maps cast initials', () => {
-    const details = tmdbTvTitleDetailsSchema.parse({
-      credits: {
-        cast: [
-          { character: 'Mark Scout', id: 1, name: 'Adam Scott' },
-          { id: 2, name: 'Cher' },
-        ],
-      },
-      id: 95396,
-      name: 'Severance',
-    })
-
-    expect(mapTvTitleDetails(details, 'US').cast).toEqual([
-      expect.objectContaining({ initials: 'AS', name: 'Adam Scott' }),
-      expect.objectContaining({ initials: 'CH', name: 'Cher' }),
-    ])
-  })
-
   it('groups cast onto one card per person and keeps the first 50', () => {
     const details = tmdbTvTitleDetailsSchema.parse({
       credits: {
@@ -301,7 +282,6 @@ describe('mapTvTitleDetails', () => {
     expect(cast[0]).toEqual({
       character: 'Mark Scout, Helly R.',
       id: 1,
-      initials: 'AS',
       name: 'Adam Scott',
       profilePath: '/a.jpg',
     })
@@ -352,7 +332,6 @@ describe('mapTvTitleDetails', () => {
     expect(mapped.crew).toEqual([
       {
         id: 9,
-        initials: 'VG',
         jobs: 'Executive Producer, Writer',
         name: 'Vince Gilligan',
         profilePath: '/v.jpg',
