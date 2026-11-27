@@ -5,7 +5,8 @@ import { useTvSeasonEpisodes } from '@/features/library/log-watch/hooks/use-tv-s
 import type { MediaTitleSeason } from '../../types'
 
 import { MediaSeasonEpisodeCardSkeleton } from './MediaSeasonEpisodeCardSkeleton'
-import { MediaSeasonEpisodes, seasonEpisodeStripClassName } from './MediaSeasonEpisodes'
+import { MediaSeasonEpisodes } from './MediaSeasonEpisodes'
+import { seasonEpisodeStripClassName } from './seasonEpisodes'
 
 /** Enough stills to fill the strip before it scrolls. */
 const EPISODE_SKELETON_COUNT = 6
@@ -13,7 +14,7 @@ const EPISODE_SKELETON_COUNT = 6
 type MediaSeasonEpisodeListProps = {
   backdropPath: null | string
   enabled: boolean
-  logWatchSubmitting: boolean
+  logWatchDisabled: boolean
   onLogEpisode: (seasonNumber: number, episodeNumber: number) => void
   query: ReturnType<typeof useTvSeasonEpisodes>
   selectedSeason?: MediaTitleSeason
@@ -23,7 +24,7 @@ type MediaSeasonEpisodeListProps = {
 export function MediaSeasonEpisodeList({
   backdropPath,
   enabled,
-  logWatchSubmitting,
+  logWatchDisabled,
   onLogEpisode,
   query,
   selectedSeason,
@@ -66,7 +67,7 @@ export function MediaSeasonEpisodeList({
     <MediaSeasonEpisodes
       backdropPath={backdropPath}
       episodes={data.episodes}
-      logWatchSubmitting={logWatchSubmitting}
+      logWatchDisabled={logWatchDisabled}
       onLogEpisode={onLogEpisode}
       seasonNumber={selectedSeason.seasonNumber}
       title={title}

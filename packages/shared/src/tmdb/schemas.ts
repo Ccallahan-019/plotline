@@ -289,7 +289,9 @@ function titleVideosFromUnknown(value: unknown): { results: TmdbTitleVideo[] } {
   }
 }
 
-const tmdbTitleVideosSchema = z.unknown().transform(titleVideosFromUnknown)
+export const tmdbTitleVideosSchema = z.unknown().transform(titleVideosFromUnknown)
+
+export type TmdbTitleVideos = z.infer<typeof tmdbTitleVideosSchema>
 
 export const tmdbMovieTitleDetailsSchema = tmdbMovieDetailsSchema.extend({
   credits: tmdbCreditsSchema.optional(),

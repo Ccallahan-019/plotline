@@ -4,9 +4,10 @@ import { episodeStillUrl, mediaImageUrl, titleBackdropUrl } from '../media-image
 
 describe('episodeStillUrl', () => {
   it('prefers the episode still and falls back to the series backdrop', () => {
-    expect(episodeStillUrl('/still.jpg', '/backdrop.jpg')).toBe(mediaImageUrl('/still.jpg', 'w500'))
-    expect(episodeStillUrl(null, '/backdrop.jpg')).toBe(mediaImageUrl('/backdrop.jpg', 'w500'))
-    expect(episodeStillUrl(undefined, '/backdrop.jpg')).toBe(mediaImageUrl('/backdrop.jpg', 'w500'))
+    expect(episodeStillUrl('/still.jpg', '/backdrop.jpg')).toBe(mediaImageUrl('/still.jpg', 'w300'))
+    expect(episodeStillUrl(null, '/backdrop.jpg')).toBe(mediaImageUrl('/backdrop.jpg', 'w780'))
+    expect(episodeStillUrl(undefined, '/backdrop.jpg')).toBe(mediaImageUrl('/backdrop.jpg', 'w780'))
+    expect(episodeStillUrl('', '/backdrop.jpg')).toBe(mediaImageUrl('/backdrop.jpg', 'w780'))
     expect(episodeStillUrl(null, null)).toBeNull()
     expect(episodeStillUrl(undefined, undefined)).toBeNull()
   })

@@ -21,7 +21,7 @@ const EPISODE_STILL_SIZES = '18rem'
 type MediaSeasonEpisodeCardProps = {
   backdropPath: null | string
   episode: TmdbTvSeasonEpisode
-  logWatchSubmitting: boolean
+  logWatchDisabled: boolean
   onLogEpisode: (seasonNumber: number, episodeNumber: number) => void
   onSelect: (episodeNumber: number) => void
   seasonNumber: number
@@ -32,7 +32,7 @@ type MediaSeasonEpisodeCardProps = {
 export function MediaSeasonEpisodeCard({
   backdropPath,
   episode,
-  logWatchSubmitting,
+  logWatchDisabled,
   onLogEpisode,
   onSelect,
   seasonNumber,
@@ -89,7 +89,7 @@ export function MediaSeasonEpisodeCard({
           <Button
             aria-label={accessibleName}
             className="pointer-events-auto"
-            disabled={logWatchSubmitting}
+            disabled={logWatchDisabled}
             onClick={handleLogEpisode}
             size="icon-sm"
             type="button"

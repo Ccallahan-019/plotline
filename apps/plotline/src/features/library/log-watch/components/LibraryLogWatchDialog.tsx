@@ -89,6 +89,11 @@ function LibraryLogWatchDialogSession({
 
   useEffect(() => {
     onSubmittingChange?.(isSubmitting)
+
+    // Report idle on the way out so an unmounted session cannot leave the page's buttons disabled.
+    return () => {
+      onSubmittingChange?.(false)
+    }
   }, [isSubmitting, onSubmittingChange])
 
   return (

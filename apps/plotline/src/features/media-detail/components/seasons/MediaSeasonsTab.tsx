@@ -20,7 +20,7 @@ type MediaSeasonsTabProps = {
   fallbackPosterPath: null | string
   lastSeason: null | number
   libraryItemId: null | number
-  logWatchSubmitting: boolean
+  logWatchDisabled: boolean
   onLogEpisode: (seasonNumber: number, episodeNumber: number) => void
   seasons: MediaTitleSeason[]
   title: string
@@ -33,7 +33,7 @@ export function MediaSeasonsTab({
   fallbackPosterPath,
   lastSeason,
   libraryItemId,
-  logWatchSubmitting,
+  logWatchDisabled,
   onLogEpisode,
   seasons,
   title,
@@ -97,7 +97,7 @@ export function MediaSeasonsTab({
       <MediaSeasonEpisodeList
         backdropPath={backdropPath}
         enabled={enabled}
-        logWatchSubmitting={logWatchSubmitting}
+        logWatchDisabled={logWatchDisabled}
         onLogEpisode={onLogEpisode}
         query={episodesQuery}
         selectedSeason={selected}

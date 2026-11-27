@@ -7,12 +7,12 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { episodesInSeasonOrder, resolveSelectedEpisode } from '../../services/format-media-season'
 import { MediaSeasonEpisodeCard, seasonEpisodeCardClassName } from './MediaSeasonEpisodeCard'
 import { MediaSeasonEpisodeDetail } from './MediaSeasonEpisodeDetail'
-import { MediaSeasonEpisodesProps, seasonEpisodeStripClassName } from './MediaSeasonEpisodes'
+import { type MediaSeasonEpisodesProps, seasonEpisodeStripClassName } from './seasonEpisodes'
 
 export function MediaSeasonEpisodeStrip({
   backdropPath,
   episodes,
-  logWatchSubmitting,
+  logWatchDisabled,
   onLogEpisode,
   seasonNumber,
   title,
@@ -34,7 +34,7 @@ export function MediaSeasonEpisodeStrip({
               <MediaSeasonEpisodeCard
                 backdropPath={backdropPath}
                 episode={episode}
-                logWatchSubmitting={logWatchSubmitting}
+                logWatchDisabled={logWatchDisabled}
                 onLogEpisode={onLogEpisode}
                 onSelect={handleSelectEpisode}
                 seasonNumber={seasonNumber}
@@ -49,7 +49,7 @@ export function MediaSeasonEpisodeStrip({
       {selected && (
         <MediaSeasonEpisodeDetail
           episode={selected}
-          logWatchSubmitting={logWatchSubmitting}
+          logWatchDisabled={logWatchDisabled}
           onLogEpisode={onLogEpisode}
           seasonNumber={seasonNumber}
           title={title}

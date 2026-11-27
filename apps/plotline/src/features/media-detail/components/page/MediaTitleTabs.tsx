@@ -18,11 +18,11 @@ import { MediaSimilarTab } from '../similar/MediaSimilarTab'
 
 type MediaTitleTabsProps = {
   data: MediaTitlePageData
-  logWatchSubmitting: boolean
+  logWatchDisabled: boolean
   onLogEpisode: (seasonNumber: number, episodeNumber: number) => void
 }
 
-export function MediaTitleTabs({ data, logWatchSubmitting, onLogEpisode }: MediaTitleTabsProps) {
+export function MediaTitleTabs({ data, logWatchDisabled, onLogEpisode }: MediaTitleTabsProps) {
   const {
     cast,
     crew,
@@ -92,7 +92,7 @@ export function MediaTitleTabs({ data, logWatchSubmitting, onLogEpisode }: Media
             fallbackPosterPath={posterPath ?? null}
             lastSeason={libraryItem?.progress.lastSeason ?? null}
             libraryItemId={libraryItem?.id ?? null}
-            logWatchSubmitting={logWatchSubmitting}
+            logWatchDisabled={logWatchDisabled}
             onLogEpisode={onLogEpisode}
             seasons={seasons}
             title={title}

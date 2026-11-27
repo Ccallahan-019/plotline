@@ -2,7 +2,7 @@
 
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
 import { ChevronRight } from 'lucide-react'
-import { useRef } from 'react'
+import { useMemo } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -41,7 +41,8 @@ export function MediaCastPreview({ cast, onShowCast }: MediaCastPreviewProps) {
     onShowCast()
   }
 
-  const wheelGestures = useRef(WheelGesturesPlugin())
+  // One plugin instance per carousel. It holds per-carousel state, so it is not shared.
+  const plugins = useMemo(() => [WheelGesturesPlugin()], [])
 
   if (cast.length === 0) {
     return null
@@ -53,7 +54,7 @@ export function MediaCastPreview({ cast, onShowCast }: MediaCastPreviewProps) {
         aria-labelledby="media-cast-preview-heading"
         className="flex w-full min-w-0 flex-col gap-3"
         opts={castCarouselOptions}
-        plugins={[wheelGestures.current]}
+        plugins={plugins}
       >
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-heading text-base font-medium" id="media-cast-preview-heading">

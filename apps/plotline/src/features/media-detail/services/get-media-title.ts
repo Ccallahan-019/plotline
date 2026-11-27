@@ -2,7 +2,7 @@ import 'server-only'
 
 import type { LibraryItem, Media, WatchEvent } from '@plotline/payload-types'
 import type { MediaType } from '@plotline/shared/constants'
-import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
+import type { TmdbTitleVideos, TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 
 import {
   createTmdbClient,
@@ -33,10 +33,12 @@ const ACTIVITY_LIMIT = 20
  * Loads the title page for one TMDB id.
  *
  * Refreshes the catalog row from TMDB when it is missing or older than a day, then
- * attaches the signed-in user's library item and recent watch events. When that
- * read fails, the page still renders with an empty library item and no activity.
- * Trailer videos include the watch
- * region's language along with English and untagged videos.
+ * attaches the signed-in user's library item and recent watch events. A failed
+ * library or activity read fails the page, so a tracked title is never shown as untracked.
+ * Trailer videos include the watch region's language along with English and untagged
+ * videos. That extra language is fetched alongside the details request, so the details
+ * call does not wait on the profile lookup. A failed extra-language fetch keeps the
+ * English and untagged videos from the details payload.
  * Metadata and page loads in the same request share one call.
  * A TMDB miss with no cached row throws `MediaTitleNotFoundError`. When TMDB fails
  * and a cached row exists, the page still renders from that row.
@@ -58,17 +60,21 @@ export const getMediaTitlePage = cache(async function getMediaTitlePage(
   const cachedPromise = findCachedMedia(clerkUserId, mediaType, tmdbId)
   const client = accessToken ? createTmdbClient(accessToken) : null
 
-  // The region decides which trailer languages to request, so the TMDB call waits for it.
+  // The details request starts at once. Only the extra-language video request waits for the region.
   const loadedPromise: Promise<LoadedTmdbTitle> = client
-    ? regionPromise.then((watchRegion) =>
-        loadTmdbTitle(client, mediaType, tmdbId, videoLanguagesForWatchRegion(watchRegion)),
+    ? loadTmdbTitle(
+        client,
+        mediaType,
+        tmdbId,
+        regionPromise.then((watchRegion) => videoLanguagesForWatchRegion(watchRegion)),
       )
     : Promise.resolve({ details: null, error: new Error('TMDB is not configured') })
 
   const cached = await cachedPromise
-  // A cached row already names the catalog id, so the viewer's rows start alongside TMDB.
-  // This promise never rejects. The uncached path uses the same recovery after upsert.
-  const viewerStatePromise = cached ? loadViewerStateOrEmpty(clerkUserId, cached.id) : null
+  // A cached row already names the catalog id, so the viewer's rows load alongside TMDB.
+  const viewerStatePromise = cached ? loadViewerState(clerkUserId, cached.id) : null
+  // Keep a rejection from going unhandled if the page throws before it is awaited below.
+  viewerStatePromise?.catch(() => undefined)
 
   const loaded = await loadedPromise
   const region = await regionPromise
@@ -93,7 +99,7 @@ export const getMediaTitlePage = cache(async function getMediaTitlePage(
     : detailsFromCachedMedia(media)
 
   const { libraryItem, watchEvents } = await (viewerStatePromise ??
-    loadViewerStateOrEmpty(clerkUserId, media.id))
+    loadViewerState(clerkUserId, media.id))
 
   return {
     ...detailFields,
@@ -134,20 +140,6 @@ function detailsFromCachedMedia(media: Media): MappedMediaTitleDetails {
     voteAverage: media.voteAverage ?? null,
     voteCount: null,
   }
-}
-
-/**
- * Viewer rows used when the library or activity read fails.
- *
- * The title page still renders from the catalog row and any TMDB payload already loaded.
- *
- * @returns An empty library item and no watch events
- */
-function emptyViewerState(): {
-  libraryItem: null
-  watchEvents: MediaTitleWatchEvent[]
-} {
-  return { libraryItem: null, watchEvents: [] }
 }
 
 /**
@@ -253,31 +245,81 @@ function isCatalogStale(media: Media): boolean {
 }
 
 /**
+ * Fetches videos in the viewer's region language, when the region adds one.
+ *
+ * @param client - Configured TMDB client
+ * @param mediaType - Which videos endpoint to call
+ * @param tmdbId - TMDB title id
+ * @param videoLanguages - Extra ISO 639-1 codes for the viewer's watch region
+ * @returns The video list, or `null` when there is no extra language, the request failed, or it
+ * returned no videos, so the English and untagged videos on the details payload are kept
+ */
+async function loadRegionVideos(
+  client: ReturnType<typeof createTmdbClient>,
+  mediaType: MediaType,
+  tmdbId: number,
+  videoLanguages: Promise<readonly string[]>,
+): Promise<null | TmdbTitleVideos> {
+  const languages = await videoLanguages
+
+  if (languages.length === 0) {
+    return null
+  }
+
+  try {
+    const videos = await client.getTitleVideos(mediaType, tmdbId, languages)
+
+    // An empty list must not replace the details' own videos.
+    return videos.results.length > 0 ? videos : null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Fetches movie or series details, including credits, ratings, and videos.
  *
- * A TMDB error is returned instead of thrown so a cached catalog row can still render.
+ * The details request carries English and untagged videos. When the viewer's region adds
+ * a language, a second request for that language runs alongside it and replaces the
+ * details' video list, since it also covers English and untagged videos. A TMDB error on
+ * the details request is returned instead of thrown so a cached catalog row can still render.
  *
  * @param client - Configured TMDB client
  * @param mediaType - Which details endpoint to call
  * @param tmdbId - TMDB title id
- * @param videoLanguages - Extra ISO 639-1 codes for the viewer's watch region
+ * @param videoLanguages - Extra ISO 639-1 codes for the viewer's watch region; never rejects
  * @returns The parsed details, or the error that prevented the fetch
  */
 async function loadTmdbTitle(
   client: ReturnType<typeof createTmdbClient>,
   mediaType: MediaType,
   tmdbId: number,
-  videoLanguages: readonly string[],
+  videoLanguages: Promise<readonly string[]>,
 ): Promise<LoadedTmdbTitle> {
+  // Started before the details await so both requests are in flight together. It never rejects.
+  const regionVideosPromise = loadRegionVideos(client, mediaType, tmdbId, videoLanguages)
+
   try {
     if (mediaType === 'movie') {
+      const details = await client.getMovieTitleDetails(tmdbId)
+      const regionVideos = await regionVideosPromise
+
       return {
-        details: { details: await client.getMovieTitleDetails(tmdbId, videoLanguages), mediaType },
+        details: {
+          details: regionVideos ? { ...details, videos: regionVideos } : details,
+          mediaType,
+        },
       }
     }
 
+    const details = await client.getTvTitleDetails(tmdbId)
+    const regionVideos = await regionVideosPromise
+
     return {
-      details: { details: await client.getTvTitleDetails(tmdbId, videoLanguages), mediaType },
+      details: {
+        details: regionVideos ? { ...details, videos: regionVideos } : details,
+        mediaType,
+      },
     }
   } catch (error) {
     return { details: null, error }
@@ -301,23 +343,6 @@ async function loadViewerState(
   ])
 
   return { libraryItem, watchEvents }
-}
-
-/**
- * Loads the viewer's library row and recent activity, or empty viewer state when that read fails.
- *
- * The title page still renders from the catalog row and any TMDB payload already loaded.
- * The returned promise never rejects, so it can start before the page awaits it.
- *
- * @param clerkUserId - Clerk user id forwarded to Payload
- * @param mediaId - Payload media id
- * @returns The library item and activity list, or an empty library item and no events
- */
-function loadViewerStateOrEmpty(
-  clerkUserId: string,
-  mediaId: number,
-): Promise<{ libraryItem: LibraryItem | null; watchEvents: MediaTitleWatchEvent[] }> {
-  return loadViewerState(clerkUserId, mediaId).catch(() => emptyViewerState())
 }
 
 /**

@@ -17,7 +17,7 @@ import {
 
 type MediaSeasonEpisodeDetailProps = {
   episode: TmdbTvSeasonEpisode
-  logWatchSubmitting: boolean
+  logWatchDisabled: boolean
   onLogEpisode: (seasonNumber: number, episodeNumber: number) => void
   seasonNumber: number
   title: string
@@ -25,7 +25,7 @@ type MediaSeasonEpisodeDetailProps = {
 
 export function MediaSeasonEpisodeDetail({
   episode,
-  logWatchSubmitting,
+  logWatchDisabled,
   onLogEpisode,
   seasonNumber,
   title,
@@ -53,7 +53,7 @@ export function MediaSeasonEpisodeDetail({
         <ItemActions>
           <Button
             aria-label={accessibleName}
-            disabled={logWatchSubmitting}
+            disabled={logWatchDisabled}
             onClick={handleLogEpisode}
             type="button"
           >

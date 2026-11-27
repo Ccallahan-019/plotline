@@ -51,7 +51,7 @@ export function MediaTitlePage({ initialData, mediaType, tmdbId }: MediaTitlePag
         <div className="px-4 py-4 md:px-8 md:pb-8">
           <MediaTitleTabs
             data={data}
-            logWatchSubmitting={logWatchSubmitting}
+            logWatchDisabled={isPending || logWatchSubmitting}
             onLogEpisode={handleLogEpisode}
           />
         </div>

@@ -21,18 +21,30 @@ describe('TmdbClient title videos', () => {
     expect(url.searchParams.get('include_video_language')).toBe('en,null')
   })
 
-  it('adds a caller language ahead of English for series details', async () => {
+  it('requests English and untagged videos with series details', async () => {
     const fetchMock = stubTitleFetch({ id: 2, name: 'Severance' })
     const client = new TmdbClient({ accessToken: 'token' })
 
-    await client.getTvTitleDetails(2, ['fr'])
+    await client.getTvTitleDetails(2)
 
     const url = requestUrl(fetchMock)
     expect(url.pathname).toBe('/3/tv/2')
     expect(url.searchParams.get('append_to_response')).toBe(
       'aggregate_credits,content_ratings,external_ids,videos',
     )
+    expect(url.searchParams.get('include_video_language')).toBe('en,null')
+  })
+
+  it('adds a caller language ahead of English when loading title videos', async () => {
+    const fetchMock = stubTitleFetch({ id: 2, results: [{ key: 'abc', site: 'YouTube' }] })
+    const client = new TmdbClient({ accessToken: 'token' })
+
+    const videos = await client.getTitleVideos('tv', 2, ['fr'])
+
+    const url = requestUrl(fetchMock)
+    expect(url.pathname).toBe('/3/tv/2/videos')
     expect(url.searchParams.get('include_video_language')).toBe('fr,en,null')
+    expect(videos.results).toEqual([{ key: 'abc', site: 'YouTube' }])
   })
 })
 
