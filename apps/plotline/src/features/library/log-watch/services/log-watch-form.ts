@@ -14,6 +14,7 @@ import type {
 import { getMediaFromLibraryItem } from '../../services/get-media-from-library-item'
 
 type GetDefaultLogWatchFormValuesOptions = {
+  episode?: LogWatchEpisodeInput
   libraryItem?: LibraryItem
   mediaType?: MediaType
   seasonEpisodeCount?: number
@@ -56,37 +57,41 @@ const FALLBACK_NEXT_EPISODE: LogWatchEpisodeInput = {
 }
 
 /**
- * Builds the log-watch form's initial values, including the next TV episode when known.
+ * Builds the log-watch form's initial values.
  *
- * Finished series still default to S1E1. The server decides whether that submit is a rewatch.
+ * An explicit `episode` is copied onto both episode fields and the next-episode
+ * suggestion is skipped. Otherwise a TV title defaults to the next episode when
+ * known. Finished series still default to S1E1. The server decides whether that
+ * submit is a rewatch.
  *
+ * @param options.episode - Episode to prefill; skips `suggestNextEpisode`
  * @param options.libraryItem - Existing library item used to infer media type and progress
  * @param options.mediaType - Overrides the media type when the library item is missing
  * @param options.seasonEpisodeCount - Length of the season in progress; wins over stored totals
- * @returns Today-dated form values with an optional next-episode suggestion
+ * @returns Today-dated form values with the prefilled or suggested episode
  */
 export function getDefaultLogWatchFormValues(
   options?: GetDefaultLogWatchFormValuesOptions,
 ): LogWatchFormValues {
-  const media = options?.libraryItem ? getMediaFromLibraryItem(options.libraryItem) : null
-  const mediaType = options?.mediaType ?? media?.mediaType ?? options?.libraryItem?.progress.type
+  const { episode, libraryItem, mediaType, seasonEpisodeCount } = options ?? {}
+  const prefilledEpisode = episode == null ? undefined : copyLogWatchEpisode(episode)
+
+  if (prefilledEpisode) {
+    return logWatchFormValues(prefilledEpisode)
+  }
+
+  const media = libraryItem ? getMediaFromLibraryItem(libraryItem) : null
+  const resolvedMediaType = mediaType ?? media?.mediaType ?? libraryItem?.progress.type
   const nextEpisode =
-    mediaType === 'tv'
+    resolvedMediaType === 'tv'
       ? suggestNextEpisode({
-          libraryItem: options?.libraryItem,
+          libraryItem,
           media,
-          seasonEpisodeCount: options?.seasonEpisodeCount,
+          seasonEpisodeCount,
         })
       : undefined
 
-  return {
-    episode: nextEpisode,
-    episodes: nextEpisode ? [{ ...nextEpisode }] : [],
-    platform: undefined,
-    platformOther: '',
-    watchedAt: startOfDay(new Date()),
-    whenPreset: 'today',
-  }
+  return logWatchFormValues(nextEpisode)
 }
 
 /**
@@ -327,6 +332,16 @@ export function whenPresetForWatchedAt(watchedAt: Date, now = new Date()): LogWa
   return 'custom'
 }
 
+// Season and episode copied so later form edits do not mutate the caller's object.
+function copyLogWatchEpisode(input: LogWatchEpisodeInput): LogWatchEpisodeInput {
+  const { episode, season } = input
+
+  return {
+    episode,
+    season,
+  }
+}
+
 /**
  * Whether last watched progress sits at (or past) the end of that season.
  *
@@ -360,6 +375,18 @@ function hasCompletedCurrentSeason({
   })
 
   return resolvedSeasonEpisodeCount != null && lastEpisode >= resolvedSeasonEpisodeCount
+}
+
+// Today-dated log-watch defaults, with one TV episode when the caller has one.
+function logWatchFormValues(episode: LogWatchEpisodeInput | undefined): LogWatchFormValues {
+  return {
+    episode,
+    episodes: episode == null ? [] : [{ ...episode }],
+    platform: undefined,
+    platformOther: '',
+    watchedAt: startOfDay(new Date()),
+    whenPreset: 'today',
+  }
 }
 
 // Platform and watched-at fields shared by single and batch payloads.

@@ -6,9 +6,11 @@ import type {
   MediaTitleCrewMember,
   MediaTitleKeyCreditGroup,
   MediaTitleSeason,
+  MediaTitleTrailer,
 } from '../types'
 
-import { formatPersonInitials } from './format-person-initials'
+import { selectTitleTrailer } from './select-title-trailer'
+import { titleHomepageUrl } from './title-homepage-url'
 
 const MAX_DISPLAYED_CREDITS = 50
 
@@ -30,11 +32,13 @@ export type MappedMediaTitleDetails = {
   createdBy: string[]
   crew: MediaTitleCrewMember[]
   directors: string[]
+  homepage: null | string
   keyCredits: MediaTitleKeyCreditGroup[]
   language: null | string
   networks: string[]
   releaseStatusLabel: null | string
   seasons: MediaTitleSeason[]
+  trailer: MediaTitleTrailer | null
   voteAverage: null | number
   voteCount: null | number
 }
@@ -42,7 +46,6 @@ export type MappedMediaTitleDetails = {
 type GroupedCredit = {
   detail: null | string
   id: number
-  initials: string
   name: string
   profilePath: null | string
 }
@@ -98,9 +101,9 @@ export function formatLanguageName(code: null | string | undefined): null | stri
  *
  * Certification prefers the viewer's region, then the US listing, then any rated release.
  *
- * @param details - Movie details, including credits and release dates when TMDB sent them
+ * @param details - Movie details, including credits, release dates, and videos when TMDB sent them
  * @param region - Profile watch region, such as `US`
- * @returns Directors, certification, language, cast, and community vote fields
+ * @returns Directors, certification, language, homepage, cast, community vote fields, and one trailer when a qualifying video exists
  */
 export function mapMovieTitleDetails(
   details: TmdbMovieTitleDetails,
@@ -116,11 +119,13 @@ export function mapMovieTitleDetails(
         .filter((member) => member.job === 'Director')
         .map((member) => member.name),
     ),
+    homepage: titleHomepageUrl(details.homepage),
     keyCredits: mapKeyCreditGroups(FILM_KEY_CREDITS, details.credits?.crew),
     language: formatLanguageName(details.original_language),
     networks: [],
     releaseStatusLabel: details.status ?? null,
     seasons: [],
+    trailer: selectTitleTrailer(details.videos?.results, region),
     voteAverage: details.vote_average ?? null,
     voteCount: details.vote_count ?? null,
   }
@@ -132,9 +137,9 @@ export function mapMovieTitleDetails(
  * Prefers `aggregate_credits`, which lists everyone who worked on the series.
  * `credits` is the shorter series-regulars list and is used when aggregate credits are absent.
  *
- * @param details - Series details, including creators, networks, seasons, and ratings
+ * @param details - Series details, including creators, networks, seasons, ratings, and videos
  * @param region - Profile watch region, such as `US`
- * @returns Creators, network, certification, seasons, cast, and community vote fields
+ * @returns Creators, network, certification, homepage, seasons, cast, community vote fields, and one trailer when a qualifying video exists
  */
 export function mapTvTitleDetails(
   details: TmdbTvTitleDetails,
@@ -148,11 +153,13 @@ export function mapTvTitleDetails(
     createdBy: uniqueNames((details.created_by ?? []).map((person) => person.name)),
     crew: mapCrew(crewCredits),
     directors: [],
+    homepage: titleHomepageUrl(details.homepage),
     keyCredits: mapTvKeyCredits(details, crewCredits),
     language: formatLanguageName(details.original_language),
     networks: uniqueNames((details.networks ?? []).map((network) => network.name)),
     releaseStatusLabel: details.status ?? null,
     seasons: mapSeasons(details.seasons),
+    trailer: selectTitleTrailer(details.videos?.results, region),
     voteAverage: details.vote_average ?? null,
     voteCount: details.vote_count ?? null,
   }
@@ -162,13 +169,14 @@ export function mapTvTitleDetails(
  * Season list for a cached series when TMDB details are unavailable.
  *
  * @param media - Stored catalog row
- * @returns One entry per stored season length. Names come from the season number; air dates are unknown.
+ * @returns One entry per stored season length. Names come from the season number; air dates and synopses are unknown.
  */
 export function seasonsFromMedia(media: Media): MediaTitleSeason[] {
   return (media.tvMeta?.seasonEpisodeCounts ?? []).map((season) => ({
     airDate: null,
     episodeCount: season.episodeCount,
     name: seasonName(season.season, null),
+    overview: null,
     posterPath: null,
     seasonNumber: season.season,
   }))
@@ -202,7 +210,6 @@ function mapCast(cast: readonly TmdbCastCredit[] | undefined): MediaTitleCastMem
   ).map((person) => ({
     character: person.detail,
     id: person.id,
-    initials: person.initials,
     name: person.name,
     profilePath: person.profilePath,
   }))
@@ -224,7 +231,6 @@ function mapCrew(crew: readonly TmdbCrewCredit[] | undefined): MediaTitleCrewMem
     })),
   ).map((person) => ({
     id: person.id,
-    initials: person.initials,
     jobs: person.detail,
     name: person.name,
     profilePath: person.profilePath,
@@ -278,7 +284,6 @@ function mapGroupedCredits(credits: readonly RawCredit[]): GroupedCredit[] {
       {
         detail: person.details.join(', ') || null,
         id,
-        initials: formatPersonInitials(person.name),
         name: person.name,
         profilePath: person.profilePath,
       },
@@ -319,6 +324,8 @@ function mapKeyCreditGroups(
 /**
  * Season cards for the title page, ordered by season number.
  *
+ * Overview text is trimmed. A blank or missing synopsis is `null`.
+ *
  * @param seasons - TMDB season summaries, including specials when present
  * @returns Seasons with a number, dropping entries TMDB left unnumbered
  */
@@ -333,13 +340,16 @@ function mapSeasons(seasons: TmdbTvTitleDetails['seasons']): MediaTitleSeason[] 
         return []
       }
 
+      const { air_date, episode_count, name, overview, poster_path, season_number } = season
+
       return [
         {
-          airDate: season.air_date ?? null,
-          episodeCount: season.episode_count ?? null,
-          name: seasonName(season.season_number, season.name),
-          posterPath: season.poster_path ?? null,
-          seasonNumber: season.season_number,
+          airDate: air_date ?? null,
+          episodeCount: episode_count ?? null,
+          name: seasonName(season_number, name),
+          overview: seasonOverview(overview),
+          posterPath: poster_path ?? null,
+          seasonNumber: season_number,
         },
       ]
     })
@@ -407,6 +417,13 @@ function seasonName(seasonNumber: number, name: null | string | undefined): stri
   }
 
   return seasonNumber === 0 ? 'Specials' : `Season ${seasonNumber}`
+}
+
+// Trimmed season synopsis, or `null` when TMDB omitted it or sent only whitespace.
+function seasonOverview(overview: null | string | undefined): null | string {
+  const trimmed = overview?.trim()
+
+  return trimmed || null
 }
 
 /**

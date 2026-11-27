@@ -1,6 +1,6 @@
 'use client'
 
-import { Tv } from 'lucide-react'
+import { TvMinimal } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -52,7 +52,7 @@ export function LogWatchEpisodesField({
     <Card className="mx-0.5 mb-0.5" size="sm">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Tv className="size-3 text-muted-foreground" />
+          <TvMinimal className="size-3 text-muted-foreground" />
           <CardTitle className="leading-none">Episodes Watched</CardTitle>
         </div>
       </CardHeader>

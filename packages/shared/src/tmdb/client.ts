@@ -1,5 +1,6 @@
 import type { MediaType } from '../constants/media'
 
+import { includeVideoLanguage } from './include-video-language'
 import {
   type TmdbGenreList,
   tmdbGenreListSchema,
@@ -13,6 +14,8 @@ import {
   tmdbReviewsResponseSchema,
   type TmdbSearchResponse,
   tmdbSearchResponseSchema,
+  type TmdbTitleVideos,
+  tmdbTitleVideosSchema,
   type TmdbTitleWatchProviders,
   tmdbTitleWatchProvidersSchema,
   type TmdbTvDetails,
@@ -78,9 +81,19 @@ export class TmdbClient {
     })
   }
 
+  /**
+   * Movie details for the title page, including credits, ratings, and English and untagged videos.
+   *
+   * Videos in another language come from `getTitleVideos`, so this call does not wait on the
+   * viewer's region.
+   *
+   * @param id - TMDB movie id
+   * @returns Parsed movie title details
+   */
   async getMovieTitleDetails(id: number): Promise<TmdbMovieTitleDetails> {
     return this.fetchValidated(`/movie/${id}`, tmdbMovieTitleDetailsSchema, {
-      append_to_response: 'credits,external_ids,release_dates',
+      append_to_response: 'credits,external_ids,release_dates,videos',
+      include_video_language: includeVideoLanguage(),
     })
   }
 
@@ -121,6 +134,24 @@ export class TmdbClient {
   }
 
   /**
+   * Videos for one title in the given languages, plus English and untagged videos.
+   *
+   * @param mediaType - `movie` or `tv`
+   * @param id - TMDB title id
+   * @param videoLanguages - Extra ISO 639-1 codes, placed ahead of English
+   * @returns Parsed video list; malformed rows are dropped
+   */
+  async getTitleVideos(
+    mediaType: MediaType,
+    id: number,
+    videoLanguages?: readonly string[],
+  ): Promise<TmdbTitleVideos> {
+    return this.fetchValidated(`/${mediaType}/${id}/videos`, tmdbTitleVideosSchema, {
+      include_video_language: includeVideoLanguage(videoLanguages),
+    })
+  }
+
+  /**
    * Loads page 1 of TMDB's weekly trending list.
    *
    * @param mediaType - `movie` or `tv`
@@ -150,9 +181,19 @@ export class TmdbClient {
     return this.fetchValidated(`/tv/${tvId}/season/${seasonNumber}`, tmdbTvSeasonDetailsSchema)
   }
 
+  /**
+   * Series details for the title page, including credits, ratings, and English and untagged videos.
+   *
+   * Videos in another language come from `getTitleVideos`, so this call does not wait on the
+   * viewer's region.
+   *
+   * @param id - TMDB series id
+   * @returns Parsed series title details
+   */
   async getTvTitleDetails(id: number): Promise<TmdbTvTitleDetails> {
     return this.fetchValidated(`/tv/${id}`, tmdbTvTitleDetailsSchema, {
-      append_to_response: 'aggregate_credits,content_ratings,external_ids',
+      append_to_response: 'aggregate_credits,content_ratings,external_ids,videos',
+      include_video_language: includeVideoLanguage(),
     })
   }
 

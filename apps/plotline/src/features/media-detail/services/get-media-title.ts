@@ -2,7 +2,7 @@ import 'server-only'
 
 import type { LibraryItem, Media, WatchEvent } from '@plotline/payload-types'
 import type { MediaType } from '@plotline/shared/constants'
-import type { TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
+import type { TmdbTitleVideos, TmdbUpsertMediaInput } from '@plotline/shared/tmdb'
 
 import {
   createTmdbClient,
@@ -24,6 +24,7 @@ import {
   seasonsFromMedia,
 } from './map-media-title-details'
 import { MediaTitleNotFoundError } from './media-title-errors'
+import { videoLanguagesForWatchRegion } from './video-languages-for-watch-region'
 
 const CATALOG_REFRESH_MS = 24 * 60 * 60 * 1000
 const ACTIVITY_LIMIT = 20
@@ -32,7 +33,13 @@ const ACTIVITY_LIMIT = 20
  * Loads the title page for one TMDB id.
  *
  * Refreshes the catalog row from TMDB when it is missing or older than a day, then
- * attaches the signed-in user's library item and recent watch events. Metadata and page loads in the same request share one call.
+ * attaches the signed-in user's library item and recent watch events. A failed
+ * library or activity read fails the page, so a tracked title is never shown as untracked.
+ * Trailer videos include the watch region's language along with English and untagged
+ * videos. That extra language is fetched alongside the details request, so the details
+ * call does not wait on the profile lookup. A failed extra-language fetch keeps the
+ * English and untagged videos from the details payload.
+ * Metadata and page loads in the same request share one call.
  * A TMDB miss with no cached row throws `MediaTitleNotFoundError`. When TMDB fails
  * and a cached row exists, the page still renders from that row.
  *
@@ -51,9 +58,16 @@ export const getMediaTitlePage = cache(async function getMediaTitlePage(
   const accessToken = process.env.TMDB_READ_ACCESS_TOKEN
   const regionPromise = getProfileWatchRegion(clerkUserId)
   const cachedPromise = findCachedMedia(clerkUserId, mediaType, tmdbId)
+  const client = accessToken ? createTmdbClient(accessToken) : null
 
-  const loadedPromise: Promise<LoadedTmdbTitle> = accessToken
-    ? loadTmdbTitle(createTmdbClient(accessToken), mediaType, tmdbId)
+  // The details request starts at once. Only the extra-language video request waits for the region.
+  const loadedPromise: Promise<LoadedTmdbTitle> = client
+    ? loadTmdbTitle(
+        client,
+        mediaType,
+        tmdbId,
+        regionPromise.then((watchRegion) => videoLanguagesForWatchRegion(watchRegion)),
+      )
     : Promise.resolve({ details: null, error: new Error('TMDB is not configured') })
 
   const cached = await cachedPromise
@@ -104,8 +118,10 @@ type LoadedTmdbTitle =
 /**
  * Overview fields available from the catalog row alone.
  *
+ * The catalog row does not store videos or a homepage, so those stay empty until TMDB details load.
+ *
  * @param media - Stored catalog row used when TMDB details were not loaded
- * @returns Empty credits, certification, and review ratings, with the stored vote average and seasons
+ * @returns Empty credits, certification, homepage, review ratings, and trailer, with the stored vote average and seasons
  */
 function detailsFromCachedMedia(media: Media): MappedMediaTitleDetails {
   return {
@@ -114,11 +130,13 @@ function detailsFromCachedMedia(media: Media): MappedMediaTitleDetails {
     createdBy: [],
     crew: [],
     directors: [],
+    homepage: null,
     keyCredits: [],
     language: null,
     networks: [],
     releaseStatusLabel: null,
     seasons: seasonsFromMedia(media),
+    trailer: null,
     voteAverage: media.voteAverage ?? null,
     voteCount: null,
   }
@@ -227,26 +245,82 @@ function isCatalogStale(media: Media): boolean {
 }
 
 /**
- * Fetches movie or series details, including credits and ratings.
+ * Fetches videos in the viewer's region language, when the region adds one.
  *
- * A TMDB error is returned instead of thrown so a cached catalog row can still render.
+ * @param client - Configured TMDB client
+ * @param mediaType - Which videos endpoint to call
+ * @param tmdbId - TMDB title id
+ * @param videoLanguages - Extra ISO 639-1 codes for the viewer's watch region
+ * @returns The video list, or `null` when there is no extra language, the request failed, or it
+ * returned no videos, so the English and untagged videos on the details payload are kept
+ */
+async function loadRegionVideos(
+  client: ReturnType<typeof createTmdbClient>,
+  mediaType: MediaType,
+  tmdbId: number,
+  videoLanguages: Promise<readonly string[]>,
+): Promise<null | TmdbTitleVideos> {
+  const languages = await videoLanguages
+
+  if (languages.length === 0) {
+    return null
+  }
+
+  try {
+    const videos = await client.getTitleVideos(mediaType, tmdbId, languages)
+
+    // An empty list must not replace the details' own videos.
+    return videos.results.length > 0 ? videos : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Fetches movie or series details, including credits, ratings, and videos.
+ *
+ * The details request carries English and untagged videos. When the viewer's region adds
+ * a language, a second request for that language runs alongside it and replaces the
+ * details' video list, since it also covers English and untagged videos. A TMDB error on
+ * the details request is returned instead of thrown so a cached catalog row can still render.
  *
  * @param client - Configured TMDB client
  * @param mediaType - Which details endpoint to call
  * @param tmdbId - TMDB title id
+ * @param videoLanguages - Extra ISO 639-1 codes for the viewer's watch region; never rejects
  * @returns The parsed details, or the error that prevented the fetch
  */
 async function loadTmdbTitle(
   client: ReturnType<typeof createTmdbClient>,
   mediaType: MediaType,
   tmdbId: number,
+  videoLanguages: Promise<readonly string[]>,
 ): Promise<LoadedTmdbTitle> {
+  // Started before the details await so both requests are in flight together. It never rejects.
+  const regionVideosPromise = loadRegionVideos(client, mediaType, tmdbId, videoLanguages)
+
   try {
     if (mediaType === 'movie') {
-      return { details: { details: await client.getMovieTitleDetails(tmdbId), mediaType } }
+      const details = await client.getMovieTitleDetails(tmdbId)
+      const regionVideos = await regionVideosPromise
+
+      return {
+        details: {
+          details: regionVideos ? { ...details, videos: regionVideos } : details,
+          mediaType,
+        },
+      }
     }
 
-    return { details: { details: await client.getTvTitleDetails(tmdbId), mediaType } }
+    const details = await client.getTvTitleDetails(tmdbId)
+    const regionVideos = await regionVideosPromise
+
+    return {
+      details: {
+        details: regionVideos ? { ...details, videos: regionVideos } : details,
+        mediaType,
+      },
+    }
   } catch (error) {
     return { details: null, error }
   }

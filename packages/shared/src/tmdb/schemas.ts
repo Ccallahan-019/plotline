@@ -102,7 +102,9 @@ const tvSeasonEpisodeSchema = z.object({
   air_date: z.string().nullable().optional(),
   episode_number: z.number(),
   name: z.string().nullable(),
+  overview: z.string().nullable().optional(),
   runtime: z.number().nullable().optional(),
+  still_path: z.string().nullable().optional(),
 })
 
 export const tmdbTvSeasonDetailsSchema = z.object({
@@ -245,14 +247,58 @@ const tmdbTitleSeasonSchema = z.object({
   air_date: z.string().nullable().optional(),
   episode_count: z.number().nullable().optional(),
   name: z.string().nullable().optional(),
+  overview: z.string().nullable().optional(),
   poster_path: z.string().nullable().optional(),
   season_number: z.number().nullable().optional(),
 })
 
+const tmdbTitleVideoSchema = z.object({
+  iso_3166_1: z.string().nullable().optional(),
+  key: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
+  official: z.boolean().nullable().optional(),
+  published_at: z.string().nullable().optional(),
+  site: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
+})
+
+export type TmdbTitleVideo = z.infer<typeof tmdbTitleVideoSchema>
+
+function isTitleVideoBlock(value: unknown): value is { results?: unknown } {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+// Missing, null, and malformed video rows become an empty list so title details still parse.
+function titleVideosFromUnknown(value: unknown): { results: TmdbTitleVideo[] } {
+  if (!isTitleVideoBlock(value)) {
+    return { results: [] }
+  }
+
+  const { results } = value
+
+  if (!Array.isArray(results)) {
+    return { results: [] }
+  }
+
+  return {
+    results: results.flatMap((item) => {
+      const parsed = tmdbTitleVideoSchema.safeParse(item)
+
+      return parsed.success ? [parsed.data] : []
+    }),
+  }
+}
+
+export const tmdbTitleVideosSchema = z.unknown().transform(titleVideosFromUnknown)
+
+export type TmdbTitleVideos = z.infer<typeof tmdbTitleVideosSchema>
+
 export const tmdbMovieTitleDetailsSchema = tmdbMovieDetailsSchema.extend({
   credits: tmdbCreditsSchema.optional(),
+  homepage: z.string().nullable().optional(),
   original_language: z.string().optional(),
   release_dates: tmdbReleaseDatesSchema.optional(),
+  videos: tmdbTitleVideosSchema.nullish(),
   vote_count: z.number().optional(),
 })
 
@@ -268,6 +314,7 @@ export const tmdbTvTitleDetailsSchema = tmdbTvDetailsSchema.extend({
     )
     .optional(),
   credits: tmdbCreditsSchema.optional(),
+  homepage: z.string().nullable().optional(),
   networks: z
     .array(
       z.object({
@@ -278,6 +325,7 @@ export const tmdbTvTitleDetailsSchema = tmdbTvDetailsSchema.extend({
     .optional(),
   original_language: z.string().optional(),
   seasons: z.array(tmdbTitleSeasonSchema).optional(),
+  videos: tmdbTitleVideosSchema.nullish(),
   vote_count: z.number().optional(),
 })
 

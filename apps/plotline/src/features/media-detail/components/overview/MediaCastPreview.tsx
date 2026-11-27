@@ -1,14 +1,35 @@
-import { ChevronRight } from 'lucide-react'
+'use client'
 
-import { AvatarGroup } from '@/components/ui/avatar'
+import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
+import { ChevronRight } from 'lucide-react'
+import { useMemo } from 'react'
+
 import { Button } from '@/components/ui/button'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  useCarousel,
+} from '@/components/ui/carousel'
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { ShowIf } from '@/components/utils/ShowIf'
 
 import type { MediaTitleCastMember } from '../../types'
 
 import { MediaCastAvatar } from '../cast/MediaCastAvatar'
 
-const PREVIEW_COUNT = 8
+/** Several billed cast members per page, flush with the start of the rail. */
+const castCarouselOptions = {
+  align: 'start',
+  containScroll: 'trimSnaps',
+  slidesToScroll: 'auto',
+} as const
+
+type MediaCastPreviewCardProps = {
+  member: MediaTitleCastMember
+}
 
 type MediaCastPreviewProps = {
   cast: MediaTitleCastMember[]
@@ -16,32 +37,78 @@ type MediaCastPreviewProps = {
 }
 
 export function MediaCastPreview({ cast, onShowCast }: MediaCastPreviewProps) {
-  const preview = cast.slice(0, PREVIEW_COUNT)
+  function handleShowCast() {
+    onShowCast()
+  }
 
-  if (preview.length === 0) {
+  // One plugin instance per carousel. It holds per-carousel state, so it is not shared.
+  const plugins = useMemo(() => [WheelGesturesPlugin()], [])
+
+  if (cast.length === 0) {
     return null
   }
 
   return (
-    <section className="hidden flex-col gap-3 md:flex">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-heading text-base font-medium">Cast</h2>
-        <Button onClick={onShowCast} size="sm" type="button" variant="ghost">
-          Full Cast & Crew
-          <ChevronRight />
-        </Button>
-      </div>
-      <AvatarGroup className="gap-x-8 gap-y-4 flex-wrap">
-        {preview.map((member) => (
-          <li className="w-20 shrink-0 flex flex-col items-center" key={member.id}>
-            <MediaCastAvatar initials={member.initials} profilePath={member.profilePath} />
-            <p className="mt-2 line-clamp-2 text-xs font-medium text-center">{member.name}</p>
-            <ShowIf condition={member.character != null}>
-              <p className="text-xs text-muted-foreground text-center">{member.character}</p>
-            </ShowIf>
-          </li>
-        ))}
-      </AvatarGroup>
+    <section className="hidden min-w-0 md:block">
+      <Carousel
+        aria-labelledby="media-cast-preview-heading"
+        className="flex w-full min-w-0 flex-col gap-3"
+        opts={castCarouselOptions}
+        plugins={plugins}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-heading text-base font-medium" id="media-cast-preview-heading">
+            Cast
+          </h2>
+          <div className="flex shrink-0 items-center gap-1">
+            <CarouselPrevious className="static my-0" />
+            <CarouselNext className="static my-0" />
+            <Button onClick={handleShowCast} size="sm" type="button" variant="ghost">
+              Full Cast & Crew
+              <ChevronRight />
+            </Button>
+          </div>
+        </div>
+        <div className="relative">
+          <CarouselContent>
+            {cast.map((member) => (
+              <CarouselItem className="basis-auto" key={member.id}>
+                <MediaCastPreviewCard member={member} />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <MediaCastPreviewEdge />
+        </div>
+      </Carousel>
     </section>
+  )
+}
+
+function MediaCastPreviewCard({ member }: MediaCastPreviewCardProps) {
+  const { character, name, profilePath } = member
+
+  return (
+    <Item className="flex-col items-start w-32 p-0" size="xs">
+      <MediaCastAvatar profilePath={profilePath} />
+      <ItemContent>
+        <ItemTitle className="line-clamp-2">{name}</ItemTitle>
+        <ShowIf condition={character != null}>
+          <ItemDescription className="line-clamp-2">{character}</ItemDescription>
+        </ShowIf>
+      </ItemContent>
+    </Item>
+  )
+}
+
+function MediaCastPreviewEdge() {
+  const { canScrollNext } = useCarousel()
+
+  return (
+    <ShowIf condition={canScrollNext}>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 w-14 bg-linear-to-l from-background to-transparent"
+      />
+    </ShowIf>
   )
 }

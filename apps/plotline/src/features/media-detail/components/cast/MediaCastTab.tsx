@@ -1,5 +1,6 @@
 import type {
   MediaTitleCastMember,
+  MediaTitleCreditCard,
   MediaTitleCrewMember,
   MediaTitleKeyCreditGroup,
 } from '../../types'
@@ -23,26 +24,32 @@ export function MediaCastTab({ cast, crew, keyCredits }: MediaCastTabProps) {
       <div className="border-b pb-4">
         <MediaKeyCredits groups={keyCredits} />
       </div>
-      <MediaCreditSection
-        people={cast.map((member) => ({
-          id: member.id,
-          initials: member.initials,
-          name: member.name,
-          profilePath: member.profilePath,
-          subtitle: member.character,
-        }))}
-        title="Cast"
-      />
-      <MediaCreditSection
-        people={crew.map((member) => ({
-          id: member.id,
-          initials: member.initials,
-          name: member.name,
-          profilePath: member.profilePath,
-          subtitle: member.jobs,
-        }))}
-        title="Crew"
-      />
+      <MediaCreditSection people={cast.map(toCastCreditCard)} title="Cast" />
+      <MediaCreditSection people={crew.map(toCrewCreditCard)} title="Crew" />
     </div>
   )
+}
+
+// One cast credit card. The character name is the subtitle.
+function toCastCreditCard(member: MediaTitleCastMember): MediaTitleCreditCard {
+  const { character, id, name, profilePath } = member
+
+  return {
+    id,
+    name,
+    profilePath,
+    subtitle: character,
+  }
+}
+
+// One crew credit card. Joined jobs are the subtitle.
+function toCrewCreditCard(member: MediaTitleCrewMember): MediaTitleCreditCard {
+  const { id, jobs, name, profilePath } = member
+
+  return {
+    id,
+    name,
+    profilePath,
+    subtitle: jobs,
+  }
 }

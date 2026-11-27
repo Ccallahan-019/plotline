@@ -4,7 +4,7 @@ import type { StreamingPlatform, StreamingPlatformLucideIcon } from '@plotline/s
 import type { LucideIcon } from 'lucide-react'
 
 import { getStreamingPlatformMeta } from '@plotline/shared/constants'
-import { Clapperboard, Disc, MoreHorizontal, Tv } from 'lucide-react'
+import { Clapperboard, Disc, MoreHorizontal, TvMinimal } from 'lucide-react'
 import Image from 'next/image'
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -73,7 +73,7 @@ function PlatformGlyph({
     )
   }
 
-  const Icon = lucideIcon ? LUCIDE_ICONS[lucideIcon] : Tv
+  const Icon = lucideIcon ? LUCIDE_ICONS[lucideIcon] : TvMinimal
 
   return (
     <div className="rounded-sm bg-muted p-2">

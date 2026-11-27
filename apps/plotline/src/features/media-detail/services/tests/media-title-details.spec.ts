@@ -53,6 +53,22 @@ describe('mapMovieTitleDetails', () => {
     })
   })
 
+  it('keeps an https homepage and drops an insecure one', () => {
+    const https = tmdbMovieTitleDetailsSchema.parse({
+      homepage: 'https://example.com/film',
+      id: 1,
+      title: 'Perfect Days',
+    })
+    const insecure = tmdbMovieTitleDetailsSchema.parse({
+      homepage: 'http://example.com/film',
+      id: 1,
+      title: 'Perfect Days',
+    })
+
+    expect(mapMovieTitleDetails(https, 'US').homepage).toBe('https://example.com/film')
+    expect(mapMovieTitleDetails(insecure, 'US').homepage).toBeNull()
+  })
+
   it('groups crew onto one card per person and keeps the first 50', () => {
     const details = tmdbMovieTitleDetailsSchema.parse({
       credits: {
@@ -76,7 +92,6 @@ describe('mapMovieTitleDetails', () => {
     expect(crew).toHaveLength(50)
     expect(crew[0]).toEqual({
       id: 1,
-      initials: 'AD',
       jobs: 'Director, Writer',
       name: 'Ava DuVernay',
       profilePath: '/a.jpg',
@@ -115,6 +130,36 @@ describe('mapMovieTitleDetails', () => {
       { label: 'Editors', names: ['James Haygood'] },
     ])
   })
+
+  it('maps a videos array to a trailer and leaves a missing array null', () => {
+    const withVideos = tmdbMovieTitleDetailsSchema.parse({
+      id: 1,
+      title: 'Perfect Days',
+      videos: {
+        results: [
+          {
+            iso_3166_1: 'US',
+            key: 'yt-key',
+            name: 'Official Trailer',
+            official: true,
+            published_at: '2023-05-01T00:00:00.000Z',
+            site: 'YouTube',
+            type: 'Trailer',
+          },
+        ],
+      },
+    })
+    const withoutVideos = tmdbMovieTitleDetailsSchema.parse({
+      id: 1,
+      title: 'Perfect Days',
+    })
+
+    expect(mapMovieTitleDetails(withVideos, 'US').trailer).toEqual({
+      key: 'yt-key',
+      name: 'Official Trailer',
+    })
+    expect(mapMovieTitleDetails(withoutVideos, 'US').trailer).toBeNull()
+  })
 })
 
 describe('mapTvTitleDetails', () => {
@@ -127,6 +172,7 @@ describe('mapTvTitleDetails', () => {
         ],
       },
       created_by: [{ name: 'Dan Erickson' }],
+      homepage: 'https://tv.example/severance',
       id: 95396,
       name: 'Severance',
       networks: [{ name: 'Apple TV+' }],
@@ -147,6 +193,7 @@ describe('mapTvTitleDetails', () => {
 
     expect(mapped.certification).toBe('15')
     expect(mapped.createdBy).toEqual(['Dan Erickson'])
+    expect(mapped.homepage).toBe('https://tv.example/severance')
     expect(mapped.networks).toEqual(['Apple TV+'])
     expect(mapped.releaseStatusLabel).toBe('Returning Series')
     expect(mapped.seasons).toEqual([
@@ -154,6 +201,7 @@ describe('mapTvTitleDetails', () => {
         airDate: null,
         episodeCount: 2,
         name: 'Specials',
+        overview: null,
         posterPath: null,
         seasonNumber: 0,
       },
@@ -161,9 +209,32 @@ describe('mapTvTitleDetails', () => {
         airDate: '2022-02-18',
         episodeCount: 9,
         name: 'Season 1',
+        overview: null,
         posterPath: '/s1.jpg',
         seasonNumber: 1,
       },
+    ])
+  })
+
+  it('trims a season overview and drops a blank one', () => {
+    const details = tmdbTvTitleDetailsSchema.parse({
+      id: 95396,
+      name: 'Severance',
+      seasons: [
+        {
+          name: 'Season 1',
+          overview: '  Mark leads a team of office workers.  ',
+          season_number: 1,
+        },
+        { name: 'Season 2', overview: '   ', season_number: 2 },
+        { name: 'Season 3', season_number: 3 },
+      ],
+    })
+
+    expect(mapTvTitleDetails(details, 'US').seasons.map((season) => season.overview)).toEqual([
+      'Mark leads a team of office workers.',
+      null,
+      null,
     ])
   })
 
@@ -180,27 +251,10 @@ describe('mapTvTitleDetails', () => {
         airDate: null,
         episodeCount: 9,
         name: 'Season 1',
+        overview: null,
         posterPath: null,
         seasonNumber: 1,
       },
-    ])
-  })
-
-  it('maps cast initials', () => {
-    const details = tmdbTvTitleDetailsSchema.parse({
-      credits: {
-        cast: [
-          { character: 'Mark Scout', id: 1, name: 'Adam Scott' },
-          { id: 2, name: 'Cher' },
-        ],
-      },
-      id: 95396,
-      name: 'Severance',
-    })
-
-    expect(mapTvTitleDetails(details, 'US').cast).toEqual([
-      expect.objectContaining({ initials: 'AS', name: 'Adam Scott' }),
-      expect.objectContaining({ initials: 'CH', name: 'Cher' }),
     ])
   })
 
@@ -228,7 +282,6 @@ describe('mapTvTitleDetails', () => {
     expect(cast[0]).toEqual({
       character: 'Mark Scout, Helly R.',
       id: 1,
-      initials: 'AS',
       name: 'Adam Scott',
       profilePath: '/a.jpg',
     })
@@ -279,7 +332,6 @@ describe('mapTvTitleDetails', () => {
     expect(mapped.crew).toEqual([
       {
         id: 9,
-        initials: 'VG',
         jobs: 'Executive Producer, Writer',
         name: 'Vince Gilligan',
         profilePath: '/v.jpg',
@@ -323,6 +375,36 @@ describe('mapTvTitleDetails', () => {
       { label: 'Executive producers', names: ['Vince Gilligan'] },
       { label: 'Music', names: ['Dave Porter'] },
     ])
+  })
+
+  it('maps a videos array to a trailer and leaves a missing array null', () => {
+    const withVideos = tmdbTvTitleDetailsSchema.parse({
+      id: 95396,
+      name: 'Severance',
+      videos: {
+        results: [
+          {
+            iso_3166_1: 'US',
+            key: 'yt-key',
+            name: 'Official Trailer',
+            official: true,
+            published_at: '2022-01-01T00:00:00.000Z',
+            site: 'YouTube',
+            type: 'Trailer',
+          },
+        ],
+      },
+    })
+    const withoutVideos = tmdbTvTitleDetailsSchema.parse({
+      id: 95396,
+      name: 'Severance',
+    })
+
+    expect(mapTvTitleDetails(withVideos, 'US').trailer).toEqual({
+      key: 'yt-key',
+      name: 'Official Trailer',
+    })
+    expect(mapTvTitleDetails(withoutVideos, 'US').trailer).toBeNull()
   })
 })
 
@@ -539,6 +621,7 @@ function pageData(overrides: Partial<MediaTitlePageData> = {}): MediaTitlePageDa
     createdBy: [],
     crew: [],
     directors: [],
+    homepage: null,
     keyCredits: [],
     language: null,
     libraryItem: null,
@@ -547,6 +630,7 @@ function pageData(overrides: Partial<MediaTitlePageData> = {}): MediaTitlePageDa
     region: 'US',
     releaseStatusLabel: null,
     seasons: [],
+    trailer: null,
     voteAverage: null,
     voteCount: null,
     watchEvents: [],

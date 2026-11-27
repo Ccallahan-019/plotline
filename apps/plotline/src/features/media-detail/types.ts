@@ -3,14 +3,12 @@ import type { LibraryItem, Media, WatchEvent } from '@plotline/payload-types'
 export type MediaTitleCastMember = {
   character: null | string
   id: number
-  initials: string
   name: string
   profilePath: null | string
 }
 
 export type MediaTitleCreditCard = {
   id: number
-  initials: string
   name: string
   profilePath: null | string
   subtitle: null | string
@@ -18,7 +16,6 @@ export type MediaTitleCreditCard = {
 
 export type MediaTitleCrewMember = {
   id: number
-  initials: string
   jobs: null | string
   name: string
   profilePath: null | string
@@ -35,6 +32,7 @@ export type MediaTitlePageData = {
   createdBy: string[]
   crew: MediaTitleCrewMember[]
   directors: string[]
+  homepage: null | string
   keyCredits: MediaTitleKeyCreditGroup[]
   language: null | string
   libraryItem: LibraryItem | null
@@ -43,6 +41,7 @@ export type MediaTitlePageData = {
   region: string
   releaseStatusLabel: null | string
   seasons: MediaTitleSeason[]
+  trailer: MediaTitleTrailer | null
   voteAverage: null | number
   voteCount: null | number
   watchEvents: MediaTitleWatchEvent[]
@@ -52,8 +51,15 @@ export type MediaTitleSeason = {
   airDate: null | string
   episodeCount: null | number
   name: string
+  overview: null | string
   posterPath: null | string
   seasonNumber: number
+}
+
+/** Official YouTube trailer or teaser selected for this title. */
+export type MediaTitleTrailer = {
+  key: string
+  name: string
 }
 
 export type MediaTitleWatchEvent = {
